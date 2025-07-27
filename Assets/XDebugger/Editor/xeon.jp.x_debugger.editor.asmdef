@@ -1,0 +1,16 @@
+{
+    "name": "xeon.jp.x_debugger.editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f1fb321ef21c451499466427ee9a1419"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
