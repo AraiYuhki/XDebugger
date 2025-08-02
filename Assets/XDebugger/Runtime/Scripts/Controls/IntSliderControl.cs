@@ -33,6 +33,7 @@ namespace Xeon
             slider.minValue = min;
             slider.maxValue = max;
             slider.value = value;
+            slider.wholeNumbers = true;
 
             input.text = value.ToString();
 
@@ -52,9 +53,9 @@ namespace Xeon
             input.SetTextWithoutNotify(value.ToString());
         }
 
-        protected virtual void OnSliderValueChanged(int value)
+        protected virtual void OnSliderValueChanged(float value)
         {
-            this.value = value;
+            this.value = Mathf.FloorToInt(value);
             input.SetTextWithoutNotify(value.ToString());
             setter?.Invoke(this.value);
         }

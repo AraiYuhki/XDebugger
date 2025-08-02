@@ -35,6 +35,7 @@ namespace Xeon
             slider.minValue = min;
             slider.maxValue = max;
             slider.value = value;
+            slider.wholeNumbers = false;
 
             input.text = Math.Round(value, decimalPlace).ToString();
 
