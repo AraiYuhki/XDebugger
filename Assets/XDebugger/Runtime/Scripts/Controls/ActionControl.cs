@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
     public class ActionControl : ControlBase
     {

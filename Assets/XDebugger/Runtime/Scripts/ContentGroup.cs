@@ -1,10 +1,10 @@
 using TMPro;
 using UnityEngine;
 
-namespace Xeon
+namespace Xeon.XDebugger
 {
 
-    public class XGroup : MonoBehaviour
+    public class ContentGroup : MonoBehaviour
     {
         [SerializeField]
         private TMP_Text titleLabel;

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Xeon.Style;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
     public abstract class ControlBase : MonoBehaviour
     {

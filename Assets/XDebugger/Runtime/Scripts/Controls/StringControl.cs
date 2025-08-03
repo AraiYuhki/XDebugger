@@ -2,7 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
     public class StringControl : ControlBase
     {

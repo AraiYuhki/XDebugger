@@ -1,36 +1,37 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.XDebugger.Model;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
     public class BoolControl : ControlBase
     {
         [SerializeField]
         private Toggle toggle;
 
-        protected Func<bool> getter;
-        protected Action<bool> setter;
+        protected BoolModel model;
+        protected Action<bool> onValueChanged;
 
-        public void Setup(string title, bool isOn, Func<bool> getter, Action<bool> setter)
+
+        public void Setup(BoolModel model, Action<bool> onValueChanged)
         {
-            Setup(title);
+            Setup(model.Title);
+            this.model = model;
+            this.onValueChanged = onValueChanged;
 
-            this.getter = getter;
-            this.setter = setter;
-
-            toggle.SetIsOnWithoutNotify(isOn);
             toggle.onValueChanged.RemoveListener(OnValueChanged);
             toggle.onValueChanged.AddListener(OnValueChanged);
+
+            Refresh();
         }
 
         public override void Refresh()
         {
-            if (getter == null) return;
-            toggle.SetIsOnWithoutNotify(getter());
+            toggle.SetIsOnWithoutNotify(model.IsOn);
         }
 
         private void OnValueChanged(bool flag)
-            => setter?.Invoke(flag);
+            => onValueChanged?.Invoke(flag);
     }
 }

@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
     public class NumberControl : ControlBase
     {

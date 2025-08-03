@@ -1,10 +1,9 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
 
     public class DropdownControl : ControlBase

@@ -2,8 +2,9 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.XDebugger.Model;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
     public class FloatSliderControl : ControlBase
     {
@@ -12,54 +13,39 @@ namespace Xeon
         [SerializeField]
         protected TMP_InputField input;
 
-        protected float value = 0f;
-        protected float min = 0f;
-        protected float max = 1f;
-        protected int decimalPlace = 2;
+        protected FloatSliderModel model;
 
-        protected Func<float> getter;
-        protected Action<float> setter;
+        protected Action<float> onValueChanged;
 
-        public void Setup(string title, float value, float min, float max, Func<float> getter, Action<float> setter, int decimalPlace = 2)
+        public void Setup(FloatSliderModel model, Action<float> onValueChanged)
         {
-            Setup(title);
+            Setup(model.Title);
 
-            this.getter = getter;
-            this.setter = setter;
-
-            this.value = value;
-            this.min = min;
-            this.max = max;
-            this.decimalPlace = decimalPlace;
-
-            slider.minValue = min;
-            slider.maxValue = max;
-            slider.value = value;
             slider.wholeNumbers = false;
-
-            input.text = Math.Round(value, decimalPlace).ToString();
 
             slider.onValueChanged.RemoveListener(OnSliderValueChanged);
             slider.onValueChanged.AddListener(OnSliderValueChanged);
 
             input.onEndEdit.RemoveListener(OnEndEdit);
             input.onEndEdit.AddListener(OnEndEdit);
+
+            this.onValueChanged = onValueChanged;
+
+            Refresh();
         }
 
         public override void Refresh()
         {
-            if (getter == null) return;
-
-            value = getter();
-            slider.SetValueWithoutNotify(value);
-            input.SetTextWithoutNotify(Math.Round(value, decimalPlace).ToString());
+            slider.minValue = model.Min;
+            slider.maxValue = model.Max;
+            slider.SetValueWithoutNotify(model.Value);
+            input.SetTextWithoutNotify(model.GetRoundedText);
         }
 
         protected virtual void OnSliderValueChanged(float value)
         {
-            this.value = value;
-            input.SetTextWithoutNotify(Math.Round(value, decimalPlace).ToString());
-            setter?.Invoke(this.value);
+            input.SetTextWithoutNotify(model.GetRoundedText);
+            onValueChanged?.Invoke(value);
         }
 
         protected virtual void OnEndEdit(string text)
@@ -70,9 +56,8 @@ namespace Xeon
                 return;
             }
 
-            value = tmp;
-            slider.SetValueWithoutNotify(value);
-            setter?.Invoke(value);
+            slider.SetValueWithoutNotify(tmp);
+            onValueChanged?.Invoke(tmp);
         }
     }
 }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Xeon
+namespace Xeon.XDebugger
 {
     public class XDebugger : MonoBehaviour
     {

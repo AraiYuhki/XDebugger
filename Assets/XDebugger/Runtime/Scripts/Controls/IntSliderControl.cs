@@ -2,8 +2,9 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.XDebugger.Model;
 
-namespace Xeon
+namespace Xeon.XDebugger.Control
 {
     public class IntSliderControl : ControlBase
     {
@@ -12,52 +13,36 @@ namespace Xeon
         [SerializeField]
         protected TMP_InputField input;
 
-        protected int value = 0;
-        protected int min = 0;
-        protected int max = 255;
+        protected IntSliderModel model;
 
-        protected Func<int> getter;
-        protected Action<int> setter;
+        protected Action<int> onValueChanged;
 
-        public void Setup(string title, int value, int min, int max, Func<int> getter, Action<int> setter)
+        public void Setup(IntSliderModel model, Action<int> onValueChanged)
         {
-            Setup(title);
+            Setup(model.Title);
 
-            this.getter = getter;
-            this.setter = setter;
-
-            this.value = value;
-            this.min = min;
-            this.max = max;
-
-            slider.minValue = min;
-            slider.maxValue = max;
-            slider.value = value;
             slider.wholeNumbers = true;
-
-            input.text = value.ToString();
 
             slider.onValueChanged.RemoveListener(OnSliderValueChanged);
             slider.onValueChanged.AddListener(OnSliderValueChanged);
 
             input.onEndEdit.RemoveListener(OnEndEdit);
             input.onEndEdit.AddListener(OnEndEdit);
+
+            Refresh();
         }
 
         public override void Refresh()
         {
-            if (getter == null) return;
-
-            value = getter();
-            slider.SetValueWithoutNotify(value);
-            input.SetTextWithoutNotify(value.ToString());
+            slider.SetValueWithoutNotify(model.Value);
+            input.SetTextWithoutNotify(model.Value.ToString());
         }
 
         protected virtual void OnSliderValueChanged(float value)
         {
-            this.value = Mathf.FloorToInt(value);
-            input.SetTextWithoutNotify(value.ToString());
-            setter?.Invoke(this.value);
+            var tmp = Mathf.FloorToInt(value);
+            input.SetTextWithoutNotify(tmp.ToString());
+            onValueChanged?.Invoke(tmp);
         }
 
         protected virtual void OnEndEdit(string text)
@@ -68,9 +53,8 @@ namespace Xeon
                 return;
             }
 
-            value = tmp;
-            slider.SetValueWithoutNotify(value);
-            setter?.Invoke(value);
+            slider.SetValueWithoutNotify(tmp);
+            onValueChanged?.Invoke(tmp);
         }
     }
 }
