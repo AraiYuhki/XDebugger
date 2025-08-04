@@ -10,7 +10,7 @@ namespace Xeon.XDebugger.Model
 
         private float value, min, max;
         private FloatSliderControl control;
-        private Action<float> onValueChanged;
+        private Action<float> onChangedValue;
 
         public float Value
         {
@@ -28,14 +28,14 @@ namespace Xeon.XDebugger.Model
 
         public string GetRoundedText => Math.Round(value, Digits).ToString();
 
-        public FloatSliderModel(string title, float value, float min, float max, Action<float> onValueChanged, int digits = 2, int priority = 0)
+        public FloatSliderModel(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0)
             :base(title, priority)
         {
             this.value = value;
             this.min = min;
             this.max = max;
             Digits = digits;
-            this.onValueChanged = onValueChanged;
+            this.onChangedValue = onChangedValue;
         }
 
         public void SetMin(float min, bool isRefreshControl = true)
@@ -62,7 +62,7 @@ namespace Xeon.XDebugger.Model
         private void OnValueChanged(float newValue)
         {
             value = newValue;
-            onValueChanged?.Invoke(value);
+            onChangedValue?.Invoke(value);
         }
     }
 }

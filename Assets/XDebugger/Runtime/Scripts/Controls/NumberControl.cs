@@ -1,7 +1,9 @@
 using System;
 using TMPro;
+using UnityEditor.Build.Reporting;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
@@ -14,65 +16,38 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         protected Button leftButton;
 
-        protected float value = 0f;
-        protected float step = 1f;
-        protected Func<float> getter;
-        protected Action<float> setter;
+        protected NumberModel model;
+        protected Action<float> onChangedValue;
 
-        public void Setup(string title, float value, float step, Func<float> getter, Action<float> setter)
+        public void Setup(NumberModel model, Action<float> onChangedValue)
         {
-            Setup(title);
-            this.getter = getter;
-            this.setter = setter;
+            Setup(model.Title);
+            this.model = model;
+            this.onChangedValue = onChangedValue;
 
-            this.value = value;
-            this.step = step;
-
-            input.SetTextWithoutNotify(value.ToString());
             input.onEndEdit.RemoveListener(OnEndEdit);
             input.onEndEdit.AddListener(OnEndEdit);
 
             rightButton.onClick.RemoveListener(OnClickRightButton);
-            rightButton.onClick.AddListener(OnClickRightButton);
-
-            leftButton.onClick.RemoveListener(OnClickLeftButton);
             leftButton.onClick.AddListener(OnClickLeftButton);
+
+            Refresh();
         }
 
         public override void Refresh()
         {
-            if (getter == null) return;
-            value = getter();
-            input.SetTextWithoutNotify(value.ToString());
+            input.SetTextWithoutNotify(model.Value.ToString());
         }
 
         protected virtual void OnEndEdit(string text)
         {
             if (float.TryParse(text, out var value))
-            {
-                this.value = value;
-                setter?.Invoke(value);
-            }
+                onChangedValue?.Invoke(value);
             else
                 Refresh();
         }
 
-        protected virtual void OnClickRightButton()
-        {
-            value += step;
-            OnChanged();
-        }
-
-        protected virtual void OnClickLeftButton()
-        {
-            value -= step;
-            OnChanged();
-        }
-
-        protected virtual void OnChanged()
-        {
-            input.SetTextWithoutNotify(value.ToString());
-            setter?.Invoke(value);
-        }
+        protected virtual void OnClickRightButton() => model.Value += model.Step;
+        protected virtual void OnClickLeftButton() => model.Value -= model.Step;
     }
 }

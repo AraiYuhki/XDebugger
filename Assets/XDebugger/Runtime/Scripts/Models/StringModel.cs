@@ -1,0 +1,45 @@
+using System;
+using UnityEngine;
+using Xeon.XDebugger.Control;
+
+namespace Xeon.XDebugger.Model
+{
+    public class StringModel : ControlModelBase
+    {
+        protected override string prefabAddress => $"XDebugger/{nameof(StringControl)}";
+        
+        private string text = string.Empty;
+        private StringControl control;
+
+        private Action<string> onChangedValue;
+
+        public string Text
+        {
+            get => text;
+            set
+            {
+                text = value;
+                control?.Refresh();
+            }
+        }
+
+        public StringModel(string title, string text, Action<string> onChangedValue, int priority = 0) :base(title, priority)
+        {
+            this.text = text;
+            this.onChangedValue = onChangedValue;
+        }
+
+        public override ControlBase CreateControl(Transform parent)
+        {
+            control = Instantiate<StringControl>(parent);
+            control.Setup(this, OnChangedValue);
+            return control;
+        }
+
+        private void OnChangedValue(string newValue)
+        {
+            text = newValue;
+            onChangedValue?.Invoke(text);
+        }
+    }
+}

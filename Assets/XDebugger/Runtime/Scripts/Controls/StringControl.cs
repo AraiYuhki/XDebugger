@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
@@ -9,27 +10,27 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         protected TMP_InputField inputField;
 
-        protected Func<string> getter;
-        protected Action<string> setter;
+        protected StringModel model;
 
-        public void Setup(string title, string text, Func<string> getter, Action<string> setter)
+        protected Action<string> onChangedValue;
+
+        public void Setup(StringModel model, Action<string> onChangedValue)
         {
-            Setup(title);
-            this.getter = getter;
-            this.setter = setter;
+            Setup(model.Title);
+            
+            this.model = model;
+            this.onChangedValue = onChangedValue;
 
-            inputField.SetTextWithoutNotify(text);
-            inputField.onEndEdit.RemoveListener(OnEndEdit);
-            inputField.onEndEdit.AddListener(OnEndEdit);
+            Refresh();
         }
 
         public override void Refresh()
         {
-            if (getter == null) return;
-            inputField.SetTextWithoutNotify(getter());
+            inputField.SetTextWithoutNotify(model.Text);
+            inputField.onEndEdit.RemoveListener(OnEndEdit);
+            inputField.onEndEdit.AddListener(OnEndEdit);
         }
 
-        private void OnEndEdit(string text)
-            => setter?.Invoke(text);
+        private void OnEndEdit(string text) => model.Text = text;
     }
 }

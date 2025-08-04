@@ -1,7 +1,8 @@
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
+using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
@@ -11,42 +12,28 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         protected TMP_Dropdown dropdown;
 
-        protected int selectedIndex = 0;
+        protected IDropdownModel model;
 
-        protected Func<int> getter;
-        protected Action<int> setter;
+        protected Action<int> onChangedValue;
 
-        public void Setup(string title, int value, string[] labels, Func<int> getter, Action<int> setter)
+        public void Setup(IDropdownModel model, Action<int> onChangedValue)
         {
-            Setup(title);
-            this.getter = getter;
-            this.setter = setter;
+            Setup(model.Title);
+            this.model = model;
+            this.onChangedValue = onChangedValue;
 
-            selectedIndex = value;
-
-            dropdown.ClearOptions();
-            var options = new List<TMP_Dropdown.OptionData>();
-            foreach (var label in labels)
-                options.Add(new TMP_Dropdown.OptionData(label));
-            dropdown.AddOptions(options);
-
-            dropdown.SetValueWithoutNotify(selectedIndex);
-            dropdown.onValueChanged.RemoveListener(OnValueChanged);
-            dropdown.onValueChanged.AddListener(OnValueChanged);
+            dropdown.onValueChanged.RemoveListener(OnChangedValue);
+            dropdown.onValueChanged.AddListener(OnChangedValue);
+            Refresh();
         }
 
         public override void Refresh()
         {
-            if (getter == null) return;
-
-            selectedIndex = getter();
-            dropdown.SetValueWithoutNotify(selectedIndex);
+            dropdown.ClearOptions();
+            dropdown.AddOptions(model.Labels);
+            dropdown.SetValueWithoutNotify(model.SelectedIndex);
         }
 
-        protected virtual void OnValueChanged(int index)
-        {
-            selectedIndex = index;
-            setter?.Invoke(selectedIndex);
-        }
+        protected virtual void OnChangedValue(int index) => onChangedValue?.Invoke(index);
     }
 }

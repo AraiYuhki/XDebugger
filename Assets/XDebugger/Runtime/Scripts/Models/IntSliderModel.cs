@@ -25,13 +25,13 @@ namespace Xeon.XDebugger.Model
         public int Min => min;
         public int Max => max;
         
-        public IntSliderModel(string title, int value, int min, int max, Action<int> onValueChanged, int priority = 0)
+        public IntSliderModel(string title, int value, int min, int max, Action<int> onChangedValue, int priority = 0)
             : base(title, priority)
         {
             this.value = value;
             this.min = min;
             this.max = max;
-            this.onValueChanged = onValueChanged;
+            this.onValueChanged = onChangedValue;
         }
 
         public void SetMin(int min, bool isRefreshControl = true)

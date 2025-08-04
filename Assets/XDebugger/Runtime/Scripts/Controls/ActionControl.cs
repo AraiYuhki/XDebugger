@@ -1,6 +1,6 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
@@ -9,20 +9,16 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         protected Button button;
 
-        protected Action action;
+        protected ActionModel model;
 
-        public ActionControl(string title, Action action)
+        public void Setup(ActionModel model)
         {
-            Setup(title);
-            this.action = action;
-            button.onClick.RemoveListener(OnClicked);
-            button.onClick.AddListener(OnClicked);
+            Setup(model.Title);
+            
+            this.model = model;
 
-        }
-
-        protected virtual void OnClicked()
-        {
-            action?.Invoke();
+            button.onClick.RemoveListener(model.ExecuteMethod);
+            button.onClick.AddListener(model.ExecuteMethod);
         }
     }
 }

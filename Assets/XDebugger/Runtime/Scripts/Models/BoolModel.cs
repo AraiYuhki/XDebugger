@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Xeon.XDebugger.Control;
 
@@ -9,6 +10,7 @@ namespace Xeon.XDebugger.Model
 
         private BoolControl control;
         private bool isOn = false;
+        private Action<bool> onChangedValue;
 
         public bool IsOn
         {
@@ -20,15 +22,23 @@ namespace Xeon.XDebugger.Model
             }
         }
 
-        public BoolModel(string title, bool isOn, int priority = 0) : base(title, priority)
+        public BoolModel(string title, bool isOn, Action<bool> onChangedValue, int priority = 0) : base(title, priority)
         {
             this.isOn = isOn;
+            this.onChangedValue = onChangedValue;
         }
 
         public override ControlBase CreateControl(Transform parent)
         {
-            var control = Instantiate<BoolControl>(parent);
+            control = Instantiate<BoolControl>(parent);
+            control.Setup(this, OnChangedValue);
             return control;
+        }
+
+        private void OnChangedValue(bool newValue)
+        {
+            isOn = newValue;
+            onChangedValue?.Invoke(isOn);
         }
     }
 }
