@@ -1,4 +1,5 @@
 using UnityEngine;
+using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger
 {
@@ -9,6 +10,7 @@ namespace Xeon.XDebugger
         private static XDebugger instance;
 
         public static XDebugger Instance => instance;
+        private static PageModel initialPage;
 
         [SerializeField]
         private GameObject mainMenu;
@@ -25,6 +27,7 @@ namespace Xeon.XDebugger
         private float elapsedTime = 0f;
         private int clickedCount = 0;
 
+
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -38,6 +41,12 @@ namespace Xeon.XDebugger
             isShow = false;
 
             DontDestroyOnLoad(gameObject);
+        }
+
+        public static PageModel GetOrCreateInitialPage()
+        {
+            initialPage ??= new PageModel("Initial Page");
+            return initialPage;
         }
 
         public void Show()

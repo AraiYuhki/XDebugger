@@ -17,6 +17,12 @@ namespace Xeon.XDebugger.Model
 
         public string Title => title;
 
+        public Transform Content
+        {
+            get => content;
+            set => content = value;
+        }
+
         public ReadOnlyCollection<ControlModelBase> ModelList => new ReadOnlyCollection<ControlModelBase>(modelList.OrderBy(model => model.Priority).ToList());
 
         public ControlModelBase this[int index] => modelList[index];
@@ -33,13 +39,15 @@ namespace Xeon.XDebugger.Model
             modelList = copyItemModels.ToList();
         }
 
-        protected virtual void Initialize()
+        public virtual void Initialize()
         {
 
         }
 
         public void OpenPage(Transform parent)
         {
+            Initialize();
+            rootContent = content = parent;
         }
 
         public void AddLabel(LabelModel model) => modelList.Add(model);
@@ -47,6 +55,9 @@ namespace Xeon.XDebugger.Model
 
         public void AddButton(ActionModel model) => modelList.Add(model);
         public void AddButton(string text, Action action, int priority = 0) => AddButton(new ActionModel(text, action, priority));
+
+        public void AddText(StringModel model) => modelList.Add(model);
+        public void AddText(string title, string text, Action<string> onChangedValue, int priority = 0) => AddText(new StringModel(title, text, onChangedValue, priority));
         
         public void AddNumber(NumberModel model) => modelList.Add(model);
         public void AddNumber(string text, float value, float step, Action<float> onChangedValue, int priority = 0) => AddNumber(new NumberModel(text, value, step, onChangedValue, priority));
