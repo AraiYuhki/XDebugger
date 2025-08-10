@@ -35,29 +35,39 @@ namespace Xeon.XDebugger.Model
 
         public EnumDropdownModel(string title, int selectedIndex , Action<T> onChangedValue, int priority = 0) : base(title, priority)
         {
+            Initialize(selectedIndex, onChangedValue);
+        }
+
+        public EnumDropdownModel(string title, int selectedIndex, Action<T> onChangedValue, IGroupModel parent, int priority): base(title, parent, priority)
+        {
+            Initialize(selectedIndex, onChangedValue);
+        }
+
+        public EnumDropdownModel(string title, T value, Action<T> onChangedValue, int priority = 0) : base(title, priority)
+        {
+            Initialize(IndexOf(value), onChangedValue);
+        }
+        public EnumDropdownModel(string title, T value, Action<T> onChangedValue, IGroupModel parent, int priority = 0) : base(title, parent, priority)
+        {
+            Initialize(IndexOf(value), onChangedValue);
+        }
+
+        private void Initialize(int selectedIndex, Action<T> onChangedValue)
+        {
             labels = Enum.GetNames(typeof(T)).ToList();
             options = Enum.GetValues(typeof(T)).Cast<T>().ToArray();
             this.selectedIndex = selectedIndex;
             this.onChangedValue = onChangedValue;
         }
 
-        public EnumDropdownModel(string title, T value, Action<T> onChangedValue, int priority = 0) : base(title, priority)
+        private int IndexOf(T target)
         {
-            labels = Enum.GetNames(typeof(T)).ToList();
-            options = Enum.GetValues(typeof(T)).Cast<T>().ToArray();
-
-            var index = 0;
-            for (var i = 0; i < options.Length; i++)
+            foreach (var (value, index) in Enum.GetValues(typeof(T)).Cast<T>().Select((value, index) => (value, index)))
             {
-                var option = options[i];
-                if (option.Equals(value))
-                {
-                    index = i;
-                    break;
-                }
+                if (target.Equals(value))
+                    return index;
             }
-            selectedIndex = index;
-            this.onChangedValue = onChangedValue;
+            return -1;
         }
 
 

@@ -31,6 +31,17 @@ namespace Xeon.XDebugger.Model
         public FloatSliderModel(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0)
             :base(title, priority)
         {
+            Initialize(value, min, max, onChangedValue, digits);
+        }
+
+        public FloatSliderModel(string title, float value, float min, float max, Action<float> onChangedValue, IGroupModel parent, int digits = 2, int priority = 0)
+            : base(title, priority)
+        {
+            Initialize(value, min, max, onChangedValue, digits);
+        }
+
+        private void Initialize(float value, float min, float max, Action<float> onChangedValue, int digits)
+        {
             this.value = value;
             this.min = min;
             this.max = max;

@@ -1,4 +1,5 @@
 using Codice.Client.BaseCommands;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,16 +58,30 @@ namespace Xeon.XDebugger.Model
 
         public DropdownModel(string title, int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue, int priority = 0) : base(title, priority)
         {
-            selectedIndex = value;
-            this.labels = labels.ToList();
-            this.options = options.ToArray();
-            this.onChangedValue = onChangedValue;
+            Initialize(value, labels, options, onChangedValue);
+        }
+
+        public DropdownModel(string title, int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue, IGroupModel parent, int priority = 0)
+            : base(title, priority)
+        {
+            Initialize(value, labels, options, onChangedValue);
         }
 
         public DropdownModel(string title, int value, IEnumerable<T> options, Action<T> onChangedValue, int priority = 0) : base(title, priority)
         {
+            Initialize(value, options.Select(option => option.ToString()), options, onChangedValue);
+        }
+
+        public DropdownModel(string title, int value, IEnumerable<T> options, Action<T> onChangedValue, IGroupModel parent, int priority = 0)
+            :base(title, parent, priority)
+        {
+            Initialize(value, options.Select(option => option.ToString()), options, onChangedValue);
+        }
+
+        private void Initialize(int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue)
+        {
             selectedIndex = value;
-            labels = options.Select(option => option.ToString()).ToList();
+            this.labels = labels.ToList();
             this.options = options.ToArray();
             this.onChangedValue = onChangedValue;
         }

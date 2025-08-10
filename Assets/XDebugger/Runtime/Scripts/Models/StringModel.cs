@@ -25,6 +25,17 @@ namespace Xeon.XDebugger.Model
 
         public StringModel(string title, string text, Action<string> onChangedValue, int priority = 0) :base(title, priority)
         {
+            Initialize(text, onChangedValue);
+        }
+
+        public StringModel(string title, string text, Action<string> onChangedValue, IGroupModel parent, int priority = 0)
+            : base(title, parent, priority)
+        {
+            Initialize(text, onChangedValue);
+        }
+
+        private void Initialize(string text, Action<string> onChangedValue)
+        {
             this.text = text;
             this.onChangedValue = onChangedValue;
         }

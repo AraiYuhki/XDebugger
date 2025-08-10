@@ -10,7 +10,7 @@ namespace Xeon.XDebugger.Model
 
         private int value, min, max;
         private IntSliderControl control;
-        private Action<int> onValueChanged;
+        private Action<int> onChangedValue;
 
         public int Value
         {
@@ -28,10 +28,21 @@ namespace Xeon.XDebugger.Model
         public IntSliderModel(string title, int value, int min, int max, Action<int> onChangedValue, int priority = 0)
             : base(title, priority)
         {
+            Initialize(value, min, max, onChangedValue);
+        }
+
+        public IntSliderModel(string title, int value, int min, int max, Action<int> onChangedValue, IGroupModel parent, int priority = 0)
+            : base(title, parent, priority)
+        {
+            Initialize(value, min, max, onChangedValue);
+        }
+
+        private void Initialize(int value, int min, int max, Action<int> onChangedValue)
+        {
             this.value = value;
             this.min = min;
             this.max = max;
-            this.onValueChanged = onChangedValue;
+            this.onChangedValue = onChangedValue;
         }
 
         public void SetMin(int min, bool isRefreshControl = true)
@@ -58,7 +69,7 @@ namespace Xeon.XDebugger.Model
         private void OnValueChanged(int newValue)
         {
             value = newValue;
-            onValueChanged?.Invoke(value);
+            onChangedValue?.Invoke(value);
         }
     }
 }

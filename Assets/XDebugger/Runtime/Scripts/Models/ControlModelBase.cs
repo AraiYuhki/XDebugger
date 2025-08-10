@@ -12,9 +12,18 @@ namespace Xeon.XDebugger.Model
         public string Title { get; protected set; } = string.Empty;
         public int Priority { get; protected set; } = 0;
 
+        public IGroupModel Parent { get; private set; }
+
         public ControlModelBase(string title, int priority = 0)
         {
             Title = title;
+            Priority = priority;
+        }
+
+        public ControlModelBase(string title, IGroupModel parent, int priority = 0)
+        {
+            Title = title;
+            Parent = parent;
             Priority = priority;
         }
 

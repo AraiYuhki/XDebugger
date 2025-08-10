@@ -28,6 +28,17 @@ namespace Xeon.XDebugger.Model
 
         public NumberModel(string title, float value, float step, Action<float> onChangedValue, int priority = 0) : base(title, priority)
         {
+            Initialize(value, step, onChangedValue);
+        }
+
+        public NumberModel(string title, float value, float step, Action<float> onChangedValue, IGroupModel parent, int priority = 0)
+            : base(title, parent, priority)
+        {
+            Initialize(value, step, onChangedValue);
+        }
+
+        private void Initialize(float value, float step, Action<float> onChangedValue)
+        {
             this.value = value;
             this.step = step;
             this.onChangedValue = onChangedValue;
