@@ -6,7 +6,7 @@ namespace Xeon.XDebugger.Model
 {
     public abstract class GroupModel : ControlModelBase, IGroupModel
     {
-        protected List<ControlModelBase> children;
+        protected List<ControlModelBase> children = new();
 
         public GroupModel(string title, int priority = 0) : base(title, priority)
         {
@@ -16,6 +16,8 @@ namespace Xeon.XDebugger.Model
             : base(title, parent, priority)
         {
         }
+
+        public void AddChild(ControlModelBase model) => children.Add(model);
 
         public IReadOnlyCollection<ControlModelBase> Children => children;
 

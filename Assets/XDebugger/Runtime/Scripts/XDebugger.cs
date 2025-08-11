@@ -57,6 +57,9 @@ namespace Xeon.XDebugger
             isShow = true;
             mainMenu.SetActive(true);
             animator.Play(OpenId);
+
+            var page = new PageModel();
+            page.Initialize();
         }
 
         public void Hide()

@@ -27,6 +27,8 @@ namespace Xeon.XDebugger.Model
             Priority = priority;
         }
 
+        public void SetParent(IGroupModel parent) => Parent = parent;
+
         protected virtual T Instantiate<T>(Transform parent) where T : ControlBase, new()
         {
             var prefab = Addressables.LoadAssetAsync<GameObject>(prefabAddress).WaitForCompletion();

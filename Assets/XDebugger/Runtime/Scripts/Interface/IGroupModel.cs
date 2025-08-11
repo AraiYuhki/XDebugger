@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 using Xeon.XDebugger.Control;
@@ -11,6 +10,7 @@ namespace Xeon.XDebugger.Model
         string Title { get; }
         int Priority { get; }
         IReadOnlyCollection<ControlModelBase> Children { get; }
+        void AddChild(ControlModelBase model);
         ControlBase CreateControl(Transform parent);
     }
 }
