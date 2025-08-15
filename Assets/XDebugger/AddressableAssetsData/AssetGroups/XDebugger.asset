@@ -26,7 +26,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 36780d5c10bf87a48af27b2f2a8976de
-    m_Address: XDebugger/ButtonControl
+    m_Address: XDebugger/ActionControl
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7318594194689286964}
   - component: {fileID: 4337912309943576667}
   m_Layer: 5
-  m_Name: ButtonControl
+  m_Name: ActionControl
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -92,7 +92,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: -1
+  m_MinHeight: 50
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1

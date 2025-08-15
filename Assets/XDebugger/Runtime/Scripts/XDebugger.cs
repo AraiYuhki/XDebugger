@@ -22,6 +22,8 @@ namespace Xeon.XDebugger
         [SerializeField]
         private int clickCount = 3;
         [SerializeField]
+        private Transform content;
+        [SerializeField]
         private readonly float inputGraceTime = 0.2f;
 
         private float elapsedTime = 0f;
@@ -59,7 +61,7 @@ namespace Xeon.XDebugger
             animator.Play(OpenId);
 
             var page = new PageModel();
-            page.Initialize();
+            page.OpenPage(content);
         }
 
         public void Hide()

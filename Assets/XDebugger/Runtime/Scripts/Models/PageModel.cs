@@ -1,10 +1,9 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
+using Xeon.XDebugger.Control;
 
 namespace Xeon.XDebugger.Model
 {
@@ -15,6 +14,7 @@ namespace Xeon.XDebugger.Model
         protected IGroupModel group;
 
         protected List<ControlModelBase> modelList = new List<ControlModelBase>();
+        protected List<ControlBase> controlList = new();
         protected string title;
 
         public string Title => title;
@@ -75,6 +75,11 @@ namespace Xeon.XDebugger.Model
         {
             Initialize();
             content = parent;
+            controlList.Clear();
+            foreach (var model in modelList)
+            {
+                controlList.Add(model.CreateControl(parent));
+            }
         }
 
         public GroupLayoutScope HorizontalScope(string title, int priority = 0)
