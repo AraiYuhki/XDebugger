@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
 
 namespace Xeon.XDebugger.Model
 {
     public class PageModel
     {
+        protected virtual string prefabAddress => "XDebugger/Page";
+
         protected Transform content;
 
         protected IGroupModel group;
@@ -16,6 +19,7 @@ namespace Xeon.XDebugger.Model
         protected List<ControlModelBase> modelList = new List<ControlModelBase>();
         protected List<ControlBase> controlList = new();
         protected string title;
+        protected PageControl control;
 
         public string Title => title;
 
@@ -73,13 +77,59 @@ namespace Xeon.XDebugger.Model
 
         public void OpenPage(Transform parent)
         {
+            Clear();
             Initialize();
             content = parent;
-            controlList.Clear();
+            control ??= Instantiate(parent);
             foreach (var model in modelList)
+                controlList.Add(model.CreateControl(control.Content));
+            control.Open();
+        }
+
+        public virtual void Close(Action onClose = null)
+        {
+            control.Close(() =>
             {
-                controlList.Add(model.CreateControl(parent));
+                Clear();
+                XDebugger.Instance.ClosePage(this);
+                onClose?.Invoke();
+            });
+        }
+
+        public void Show(bool isRefresh = false)
+        {
+            if (isRefresh)
+                Refresh();
+            control.Open();
+        }
+
+        public void Hide() => control.Close();
+
+        public virtual void Refresh(bool doRecreate = false)
+        {
+
+            if (doRecreate)
+            {
+                Clear();
+                Initialize();
             }
+            foreach (var control in controlList)
+                control.Refresh();
+        }
+
+        protected virtual void Clear()
+        {
+            foreach (var control in controlList)
+                GameObject.Destroy(control.gameObject);
+            controlList.Clear();
+            modelList.Clear();
+        }
+
+        public PageControl Instantiate(Transform parent)
+        {
+            var prefab = Addressables.LoadAssetAsync<GameObject>(prefabAddress).WaitForCompletion();
+            var instance = GameObject.Instantiate(prefab, parent);
+            return instance.GetComponent<PageControl>();
         }
 
         public GroupLayoutScope HorizontalScope(string title, int priority = 0)
@@ -90,7 +140,7 @@ namespace Xeon.XDebugger.Model
             return scope;
         }
 
-        public GroupLayoutScope VerticalScope(string titiel, int priority = 0)
+        public GroupLayoutScope VerticalScope(string title, int priority = 0)
         {
             var scope = new VerticalLayoutScope(title, this, priority);
             AddChild(scope.Model);
@@ -111,6 +161,12 @@ namespace Xeon.XDebugger.Model
 
         public void AddButton(ActionModel model) => AddChild(model);
         public void AddButton(string text, Action action, int priority = 0) => AddButton(new ActionModel(text, action, priority));
+
+        public void AddPageLinkButton<T>(string text, int priority = 0) where T : PageModel, new()
+        {
+            var model = new ActionModel(text, () => XDebugger.Instance.OpenPage<T>(), priority);
+            modelList.Add(model);
+        }
 
         public void AddText(StringModel model) => AddChild(model);
         public void AddText(string title, string text, Action<string> onChangedValue, int priority = 0) => AddText(new StringModel(title, text, onChangedValue, priority));

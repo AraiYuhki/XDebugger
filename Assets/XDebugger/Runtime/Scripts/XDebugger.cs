@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using Xeon.XDebugger.Model;
 
@@ -15,6 +18,8 @@ namespace Xeon.XDebugger
         [SerializeField]
         private GameObject mainMenu;
         [SerializeField]
+        private TMP_Text titleLabel;
+        [SerializeField]
         private Animator animator;
         private bool isShow = false;
 
@@ -28,6 +33,9 @@ namespace Xeon.XDebugger
 
         private float elapsedTime = 0f;
         private int clickedCount = 0;
+        private PageModel currentPage;
+
+        private List<PageModel> pageStack = new ();
 
 
         private void Awake()
@@ -59,9 +67,10 @@ namespace Xeon.XDebugger
             isShow = true;
             mainMenu.SetActive(true);
             animator.Play(OpenId);
-
-            var page = new PageModel();
-            page.OpenPage(content);
+            if (currentPage == null)
+                OpenPage(GetOrCreateInitialPage());
+            else
+                currentPage.Refresh();
         }
 
         public void Hide()
@@ -97,6 +106,40 @@ namespace Xeon.XDebugger
                 clickedCount = 0;
             else
                 elapsedTime += Time.deltaTime;
+        }
+
+        public void OpenPage<T>(T model = null) where T : PageModel, new()
+        {
+            if (currentPage != null)
+            {
+                currentPage.Close(() => CreatePage(model));
+                return;
+            }
+            CreatePage(model);
+        }
+
+        private void CreatePage<T>(T model) where T : PageModel, new()
+        {
+            model ??= new T();
+            model.Initialize();
+            model.OpenPage(content);
+            pageStack.Add(model);
+            currentPage = model;
+            titleLabel.text = currentPage.Title;
+        }
+
+        public void ClosePage(PageModel target)
+        {
+            pageStack.Remove(target);
+            if (currentPage != target)
+                return;
+            currentPage = null;
+            target.Close(() =>
+            {
+                currentPage = pageStack.LastOrDefault();
+                currentPage.Show(true);
+                titleLabel.text = currentPage.Title;
+            });
         }
     }
 }

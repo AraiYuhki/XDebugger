@@ -23,5 +23,13 @@ namespace Xeon.XDebugger
             this.model = model;
             this.parent = parent;
         }
+
+        public override void Refresh()
+        {
+            if (children == null) return;
+
+            foreach (var control in children)
+                control.Refresh();
+        }
     }
 }
