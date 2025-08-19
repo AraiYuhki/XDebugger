@@ -7,41 +7,51 @@ using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger
 {
+    /// <summary>
+    /// デバッグ用UIを管理するシングルトンクラス。
+    /// デバッグメニューの表示・非表示やページ遷移を制御します。
+    /// </summary>
     public class XDebugger : MonoBehaviour
     {
+        // アニメーションのステートID
         private static readonly int OpenId = Animator.StringToHash("Open");
         private static readonly int CloseId = Animator.StringToHash("Close");
         private static XDebugger instance;
 
+        /// <summary>
+        /// シングルトンインスタンス取得
+        /// </summary>
         public static XDebugger Instance => instance;
         private static PageModel initialPage;
 
         [SerializeField]
-        private GameObject mainMenu;
+        private GameObject mainMenu; // デバッグメニューのルートオブジェクト
         [SerializeField]
-        private TMP_Text titleLabel;
+        private TMP_Text titleLabel; // タイトル表示用
         [SerializeField]
-        private Animator animator;
+        private Animator animator;   // メニュー表示アニメーション
         [SerializeField]
-        private Button backButton;
+        private Button backButton;   // 戻るボタン
         
-        private bool isShow = false;
+        private bool isShow = false; // メニュー表示状態
 
         [Header("Trigger")]
         [SerializeField]
-        private int clickCount = 3;
+        private int clickCount = 3; // メニュー表示のためのクリック回数
         [SerializeField]
-        private Transform content;
+        private Transform content;  // ページ内容表示用
         [SerializeField]
-        private readonly float inputGraceTime = 0.2f;
+        private float inputGraceTime = 0.2f; // 入力受付猶予時間
 
-        private float elapsedTime = 0f;
-        private int clickedCount = 0;
-        private PageModel currentPage;
+        private float elapsedTime = 0f; // 経過時間
+        private int clickedCount = 0;   // クリック回数カウント
+        private PageModel currentPage;  // 現在表示中のページ
 
-        private List<PageModel> pageStack = new ();
+        private List<PageModel> pageStack = new (); // ページ履歴スタック
 
-
+        /// <summary>
+        /// インスタンス初期化。シングルトン化と初期状態設定。
+        /// </summary>
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -54,15 +64,21 @@ namespace Xeon.XDebugger
             mainMenu.SetActive(false);
             isShow = false;
 
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
         }
 
+        /// <summary>
+        /// 初期ページを取得または生成
+        /// </summary>
         public static PageModel GetOrCreateInitialPage()
         {
             initialPage ??= new PageModel("Initial Page");
             return initialPage;
         }
 
+        /// <summary>
+        /// デバッグメニューを表示
+        /// </summary>
         public void Show()
         {
             if (isShow)
@@ -78,6 +94,9 @@ namespace Xeon.XDebugger
                 currentPage.Refresh();
         }
 
+        /// <summary>
+        /// デバッグメニューを非表示
+        /// </summary>
         public void Hide()
         {
             if (!isShow)
@@ -87,6 +106,9 @@ namespace Xeon.XDebugger
             animator.Play(CloseId);
         }
 
+        /// <summary>
+        /// ページ履歴を戻る
+        /// </summary>
         public void Back()
         {
             if (pageStack.Count > 1)
@@ -94,12 +116,18 @@ namespace Xeon.XDebugger
             backButton.gameObject.SetActive(pageStack.Count > 1);
         }
 
+        /// <summary>
+        /// メニュー非表示時の処理
+        /// </summary>
         public void OnHiden()
         {
             isShow = false;
             mainMenu.SetActive(false);
         }
 
+        /// <summary>
+        /// トリガーとなるクリック処理
+        /// </summary>
         public void OnClickTrigger()
         {
             elapsedTime = 0f;
@@ -119,6 +147,9 @@ namespace Xeon.XDebugger
                 elapsedTime += Time.deltaTime;
         }
 
+        /// <summary>
+        /// ページを開く
+        /// </summary>
         public void OpenPage<T>(T model = null) where T : PageModel, new()
         {
             if (currentPage != null)
@@ -129,6 +160,9 @@ namespace Xeon.XDebugger
             CreatePage(model);
         }
 
+        /// <summary>
+        /// ページを生成して表示
+        /// </summary>
         private void CreatePage<T>(T model) where T : PageModel, new()
         {
             model ??= new T();
@@ -140,6 +174,9 @@ namespace Xeon.XDebugger
             backButton.gameObject.SetActive(pageStack.Count > 1);
         }
 
+        /// <summary>
+        /// ページを閉じる
+        /// </summary>
         public void ClosePage(PageModel target)
         {
             pageStack.Remove(target);
