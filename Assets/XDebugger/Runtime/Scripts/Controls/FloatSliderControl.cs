@@ -19,6 +19,7 @@ namespace Xeon.XDebugger.Control
 
         public void Setup(FloatSliderModel model, Action<float> onValueChanged)
         {
+            this.model = model;
             Setup(model.Title);
 
             slider.wholeNumbers = false;

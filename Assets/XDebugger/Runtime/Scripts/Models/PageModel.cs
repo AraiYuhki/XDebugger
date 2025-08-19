@@ -49,25 +49,45 @@ namespace Xeon.XDebugger.Model
 
         public virtual void Initialize()
         {
-            AddLabel("test");
-            AddNumber("number test", 0, 1, null);
-            using (HorizontalScope("test horizontal scope"))
+            AddLabel("===== Debug Menu =====");
+
+            AddButton("Start", () => Debug.Log("開始が選択されました"));
+            AddButton("Exit", () => Debug.Log("終了が選択されました"));
+
+            AddToggle("Enabled", false, v => Debug.Log($"有効化: {v}"), 1);
+
+            AddIntSlider("Volume", 50, 0, 100, v => Debug.Log($"ボリューム: {v}"), 2);
+
+            AddSlider("Brightness", 0.5f, 0f, 1f, v => Debug.Log($"明るさ: {v:F2}"), 2, 3);
+
+            AddText("Username", "Player", v => Debug.Log($"ユーザー名: {v}"), 4);
+
+            AddDropdown(
+                "Mode Select",
+                0,
+                new[] { "Easy", "Normal", "Hard" },
+                new[] { 0, 1, 2 },
+                v => Debug.Log($"モード選択: {v}"),
+                5
+            );
+
+            AddEnumDropdown("Color Select", TestColor.Red, v => Debug.Log($"色選択: {v}"), 6);
+
+            AddPageLinkButton<TestPageModel>("Go to Detail Page", 10);
+
+            using (HorizontalScope("Horizontal Group"))
             {
-                AddLabel("test label in horizontal scope");
-                AddIntSlider("test int slider", 10, 0, 255, null);
-                using (VerticalScope("test vertical scope"))
-                {
-                    AddLabel("test label in vertical scope recursive");
-                    AddText("test string", "New Text", null);
-                }
-                using (VerticalScope("test vertical scope2"))
-                {
-                    AddLabel("test label in vertical scope2");
-                    AddButton("Test button", null);
-                }
-                AddButton("Test button in horizontal scope", null);
+                AddLabel("Horizontal Label");
+                AddButton("Horizontal Button", () => Debug.Log("水平ボタン押下"));
             }
-            AddButton("Footer button", null);
+
+            using (VerticalScope("Vertical Group"))
+            {
+                AddLabel("Vertical Label");
+                AddToggle("Vertical Toggle", true, v => Debug.Log($"垂直トグル: {v}"), 7);
+            }
+
+            AddButton("Refresh", () => Refresh(true), 99);
         }
 
         public void SetGroup(IGroupModel model)
@@ -93,6 +113,9 @@ namespace Xeon.XDebugger.Model
                 Clear();
                 XDebugger.Instance.ClosePage(this);
                 onClose?.Invoke();
+                GameObject.Destroy(control.gameObject);
+                content = null;
+                control = null;
             });
         }
 
@@ -100,10 +123,18 @@ namespace Xeon.XDebugger.Model
         {
             if (isRefresh)
                 Refresh();
+            control.gameObject.SetActive(true);
             control.Open();
         }
 
-        public void Hide() => control.Close();
+        public void Hide(Action onHidden = null)
+        {
+            control.Close(() =>
+            {
+                control.gameObject.SetActive(false);
+                onHidden?.Invoke();
+            });   
+        }
 
         public virtual void Refresh(bool doRecreate = false)
         {
@@ -194,5 +225,23 @@ namespace Xeon.XDebugger.Model
         public void AddEnumDropdown<T>(string text, T value, Action<T> onChangedValue, int priority = 0) where T : Enum
             => AddEnumDropdown(new EnumDropdownModel<T>(text, value, onChangedValue, priority));
 
+    }
+
+    // テスト用Enum
+    public enum TestColor
+    {
+        Red,
+        Green,
+        Blue
+    }
+
+    // テスト用ページ
+    public class TestPageModel : PageModel
+    {
+        public override void Initialize()
+        {
+            AddLabel("Detail Page");
+            AddButton("Back", () => XDebugger.Instance.ClosePage(this));
+        }
     }
 }

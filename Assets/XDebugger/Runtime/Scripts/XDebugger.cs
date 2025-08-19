@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger
@@ -21,6 +22,9 @@ namespace Xeon.XDebugger
         private TMP_Text titleLabel;
         [SerializeField]
         private Animator animator;
+        [SerializeField]
+        private Button backButton;
+        
         private bool isShow = false;
 
         [Header("Trigger")]
@@ -64,6 +68,7 @@ namespace Xeon.XDebugger
             if (isShow)
                 return;
             
+            backButton.gameObject.SetActive(false);
             isShow = true;
             mainMenu.SetActive(true);
             animator.Play(OpenId);
@@ -82,6 +87,13 @@ namespace Xeon.XDebugger
             animator.Play(CloseId);
         }
 
+        public void Back()
+        {
+            if (pageStack.Count > 1)
+                ClosePage(currentPage);
+            backButton.gameObject.SetActive(pageStack.Count > 1);
+        }
+
         public void OnHiden()
         {
             isShow = false;
@@ -96,7 +108,6 @@ namespace Xeon.XDebugger
             {
                 Show();
                 clickedCount = 0;
-                return;
             }
         }
 
@@ -112,7 +123,7 @@ namespace Xeon.XDebugger
         {
             if (currentPage != null)
             {
-                currentPage.Close(() => CreatePage(model));
+                currentPage.Hide(() => CreatePage(model));
                 return;
             }
             CreatePage(model);
@@ -126,6 +137,7 @@ namespace Xeon.XDebugger
             pageStack.Add(model);
             currentPage = model;
             titleLabel.text = currentPage.Title;
+            backButton.gameObject.SetActive(pageStack.Count > 1);
         }
 
         public void ClosePage(PageModel target)
@@ -140,6 +152,7 @@ namespace Xeon.XDebugger
                 currentPage.Show(true);
                 titleLabel.text = currentPage.Title;
             });
+            backButton.gameObject.SetActive(pageStack.Count > 1);
         }
     }
 }
