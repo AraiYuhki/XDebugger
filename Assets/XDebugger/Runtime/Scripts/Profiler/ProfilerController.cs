@@ -1,4 +1,4 @@
-using System;
+using Xeon.Common;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,7 +9,7 @@ namespace Xeon.XDebugger.Profiler
 {
     public class ProfilerController : MonoBehaviour
     {
-        private struct ProfilerFrame
+        private struct FrameData
         {
             public double FrameTime;
             public double OtherTime;
@@ -21,7 +21,7 @@ namespace Xeon.XDebugger.Profiler
         
         private float averageFrameTime;
         private float lastFrameTime;
-        private List<ProfilerFrame> frameBuffer = new();
+        private CircularBuffer<FrameData> frameBuffer = new(FrameBufferSize);
 
         private double updateDuration;
         private double renderStartTime;
@@ -42,7 +42,9 @@ namespace Xeon.XDebugger.Profiler
 
             if (frameBuffer.Count > 0)
             {
-                // TODO: 表示する内容を更新する
+                var frame = frameBuffer.Back();
+                frame.FrameTime = Time.unscaledDeltaTime;
+                frameBuffer[frameBuffer.Count - 1] = frame;
             }
 
             lastFrameTime = Time.unscaledDeltaTime;
@@ -75,7 +77,7 @@ namespace Xeon.XDebugger.Profiler
 
         private void PushFrameData(double totalTime, double updateTime, double renderTime)
         {
-            frameBuffer.Add(new()
+            frameBuffer.PushBack(new()
             {
                 OtherTime = totalTime - updateTime - renderTime,
                 UpdateTime = updateTime,
