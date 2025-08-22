@@ -2184,8 +2184,10 @@ MonoBehaviour:
   - 0
   - 50
   - 0
+  - 0
   thickness: 1
   length: 100
+  miterLimit: 4
 --- !u!222 &1811767473
 CanvasRenderer:
   m_ObjectHideFlags: 0
