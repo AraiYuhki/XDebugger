@@ -9,12 +9,12 @@ public class LineGraph : MaskableGraphic
     [SerializeField] private float thickness = 0.5f; // 半幅（この値の2倍が実線幅）
     [SerializeField] private float length = 400f; // X 方向の合計長
 
-    // ミター（角のとがり）について:
+    // マイター（角のとがり）について:
     // - 折れ線の角で、外側の辺を延長して尖らせてつなぐ方法のことです。
     // - 角が鋭いと先端が伸びすぎて“トゲ”のようになり、見た目が崩れます。
     // - miterLimit でこの尖りの長さの上限を決め、超えた場合は角を斜めに切る（ベベル）方法に切り替えて抑えます。
-    // - 計算上のミター長は thickness / dot(miterDirection, nextNormal) で求めます（thickness は線の半幅）。
-    [SerializeField] private float miterLimit = 4f; // thickness の何倍までミターを許容
+    // - 計算上のマイター長は thickness / dot(miterDirection, nextNormal) で求めます（thickness は線の半幅）。
+    [SerializeField] private float miterLimit = 4f; // thickness の何倍までマイターを許容
 
     protected override void OnPopulateMesh(VertexHelper vh)
     {
@@ -50,7 +50,7 @@ public class LineGraph : MaskableGraphic
         }
     }
 
-    // 上下のストリップ頂点を計算（ミターを用いて角を自然に接続）
+    // 上下のストリップ頂点を計算（マイターを用いて角を自然に接続）
     private void ComputeStripVertices(Vector2[] points, float halfWidth, float miterLimitMul, Vector2[] outTop, Vector2[] outBottom)
     {
         int n = points.Length;
@@ -72,7 +72,7 @@ public class LineGraph : MaskableGraphic
                 continue;
             }
 
-            // 中間点はミター結合（必要に応じてベベルへフォールバック）
+            // 中間点はマイター結合（必要に応じてベベルへフォールバック）
             ComputeJoinVertices(points, i, halfWidth, miterLimitMul, outTop, outBottom);
         }
     }
@@ -85,7 +85,7 @@ public class LineGraph : MaskableGraphic
         outBottom[index] = points[index] - normal * halfWidth;
     }
 
-    // 中間点の上下頂点を計算（ミター＋リミット、必要ならベベル）
+    // 中間点の上下頂点を計算（マイター＋リミット、必要ならベベル）
     private void ComputeJoinVertices(Vector2[] points, int index, float halfWidth, float miterLimitMul, Vector2[] outTop, Vector2[] outBottom)
     {
         var prevDir = SafeNormalize(points[index] - points[index - 1]);
@@ -93,7 +93,7 @@ public class LineGraph : MaskableGraphic
         var prevNormal = Perpendicular(prevDir);
         var nextNormal = Perpendicular(nextDir);
 
-        // ミターの計算と制御
+        // マイターの計算と制御
         var miterDir = SafeNormalize(prevNormal + nextNormal);
         float dotToNextNormal = Vector2.Dot(miterDir, nextNormal);
 
