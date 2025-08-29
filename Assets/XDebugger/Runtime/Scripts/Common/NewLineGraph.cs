@@ -1,48 +1,85 @@
-﻿using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(CanvasRenderer))]
 public class NewLineGraph : MaskableGraphic
 {
     [SerializeField]
-    private float thicness = 1f;
+    private new RectTransform rectTransform;
+    
     [SerializeField]
-    private float length = 400f;
+    private float thicness = 1f;
+    
     [SerializeField, Tooltip("thicnessの何倍までマイターを許容するか")]
     private float miterLimit = 4f;
+    
     [SerializeField]
-    private float[] values = new float[3] { 0f, 200f, 0f };
+    private float[] values = new float[] { 0f, 1f, 0f };
 
-    private List<Vector3> vertices = new List<Vector3>();
-    private List<(int, int, int)> indicies = new();
+    [SerializeField]
+    private float minValue = -1f;
+    
+    [SerializeField]
+    private float maxValue = 1f;
 
+    private float[] ConvertValues()
+    {
+        // クラス変数 values の各値を、下端=minValue、上端=maxValue として
+        // rectTransform.rect.height の 0..height に正規化してY座標へ変換する
+        var height = rectTransform != null ? rectTransform.rect.height : 0f;
+        var vals = values ?? System.Array.Empty<float>();
+        var count = vals.Length;
+        var ys = new float[count];
+        if (count == 0)
+            return ys;
 
+        var range = maxValue - minValue;
+        if (Mathf.Approximately(range, 0f))
+        {
+            // 範囲がゼロの場合は中央に配置
+            var mid = height * 0.5f;
+            for (int i = 0; i < count; i++) ys[i] = mid;
+            return ys;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            var v = vals[i];
+            // min-maxに対して0..1に正規化し、0..heightへスケーリング（上下関係はmaxが上、minが下）
+            var t = Mathf.Clamp01((v - minValue) / range);
+            ys[i] = t * height;
+        }
+        return ys;
+    }
+    
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
-        var stepX = length / (values.Length - 1f);
+        if (rectTransform == null)
+            return;
+
+        var ys = ConvertValues();
+        var count = ys.Length;
+        if (count < 2)
+            return;
+
+        var stepX = rectTransform.rect.width / (count - 1f);
         var halfWidth = thicness * 0.5f;
         var prev = Vector2.zero;
-        vertices.Clear();
-        indicies.Clear();
         var vertexIndex = 0;
-        for (var index = 0; index < values.Length; index++)
+        for (var index = 0; index < count; index++)
         {
-            var current = new Vector2(stepX * index, values[index]);
+            var current = new Vector2(stepX * index, ys[index]);
             var isBebel = false;
             if (index == 0)
             {
-                var next = new Vector2(stepX * (index + 1), values[index + 1]);
+                var next = new Vector2(stepX * (index + 1), ys[index + 1]);
                 var direction = (next - current).normalized;
                 var (top, bottom) = GetEndCap(current, direction, halfWidth);
                 AddVertex(vh, top);
                 AddVertex(vh, bottom);
-                vertices.Add(top);
-                vertices.Add(bottom);
             }
-            else if (index == values.Length - 1)
+            else if (index == count - 1)
             {
                 var direction = (current - prev).normalized;
                 var (top, bottom) = GetEndCap(current, direction, halfWidth);
@@ -50,30 +87,23 @@ public class NewLineGraph : MaskableGraphic
                 {
                     AddVertex(vh, bottom);
                     AddVertex(vh, top);
-                    vertices.Add(bottom);
-                    vertices.Add(top);
                 }
                 else
                 {
                     AddVertex(vh, top);
                     AddVertex(vh, bottom);
-                    vertices.Add(top);
-                    vertices.Add(bottom);
                 }
             }
             else
             {
-                var next = new Vector2(stepX * (index + 1), values[index + 1]);
+                var next = new Vector2(stepX * (index + 1), ys[index + 1]);
                 var (top, bottom, tmp) = GetJoinVertices(prev, current, next, halfWidth);
                 AddVertex(vh, top);
-                vertices.Add(top);
                 AddVertex(vh, bottom);
-                vertices.Add(bottom);
 
                 if (tmp.HasValue)
                 {
                     AddVertex(vh, tmp.Value);
-                    vertices.Add(tmp.Value);
                     isBebel = true;
                 }
 
@@ -85,19 +115,12 @@ public class NewLineGraph : MaskableGraphic
                     vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
                     vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
                     vh.AddTriangle(vertexIndex + 2, vertexIndex + 4, vertexIndex + 3);
-
-                    indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
-                    indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
-                    indicies.Add((vertexIndex + 2, vertexIndex + 4, vertexIndex + 3));
                     vertexIndex += 3;
                 }
                 else
                 {
                     vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
                     vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
-
-                    indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
-                    indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
                     vertexIndex += 2;
                 }
             }
@@ -152,14 +175,5 @@ public class NewLineGraph : MaskableGraphic
         vert.position = new Vector3(position.x, position.y);
         vert.color = color;
         vh.AddVert(vert);
-    }
-
-    private void OnDrawGizmos()
-    {
-        foreach (var index in indicies)
-        {
-            var vertex = new Span<Vector3>( new Vector3[] { vertices[index.Item1], vertices[index.Item2], vertices[index.Item3] });
-            Gizmos.DrawLineStrip(vertex, true);
-        }
     }
 }
