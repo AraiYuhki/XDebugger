@@ -1,129 +1,129 @@
-﻿using UnityEngine;
+﻿using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(CanvasRenderer))]
 public class NewLineGraph : MaskableGraphic
 {
     [SerializeField]
-    private new RectTransform rectTransform;
-    
-    [SerializeField]
     private float thicness = 1f;
-    
+    [SerializeField]
+    private float length = 400f;
     [SerializeField, Tooltip("thicnessの何倍までマイターを許容するか")]
     private float miterLimit = 4f;
-    
     [SerializeField]
-    private float[] values = new float[] { 0f, 1f, 0f };
+    private float[] values = new float[3] { 0f, 200f, 0f };
 
-    [SerializeField]
-    private float minValue = -1f;
-    
-    [SerializeField]
-    private float maxValue = 1f;
+    private List<Vector3> vertices = new List<Vector3>();
+    private List<(int, int, int)> indicies = new();
 
-    private float[] ConvertValues()
-    {
-        // クラス変数 values の各値を、下端=minValue、上端=maxValue として
-        // rectTransform.rect.height の 0..height に正規化してY座標へ変換する
-        var height = rectTransform != null ? rectTransform.rect.height : 0f;
-        var vals = values ?? System.Array.Empty<float>();
-        var count = vals.Length;
-        var ys = new float[count];
-        if (count == 0)
-            return ys;
 
-        var range = maxValue - minValue;
-        if (Mathf.Approximately(range, 0f))
-        {
-            // 範囲がゼロの場合は中央に配置
-            var mid = height * 0.5f;
-            for (int i = 0; i < count; i++) ys[i] = mid;
-            return ys;
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            var v = vals[i];
-            // min-maxに対して0..1に正規化し、0..heightへスケーリング（上下関係はmaxが上、minが下）
-            var t = Mathf.Clamp01((v - minValue) / range);
-            ys[i] = t * height;
-        }
-        return ys;
-    }
-    
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
-        if (rectTransform == null)
-            return;
-
-        var ys = ConvertValues();
-        var count = ys.Length;
-        if (count < 2)
-            return;
-
-        var stepX = rectTransform.rect.width / (count - 1f);
+        var stepX = length / (values.Length - 1f);
         var halfWidth = thicness * 0.5f;
         var prev = Vector2.zero;
+        var prevBebel = false;
+        vertices.Clear();
+        indicies.Clear();
         var vertexIndex = 0;
-        for (var index = 0; index < count; index++)
+        for (var index = 0; index < values.Length; index++)
         {
-            var current = new Vector2(stepX * index, ys[index]);
+            var current = new Vector2(stepX * index, values[index]);
             var isBebel = false;
+            var next = Vector2.zero;
+            var top = Vector2.zero;
+            var bottom = Vector2.zero;
             if (index == 0)
             {
-                var next = new Vector2(stepX * (index + 1), ys[index + 1]);
+                next = new Vector2(stepX * (index + 1), values[index + 1]);
                 var direction = (next - current).normalized;
-                var (top, bottom) = GetEndCap(current, direction, halfWidth);
+                (top, bottom) = GetEndCap(current, direction, halfWidth);
                 AddVertex(vh, top);
                 AddVertex(vh, bottom);
+                vertices.Add(top);
+                vertices.Add(bottom);
+                prev = current;
+                continue;
             }
-            else if (index == count - 1)
+            if (index == values.Length - 1)
             {
                 var direction = (current - prev).normalized;
-                var (top, bottom) = GetEndCap(current, direction, halfWidth);
-                if (direction.y < 0)
-                {
-                    AddVertex(vh, bottom);
-                    AddVertex(vh, top);
-                }
-                else
-                {
-                    AddVertex(vh, top);
-                    AddVertex(vh, bottom);
-                }
+                (top, bottom) = GetEndCap(current, direction, halfWidth);
+                AddVertex(vh, top);
+                AddVertex(vh, bottom);
+                vertices.Add(top);
+                vertices.Add(bottom);
+                vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
+
+                indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
+                continue;
+            }
+
+            next = new Vector2(stepX * (index + 1), values[index + 1]);
+            Vector2? tmp;
+            (top, bottom, tmp) = GetJoinVertices(prev, current, next, halfWidth);
+            AddVertex(vh, top);
+            AddVertex(vh, bottom);
+            vertices.Add(top);
+            vertices.Add(bottom);
+
+            if (tmp.HasValue)
+            {
+                AddVertex(vh, tmp.Value);
+                vertices.Add(tmp.Value);
+                isBebel = true;
+            }
+
+            if (isBebel)
+            {
+                vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
+                vh.AddTriangle(vertexIndex + 2, vertexIndex + 4, vertexIndex + 3);
+
+                indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
+                indicies.Add((vertexIndex + 2, vertexIndex + 4, vertexIndex + 3));
+                vertexIndex += 3;
             }
             else
             {
-                var next = new Vector2(stepX * (index + 1), ys[index + 1]);
-                var (top, bottom, tmp) = GetJoinVertices(prev, current, next, halfWidth);
-                AddVertex(vh, top);
-                AddVertex(vh, bottom);
-
-                if (tmp.HasValue)
+                var direction = (current - prev).normalized;
+                if (direction.y < 0)
                 {
-                    AddVertex(vh, tmp.Value);
-                    isBebel = true;
-                }
+                    if (prevBebel)
+                    {
+                        vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                        vh.AddTriangle(vertexIndex + 3, vertexIndex, vertexIndex + 2);
 
-            }
-            if (index > 0)
-            {
-                if (isBebel)
-                {
-                    vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 4, vertexIndex + 3);
-                    vertexIndex += 3;
+                        indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                        indicies.Add((vertexIndex + 3, vertexIndex, vertexIndex + 2));
+                    }
+                    else
+                    {
+                        vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                        vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
+
+                        indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                        indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
+                    }
                 }
                 else
                 {
                     vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
                     vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
-                    vertexIndex += 2;
+
+                    indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                    indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
                 }
+                vertexIndex += 2;
             }
+            prevBebel = isBebel;
             prev = current;
         }
     }
@@ -175,5 +175,18 @@ public class NewLineGraph : MaskableGraphic
         vert.position = new Vector3(position.x, position.y);
         vert.color = color;
         vh.AddVert(vert);
+    }
+
+    private void OnDrawGizmos()
+    {
+        for (var index = 0; index < vertices.Count; index++)
+        {
+            Handles.Label(vertices[index], index.ToString());
+        }
+        foreach (var index in indicies)
+        {
+            var vertex = new Span<Vector3>( new Vector3[] { vertices[index.Item1], vertices[index.Item2], vertices[index.Item3] });
+            Gizmos.DrawLineStrip(vertex, true);
+        }
     }
 }
