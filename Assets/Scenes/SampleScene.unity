@@ -1653,16 +1653,17 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  rectTransform: {fileID: 831461067}
-  thicness: 10
+  thicness: 4
+  length: 400
   miterLimit: 4
   values:
-  - 0.5
-  - 1
+  - -200
+  - 200
+  - -200
+  - 200
+  - 200
   - 0
-  - -1
-  minValue: -1
-  maxValue: 1
+  - 50
 --- !u!222 &831461069
 CanvasRenderer:
   m_ObjectHideFlags: 0

@@ -1,169 +1,181 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(CanvasRenderer))]
 public class LineGraph : MaskableGraphic
 {
-    [SerializeField] private float[] values = new float[0];
+    [SerializeField]
+    private float thicness = 1f;
+    [SerializeField]
+    private float length = 400f;
+    [SerializeField, Tooltip("thicnessの何倍までマイターを許容するか")]
+    private float miterLimit = 4f;
+    [SerializeField]
+    private float[] values = new float[3] { 0f, 200f, 0f };
 
-    [SerializeField] private float thickness = 0.5f; // 半幅（この値の2倍が実線幅）
-    [SerializeField] private float length = 400f; // X 方向の合計長
+    private float halfWidth => thicness * 0.5f;
 
-    // マイター（角のとがり）について:
-    // - 折れ線の角で、外側の辺を延長して尖らせてつなぐ方法のことです。
-    // - 角が鋭いと先端が伸びすぎて“トゲ”のようになり、見た目が崩れます。
-    // - miterLimit でこの尖りの長さの上限を決め、超えた場合は角を斜めに切る（ベベル）方法に切り替えて抑えます。
-    // - 計算上のマイター長は thickness / dot(miterDirection, nextNormal) で求めます（thickness は線の半幅）。
-    [SerializeField] private float miterLimit = 4f; // thickness の何倍までマイターを許容
+    private List<Vector3> vertices = new List<Vector3>();
+    private List<(int, int, int)> indicies = new();
+
 
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
+        
+        var stepX = length / (values.Length - 1f);
+        var prev = Vector2.zero;
+        var prevBebel = false;
+        vertices.Clear();
+        indicies.Clear();
 
-        if (values == null || values.Length < 2)
+        var vertexIndex = 0;
+        for (var index = 0; index < values.Length; index++)
         {
-            return;
-        }
-
-        int pointCount = values.Length;
-        float stepX = pointCount > 1 ? length / (pointCount - 1) : 0f;
-
-        // 中心線の点配列
-        var points = new Vector2[pointCount];
-        ComputeCenterlinePoints(pointCount, stepX, values, points);
-
-        // 上辺/下辺の頂点配列
-        var topVertices = new Vector2[pointCount];
-        var bottomVertices = new Vector2[pointCount];
-        ComputeStripVertices(points, thickness, miterLimit, topVertices, bottomVertices);
-
-        // 頂点と三角形を追加
-        AppendStrip(vh, topVertices, bottomVertices);
-    }
-
-    // values から中心線の 2D 点を等間隔に生成
-    private void ComputeCenterlinePoints(int pointCount, float stepX, float[] srcValues, Vector2[] outPoints)
-    {
-        for (int i = 0; i < pointCount; i++)
-        {
-            outPoints[i] = new Vector2(stepX * i, srcValues[i]);
-        }
-    }
-
-    // 上下のストリップ頂点を計算（マイターを用いて角を自然に接続）
-    private void ComputeStripVertices(Vector2[] points, float halfWidth, float miterLimitMul, Vector2[] outTop, Vector2[] outBottom)
-    {
-        int n = points.Length;
-        for (int i = 0; i < n; i++)
-        {
-            if (i == 0)
+            var current = new Vector2(stepX * index, values[index]);
+            var isBebel = false;
+            if (index == 0)
             {
-                // 先頭点は次点方向の法線で幅を出す
-                var dir = SafeNormalize(points[1] - points[0]);
-                ComputeEndCap(points, i, dir, halfWidth, outTop, outBottom);
+                ProcessStart(vh, stepX, current);
+                prev = current;
+                continue;
+            }
+            if (index == values.Length - 1)
+            {
+                ProcessEnd(vh, current, prev);
+                AddTriangle(vh, vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                AddTriangle(vh, vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
                 continue;
             }
 
-            if (i == n - 1)
+            var next = new Vector2(stepX * (index + 1), values[index + 1]);
+            var (top, bottom, tmp) = GetJoinVertices(prev, current, next);
+            AddVertices(vh, top, bottom);
+
+            if (tmp.HasValue)
             {
-                // 末尾点は前点方向の法線で幅を出す
-                var dir = SafeNormalize(points[i] - points[i - 1]);
-                ComputeEndCap(points, i, dir, halfWidth, outTop, outBottom);
-                continue;
+                AddVertex(vh, tmp.Value);
+                isBebel = true;
             }
 
-            // 中間点はマイター結合（必要に応じてベベルへフォールバック）
-            ComputeJoinVertices(points, i, halfWidth, miterLimitMul, outTop, outBottom);
+            AddTriangles(vh, vertexIndex, (current - prev).normalized, isBebel, prevBebel);
+            vertexIndex += isBebel ? 3 : 2;
+
+            prev = current;
+            prevBebel = isBebel;
         }
     }
 
-    // 端点の上下頂点を計算
-    private void ComputeEndCap(Vector2[] points, int index, Vector2 direction, float halfWidth, Vector2[] outTop, Vector2[] outBottom)
+    private void ProcessStart(VertexHelper vh, float stepX, Vector2 current)
     {
-        var normal = Perpendicular(direction);
-        outTop[index] = points[index] + normal * halfWidth;
-        outBottom[index] = points[index] - normal * halfWidth;
+        var next = new Vector2(stepX, values[1]);
+        var direction = (next - current).normalized;
+        var (top, bottom) = GetEndCap(current, direction);
+        AddVertices(vh, top, bottom);
     }
 
-    // 中間点の上下頂点を計算（マイター＋リミット、必要ならベベル）
-    private void ComputeJoinVertices(Vector2[] points, int index, float halfWidth, float miterLimitMul, Vector2[] outTop, Vector2[] outBottom)
+    private void ProcessEnd(VertexHelper vh, Vector2 current, Vector2 prev)
     {
-        var prevDir = SafeNormalize(points[index] - points[index - 1]);
-        var nextDir = SafeNormalize(points[index + 1] - points[index]);
-        var prevNormal = Perpendicular(prevDir);
-        var nextNormal = Perpendicular(nextDir);
+        var direction = (current - prev).normalized;
+        var (top, bottom) = GetEndCap(current, direction);
+        AddVertices(vh, top, bottom);
+    }
 
-        // マイターの計算と制御
-        var miterDir = SafeNormalize(prevNormal + nextNormal);
-        float dotToNextNormal = Vector2.Dot(miterDir, nextNormal);
-
-        if (Mathf.Abs(dotToNextNormal) < 1e-3f)
+    private void AddTriangles(VertexHelper vh, int index, Vector2 direction, bool isBebel, bool prevIsBebel)
+    {
+        if (isBebel)
         {
-            // ほぼ直線/鋭角で不安定 → 次の法線で固定
-            outTop[index] = points[index] + nextNormal * halfWidth;
-            outBottom[index] = points[index] - nextNormal * halfWidth;
+            AddTriangle(vh, index, index + 1, index + 2);
+            AddTriangle(vh, index + 2, index + 1, index + 3);
+            AddTriangle(vh, index + 2, index + 4, index + 3);
             return;
         }
 
-        float miterLen = halfWidth / dotToNextNormal;
-        float maxAllowed = halfWidth * Mathf.Max(1f, miterLimitMul);
-
-        if (Mathf.Abs(miterLen) > maxAllowed)
+        if (direction.y >= 0 || !prevIsBebel)
         {
-            // スパイク防止: ベベルへフォールバック
-            var normal = dotToNextNormal > 0f ? nextNormal : -nextNormal;
-            outTop[index] = points[index] + normal * halfWidth;
-            outBottom[index] = points[index] - normal * halfWidth;
+            AddTriangle(vh, index, index + 1, index + 2);
+            AddTriangle(vh, index + 2, index + 1, index + 3);
             return;
         }
 
-        outTop[index] = points[index] + miterDir * miterLen;
-        outBottom[index] = points[index] - miterDir * miterLen;
+        AddTriangle(vh, index, index + 1, index + 2);
+        AddTriangle(vh, index + 3, index, index + 2);
     }
 
-    // 上下ストリップを UI 頂点へ追加し、隣接クワッドを三角形で張る
-    private void AppendStrip(VertexHelper vh, Vector2[] top, Vector2[] bottom)
+    private (Vector2 top, Vector2 bottom, Vector2? nextTop) GetJoinVertices(Vector2 prev, Vector2 current, Vector2 next)
     {
-        int n = top.Length;
+        var prevDirection = (current - prev).normalized;
+        var nextDirection = (next - current).normalized;
+        var prevNormal = GetNormal(prevDirection);
+        var nextNormal = GetNormal(nextDirection);
 
-        // 頂点追加（上→下の順）
-        for (int i = 0; i < n; i++)
+        var miterDirection = (prevNormal + nextNormal).normalized;
+        var dotToNextNormal = Vector2.Dot(miterDirection, nextNormal);
+
+        if (Mathf.Abs(dotToNextNormal) < float.Epsilon)
         {
-            AddVertex(vh, new Vector3(top[i].x, top[i].y, 0f));
-            AddVertex(vh, new Vector3(bottom[i].x, bottom[i].y, 0f));
+            return (current + nextNormal * halfWidth, current - nextNormal * halfWidth, null);
         }
 
-        // クワッドを二枚の三角形で構成
-        for (int i = 0; i < n - 1; i++)
+        var miterLength = halfWidth / dotToNextNormal;
+
+        if (Mathf.Abs(miterLength) > (halfWidth * Mathf.Max(1f, miterLimit)))
         {
-            int vi = i * 2;
-            vh.AddTriangle(vi, vi + 1, vi + 2);
-            vh.AddTriangle(vi + 2, vi + 1, vi + 3);
+            var currentNormal = prevDirection.y > 0 ? prevNormal : -prevNormal;
+            var top = current + currentNormal * halfWidth;
+            var bottom = current - currentNormal * halfWidth;
+            var diff = top - bottom;
+            diff.x *= -1;
+            var tmp = bottom + diff;
+            var positions = (top, bottom, tmp);
+            return positions;
         }
+
+        return (current + miterDirection * miterLength, current - miterDirection * miterLength, null);
     }
 
-    // 値更新と再描画
-    public void SetValues(float[] newValues)
+    private (Vector2 top, Vector2 bottom) GetEndCap(Vector2 point, Vector2 direction)
     {
-        values = newValues ?? Array.Empty<float>();
-        SetVerticesDirty();
+        var normal = GetNormal(direction);
+        return (point + normal * halfWidth, point - normal * halfWidth);
     }
 
-    // ベクトルの法線（左90度回転）
-    private static Vector2 Perpendicular(Vector2 v) => new Vector2(-v.y, v.x);
+    private Vector2 GetNormal(Vector2 vector) => new Vector2(-vector.y, vector.x);
 
-    // 安全な正規化（ゼロ長のときは右方向を返す）
-    private static Vector2 SafeNormalize(Vector2 v)
+    private void AddVertices(VertexHelper vh, params Vector2[] positions)
     {
-        float m = v.magnitude;
-        return m > 1e-6f ? v / m : Vector2.right;
+        foreach (var position in positions)
+            AddVertex(vh, position);
     }
 
-    private void AddVertex(VertexHelper vh, Vector3 pos)
+    private void AddVertex(VertexHelper vh, Vector2 position)
     {
         var vert = UIVertex.simpleVert;
-        vert.position = pos;
+        vert.position = new Vector3(position.x, position.y);
         vert.color = color;
         vh.AddVert(vert);
+        vertices.Add(position);
+    }
+
+    private void AddTriangle(VertexHelper vh, int a, int b, int c)
+    {
+        vh.AddTriangle(a, b, c);
+        indicies.Add((a, b, c));
+    }
+
+    private void OnDrawGizmos()
+    {
+        for (var index = 0; index < vertices.Count; index++)
+        {
+            Handles.Label(vertices[index], index.ToString());
+        }
+        foreach (var index in indicies)
+        {
+            var vertex = new Span<Vector3>( new Vector3[] { vertices[index.Item1], vertices[index.Item2], vertices[index.Item3] });
+            Gizmos.DrawLineStrip(vertex, true);
+        }
     }
 }
