@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,6 +26,7 @@ public class NewLineGraph : MaskableGraphic
         var stepX = length / (values.Length - 1f);
         var halfWidth = thicness * 0.5f;
         var prev = Vector2.zero;
+        var prevBebel = false;
         vertices.Clear();
         indicies.Clear();
         var vertexIndex = 0;
@@ -32,64 +34,84 @@ public class NewLineGraph : MaskableGraphic
         {
             var current = new Vector2(stepX * index, values[index]);
             var isBebel = false;
+            var next = Vector2.zero;
+            var top = Vector2.zero;
+            var bottom = Vector2.zero;
             if (index == 0)
             {
-                var next = new Vector2(stepX * (index + 1), values[index + 1]);
+                next = new Vector2(stepX * (index + 1), values[index + 1]);
                 var direction = (next - current).normalized;
-                var (top, bottom) = GetEndCap(current, direction, halfWidth);
+                (top, bottom) = GetEndCap(current, direction, halfWidth);
                 AddVertex(vh, top);
                 AddVertex(vh, bottom);
                 vertices.Add(top);
                 vertices.Add(bottom);
+                prev = current;
+                continue;
             }
-            else if (index == values.Length - 1)
+            if (index == values.Length - 1)
             {
                 var direction = (current - prev).normalized;
-                var (top, bottom) = GetEndCap(current, direction, halfWidth);
-                if (direction.y < 0)
-                {
-                    AddVertex(vh, bottom);
-                    AddVertex(vh, top);
-                    vertices.Add(bottom);
-                    vertices.Add(top);
-                }
-                else
-                {
-                    AddVertex(vh, top);
-                    AddVertex(vh, bottom);
-                    vertices.Add(top);
-                    vertices.Add(bottom);
-                }
+                (top, bottom) = GetEndCap(current, direction, halfWidth);
+                AddVertex(vh, top);
+                AddVertex(vh, bottom);
+                vertices.Add(top);
+                vertices.Add(bottom);
+                vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
+
+                indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
+                continue;
+            }
+
+            next = new Vector2(stepX * (index + 1), values[index + 1]);
+            Vector2? tmp;
+            (top, bottom, tmp) = GetJoinVertices(prev, current, next, halfWidth);
+            AddVertex(vh, top);
+            AddVertex(vh, bottom);
+            vertices.Add(top);
+            vertices.Add(bottom);
+
+            if (tmp.HasValue)
+            {
+                AddVertex(vh, tmp.Value);
+                vertices.Add(tmp.Value);
+                isBebel = true;
+            }
+
+            if (isBebel)
+            {
+                vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
+                vh.AddTriangle(vertexIndex + 2, vertexIndex + 4, vertexIndex + 3);
+
+                indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
+                indicies.Add((vertexIndex + 2, vertexIndex + 4, vertexIndex + 3));
+                vertexIndex += 3;
             }
             else
             {
-                var next = new Vector2(stepX * (index + 1), values[index + 1]);
-                var (top, bottom, tmp) = GetJoinVertices(prev, current, next, halfWidth);
-                AddVertex(vh, top);
-                vertices.Add(top);
-                AddVertex(vh, bottom);
-                vertices.Add(bottom);
-
-                if (tmp.HasValue)
+                var direction = (current - prev).normalized;
+                if (direction.y < 0)
                 {
-                    AddVertex(vh, tmp.Value);
-                    vertices.Add(tmp.Value);
-                    isBebel = true;
-                }
+                    if (prevBebel)
+                    {
+                        vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                        vh.AddTriangle(vertexIndex + 3, vertexIndex, vertexIndex + 2);
 
-            }
-            if (index > 0)
-            {
-                if (isBebel)
-                {
-                    vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 4, vertexIndex + 3);
+                        indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                        indicies.Add((vertexIndex + 3, vertexIndex, vertexIndex + 2));
+                    }
+                    else
+                    {
+                        vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                        vh.AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
 
-                    indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
-                    indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
-                    indicies.Add((vertexIndex + 2, vertexIndex + 4, vertexIndex + 3));
-                    vertexIndex += 3;
+                        indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
+                        indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
+                    }
                 }
                 else
                 {
@@ -98,9 +120,10 @@ public class NewLineGraph : MaskableGraphic
 
                     indicies.Add((vertexIndex, vertexIndex + 1, vertexIndex + 2));
                     indicies.Add((vertexIndex + 2, vertexIndex + 1, vertexIndex + 3));
-                    vertexIndex += 2;
                 }
+                vertexIndex += 2;
             }
+            prevBebel = isBebel;
             prev = current;
         }
     }
@@ -156,6 +179,10 @@ public class NewLineGraph : MaskableGraphic
 
     private void OnDrawGizmos()
     {
+        for (var index = 0; index < vertices.Count; index++)
+        {
+            Handles.Label(vertices[index], index.ToString());
+        }
         foreach (var index in indicies)
         {
             var vertex = new Span<Vector3>( new Vector3[] { vertices[index.Item1], vertices[index.Item2], vertices[index.Item3] });
