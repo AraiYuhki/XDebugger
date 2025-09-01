@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.Common;
 
 [RequireComponent(typeof(CanvasRenderer))]
 public class LineGraph : MaskableGraphic
@@ -18,37 +19,34 @@ public class LineGraph : MaskableGraphic
     [SerializeField]
     private float max = 100f;
 
-    [SerializeField]
-    private List<float> values = new List<float> { 0f, 200f, 0f };
-
-
-#if UNITY_EDITOR
-    [SerializeField]
-    private bool isDrawGizmos = false;
-
-    private List<Vector3> vertices = new List<Vector3>();
-    private List<(int, int, int)> indicies = new();
-#endif
+    private CircularBuffer<double> values;
 
     private float halfWidth => thicness * 0.5f;
+
+    public void Initialize(int bufferSize)
+    {
+        values = new CircularBuffer<double>(bufferSize);
+    }
 
     /// <summary>
     /// 値を直接設定する
     /// </summary>
     /// <param name="newValues"></param>
-    public void SetValues(IEnumerable<float> newValues)
+    public void SetValues(CircularBuffer<double> newValues)
     {
-        values = newValues.ToList();
+        values = newValues;
         SetVerticesDirty();
     }
+
+    public CircularBuffer<double> GetValues() => values;
 
     /// <summary>
     /// 値を追加する
     /// </summary>
     /// <param name="value"></param>
-    public void AddValue(float value)
+    public void AddValue(double value)
     {
-        values.Add(value);
+        values.PushBack(value);
         SetVerticesDirty();
     }
 
@@ -72,7 +70,7 @@ public class LineGraph : MaskableGraphic
         for (var index = 0; index < values.Count; index++)
         {
             var percent = (values[index] - min) / height;
-            result[index] = Mathf.Lerp(rectTransform.rect.yMin + halfWidth, rectTransform.rect.yMax - halfWidth, percent);
+            result[index] = Mathf.Lerp(rectTransform.rect.yMin + halfWidth, rectTransform.rect.yMax - halfWidth, (float)percent);
         }
         return result;
     }
@@ -85,7 +83,7 @@ public class LineGraph : MaskableGraphic
     {
         vh.Clear();
 
-        if (this.values.Count <= 1)
+        if (this.values == null || this.values.Count <= 1)
             return;
 
         var values = NormzliedValues();
@@ -95,11 +93,6 @@ public class LineGraph : MaskableGraphic
         var prev = Vector2.zero;
         var prevBebel = false;
 
-#if UNITY_EDITOR
-        vertices.Clear();
-        indicies.Clear();
-#endif
-
         var vertexIndex = 0;
         for (var index = 0; index < values.Length; index++)
         {
@@ -107,7 +100,7 @@ public class LineGraph : MaskableGraphic
             var isBebel = false;
             if (index == 0)
             {
-                ProcessStart(vh, stepX, current);
+                ProcessStart(vh, stepX, current, values[1]);
                 prev = current;
                 continue;
             }
@@ -143,9 +136,9 @@ public class LineGraph : MaskableGraphic
     /// <param name="vh"></param>
     /// <param name="stepX"></param>
     /// <param name="current"></param>
-    private void ProcessStart(VertexHelper vh, float stepX, Vector2 current)
+    private void ProcessStart(VertexHelper vh, float stepX, Vector2 current, float nextHeight)
     {
-        var next = new Vector2(stepX, values[1]);
+        var next = new Vector2(stepX, nextHeight);
         var direction = (next - current).normalized;
         var (top, bottom) = GetEndCap(current, direction);
         AddVertices(vh, top, bottom);
@@ -244,9 +237,6 @@ public class LineGraph : MaskableGraphic
         vert.position = new Vector3(position.x, position.y);
         vert.color = color;
         vh.AddVert(vert);
-#if UNITY_EDITOR
-        vertices.Add(new Vector3(position.x, position.y) + transform.position);
-#endif
     }
 
     /// <summary>
@@ -288,32 +278,5 @@ public class LineGraph : MaskableGraphic
     private void AddTriangle(VertexHelper vh, int a, int b, int c)
     {
         vh.AddTriangle(a, b, c);
-#if UNITY_EDITOR
-        indicies.Add((a, b, c));
-#endif
     }
-
-#if UNITY_EDITOR
-    /// <summary>
-    /// ギズモ描画処理
-    /// </summary>
-    private void OnDrawGizmos()
-    {
-        if (!isDrawGizmos)
-            return;
-
-        // 頂点位置に頂点の番号を表示する
-        for (var index = 0; index < vertices.Count; index++)
-        {
-            Handles.Label(vertices[index], index.ToString());
-        }
-
-        // 描画している面のワイヤーフレームを描画する
-        foreach (var index in indicies)
-        {
-            var vertex = new Span<Vector3>( new Vector3[] { vertices[index.Item1], vertices[index.Item2], vertices[index.Item3] });
-            Gizmos.DrawLineStrip(vertex, true);
-        }
-    }
-#endif
 }

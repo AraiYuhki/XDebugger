@@ -1,28 +1,14 @@
-using Xeon.Common;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
-using System.Linq;
 
 namespace Xeon.XDebugger.Profiler
 {
     public class ProfilerController : MonoBehaviour
     {
-        private struct FrameData
-        {
-            public double FrameTime;
-            public double OtherTime;
-            public double RenderTime;
-            public double UpdateTime;
-        }
-        
         private const int FrameBufferSize = 400;
-        
-        private float averageFrameTime;
-        private float lastFrameTime;
-        private CircularBuffer<FrameData> frameBuffer = new(FrameBufferSize);
 
         private double updateDuration;
         private double renderStartTime;
@@ -32,35 +18,41 @@ namespace Xeon.XDebugger.Profiler
         private Coroutine endOfFrameCoroutineHandler = null;
 
         [SerializeField]
-        private LineGraph lineGraph;
+        private LineGraph frameTimeGraph;
+        [SerializeField]
+        private LineGraph updateTimeGraph;
+        [SerializeField]
+        private LineGraph renderTimeGraph;
+        [SerializeField]
+        private LineGraph otherTimeGraph;
 
         private void Awake()
         {
             RenderPipelineManager.beginContextRendering += RenderPipelineOnBeginFrameRendering;
             endOfFrameCoroutineHandler = StartCoroutine(EndOfFrameCoroutine());
+
+            frameTimeGraph.Initialize(FrameBufferSize);
+            updateTimeGraph.Initialize(FrameBufferSize);
+            renderTimeGraph.Initialize(FrameBufferSize);
+            otherTimeGraph.Initialize(FrameBufferSize);
         }
 
         private void Update()
         {
             EndFrame();
 
-            if (frameBuffer.Count > 0)
-            {
-                var frame = frameBuffer.Back();
-                frame.FrameTime = Time.unscaledDeltaTime;
-                frameBuffer[frameBuffer.Count - 1] = frame;
-            }
+            frameTimeGraph.AddValue(Time.unscaledDeltaTime);
 
-            lastFrameTime = Time.unscaledDeltaTime;
-            var frameCount = Mathf.Min(20, frameBuffer.Count);
+            var values = frameTimeGraph.GetValues();
+            var frameCount = Mathf.Min(20, values.Count);
 
             var f = 0d;
+            var count = values.Count - 1;
             for (var i = 0; i < frameCount; i++)
             {
-                f += frameBuffer[frameBuffer.Count - 1 - i].FrameTime;
+                f += values[count - i];
             }
 
-            averageFrameTime = (float)f / frameCount;
             stopwatch.Start();
         }
 
@@ -81,13 +73,9 @@ namespace Xeon.XDebugger.Profiler
 
         private void PushFrameData(double totalTime, double updateTime, double renderTime)
         {
-            frameBuffer.PushBack(new()
-            {
-                OtherTime = totalTime - updateTime - renderTime,
-                UpdateTime = updateTime,
-                RenderTime = renderTime
-            });
-            lineGraph.SetValues(frameBuffer.Select(data => (float)data.UpdateTime));
+            updateTimeGraph.AddValue(updateTime);
+            renderTimeGraph.AddValue(renderTime);
+            otherTimeGraph.AddValue(totalTime - updateTime - renderTime);
         }
 
         private void EndFrame()

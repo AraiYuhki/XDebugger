@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Xeon.Common
 {
@@ -39,7 +40,7 @@ namespace Xeon.Common
             }
         }
 
-        public CircularBuffer(int capacity, T[] items = null)
+        public CircularBuffer(int capacity, T[] items)
         {
             if (capacity < 1)
                 throw new ArgumentException("Circular buffer cannot have negative or zero capacity,", nameof(capacity));
@@ -50,6 +51,16 @@ namespace Xeon.Common
             Array.Copy(items, buffer, items.Length);
             
             Count = items.Length;
+        }
+
+        public CircularBuffer(int capacity)
+        {
+            if (capacity < 1)
+                throw new ArgumentException("Circular buffer cannot have negative or zero capacity,", nameof(capacity));
+            buffer = new T[capacity];
+            for (var index = 0; index < capacity; index++)
+                buffer[index] = default;
+            Count = capacity;
         }
 
         public void Clear()
