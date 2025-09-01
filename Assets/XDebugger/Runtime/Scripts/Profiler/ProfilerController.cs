@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System.Linq;
 
 namespace Xeon.XDebugger.Profiler
 {
@@ -29,6 +30,9 @@ namespace Xeon.XDebugger.Profiler
         private readonly Stopwatch stopwatch = new();
 
         private Coroutine endOfFrameCoroutineHandler = null;
+
+        [SerializeField]
+        private LineGraph lineGraph;
 
         private void Awake()
         {
@@ -83,12 +87,14 @@ namespace Xeon.XDebugger.Profiler
                 UpdateTime = updateTime,
                 RenderTime = renderTime
             });
+            lineGraph.SetValues(frameBuffer.Select(data => (float)data.UpdateTime));
         }
 
         private void EndFrame()
         {
             if (stopwatch.IsRunning)
             {
+                PushFrameData(stopwatch.Elapsed.TotalSeconds, updateDuration, renderDuration);
                 stopwatch.Reset();
                 stopwatch.Start();
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,7 +19,7 @@ public class LineGraph : MaskableGraphic
     private float max = 100f;
 
     [SerializeField]
-    private float[] values = new float[3] { 0f, 200f, 0f };
+    private List<float> values = new List<float> { 0f, 200f, 0f };
 
 
 #if UNITY_EDITOR
@@ -32,14 +33,43 @@ public class LineGraph : MaskableGraphic
     private float halfWidth => thicness * 0.5f;
 
     /// <summary>
+    /// 値を直接設定する
+    /// </summary>
+    /// <param name="newValues"></param>
+    public void SetValues(IEnumerable<float> newValues)
+    {
+        values = newValues.ToList();
+        SetVerticesDirty();
+    }
+
+    /// <summary>
+    /// 値を追加する
+    /// </summary>
+    /// <param name="value"></param>
+    public void AddValue(float value)
+    {
+        values.Add(value);
+        SetVerticesDirty();
+    }
+
+    /// <summary>
+    /// 値をクリアする
+    /// </summary>
+    public void ClearVertices()
+    {
+        values.Clear();
+        SetVerticesDirty();
+    }
+
+    /// <summary>
     /// rectTransform.rectに収まるようにデータを補正する
     /// </summary>
     /// <returns></returns>
     private float[] NormzliedValues()
     {
-        var result = new float[values.Length];
+        var result = new float[values.Count];
         var height = max - min;
-        for (var index = 0; index < values.Length; index++)
+        for (var index = 0; index < values.Count; index++)
         {
             var percent = (values[index] - min) / height;
             result[index] = Mathf.Lerp(rectTransform.rect.yMin + halfWidth, rectTransform.rect.yMax - halfWidth, percent);
@@ -54,7 +84,10 @@ public class LineGraph : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
-        
+
+        if (this.values.Count <= 1)
+            return;
+
         var values = NormzliedValues();
         var stepX = rectTransform.rect.width / (values.Length - 1f);
         var offsetX = rectTransform.rect.xMin;
@@ -129,35 +162,6 @@ public class LineGraph : MaskableGraphic
         var direction = (current - prev).normalized;
         var (top, bottom) = GetEndCap(current, direction);
         AddVertices(vh, top, bottom);
-    }
-
-    /// <summary>
-    /// 面を追加する
-    /// </summary>
-    /// <param name="vh"></param>
-    /// <param name="index"></param>
-    /// <param name="direction"></param>
-    /// <param name="isBebel"></param>
-    /// <param name="prevIsBebel"></param>
-    private void AddTriangles(VertexHelper vh, int index, Vector2 direction, bool isBebel, bool prevIsBebel)
-    {
-        if (isBebel)
-        {
-            AddTriangle(vh, index, index + 1, index + 2);
-            AddTriangle(vh, index + 2, index + 1, index + 3);
-            AddTriangle(vh, index + 2, index + 4, index + 3);
-            return;
-        }
-
-        if (direction.y >= 0 || !prevIsBebel)
-        {
-            AddTriangle(vh, index, index + 1, index + 2);
-            AddTriangle(vh, index + 2, index + 1, index + 3);
-            return;
-        }
-
-        AddTriangle(vh, index, index + 1, index + 2);
-        AddTriangle(vh, index + 3, index, index + 2);
     }
 
     /// <summary>
@@ -243,6 +247,35 @@ public class LineGraph : MaskableGraphic
 #if UNITY_EDITOR
         vertices.Add(new Vector3(position.x, position.y) + transform.position);
 #endif
+    }
+
+    /// <summary>
+    /// 面を追加する
+    /// </summary>
+    /// <param name="vh"></param>
+    /// <param name="index"></param>
+    /// <param name="direction"></param>
+    /// <param name="isBebel"></param>
+    /// <param name="prevIsBebel"></param>
+    private void AddTriangles(VertexHelper vh, int index, Vector2 direction, bool isBebel, bool prevIsBebel)
+    {
+        if (isBebel)
+        {
+            AddTriangle(vh, index, index + 1, index + 2);
+            AddTriangle(vh, index + 2, index + 1, index + 3);
+            AddTriangle(vh, index + 2, index + 4, index + 3);
+            return;
+        }
+
+        if (direction.y >= 0 || !prevIsBebel)
+        {
+            AddTriangle(vh, index, index + 1, index + 2);
+            AddTriangle(vh, index + 2, index + 1, index + 3);
+            return;
+        }
+
+        AddTriangle(vh, index, index + 1, index + 2);
+        AddTriangle(vh, index + 3, index, index + 2);
     }
 
     /// <summary>
