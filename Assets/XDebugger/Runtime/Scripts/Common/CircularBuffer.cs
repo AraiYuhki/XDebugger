@@ -1,23 +1,22 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Xeon.Common
 {
     public class CircularBuffer<T> : IEnumerable<T>, IReadOnlyList<T>
     {
-        private T[] buffer;
+        protected T[] buffer;
         
-        private int start;
-        private int end;
+        protected int start;
+        protected int end;
 
         public int Capacity => buffer.Length;
         public bool IsFull => Count == Capacity;
         public bool IsEmpty => Count == 0;
-        public int Count { get; private set; }
+        public int Count { get; protected set; }
 
-        public T this[int index]
+        public virtual T this[int index]
         {
             get
             {
@@ -63,7 +62,7 @@ namespace Xeon.Common
             Count = capacity;
         }
 
-        public void Clear()
+        public virtual void Clear()
         {
             Count = start = end = 0;
         }
@@ -81,7 +80,7 @@ namespace Xeon.Common
             return buffer[actualIndex];
         }
 
-        public void PushBack(T item)
+        public virtual void PushBack(T item)
         {
             buffer[end] = item;
             Increment(ref end);
@@ -94,7 +93,7 @@ namespace Xeon.Common
             Count++;
         }
 
-        public void PushFront(T item)
+        public virtual void PushFront(T item)
         {
             Decrement(ref start);
             buffer[start] = item;
@@ -108,7 +107,7 @@ namespace Xeon.Common
             Count++;
         }
 
-        public void PopBack()
+        public virtual void PopBack()
         {
             ThrowIfEmpty("Cannot take elements from an empty buffer.");
             Decrement(ref end);
@@ -116,7 +115,7 @@ namespace Xeon.Common
             Count--;
         }
 
-        public void PopFront()
+        public virtual void PopFront()
         {
             ThrowIfEmpty("Cannot taek elements from an empty buffer.");
             buffer[start] = default;

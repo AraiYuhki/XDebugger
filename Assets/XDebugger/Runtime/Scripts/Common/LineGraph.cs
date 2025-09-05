@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using Xeon.Common;
 
@@ -19,35 +15,50 @@ public class LineGraph : MaskableGraphic
     [SerializeField]
     private float max = 100f;
 
-    private CircularBuffer<double> values;
+    private DoubleCircularBuffer values;
+
+    public double MaxValue => values.Max;
 
     private float halfWidth => thicness * 0.5f;
 
     public void Initialize(int bufferSize)
     {
-        values = new CircularBuffer<double>(bufferSize);
+        values = new DoubleCircularBuffer(bufferSize);
+    }
+
+    public void SetMax(float max)
+    {
+        this.max = max;
+        SetVerticesDirty();
+    }
+
+    public void SetMin(float min)
+    {
+        this.min = min;
+        SetVerticesDirty();
     }
 
     /// <summary>
     /// 値を直接設定する
     /// </summary>
     /// <param name="newValues"></param>
-    public void SetValues(CircularBuffer<double> newValues)
+    public void SetValues(DoubleCircularBuffer newValues)
     {
         values = newValues;
         SetVerticesDirty();
     }
 
-    public CircularBuffer<double> GetValues() => values;
+    public DoubleCircularBuffer GetValues() => values;
 
     /// <summary>
     /// 値を追加する
     /// </summary>
     /// <param name="value"></param>
-    public void AddValue(double value)
+    public void AddValue(double value, bool updateVertices = true)
     {
         values.PushBack(value);
-        SetVerticesDirty();
+        if (updateVertices)
+            SetVerticesDirty();
     }
 
     /// <summary>
