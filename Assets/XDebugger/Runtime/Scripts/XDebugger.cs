@@ -64,6 +64,8 @@ namespace Xeon.XDebugger
             mainMenu.SetActive(false);
             isShow = false;
 
+            Application.targetFrameRate = 60;
+
             DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
         }
 

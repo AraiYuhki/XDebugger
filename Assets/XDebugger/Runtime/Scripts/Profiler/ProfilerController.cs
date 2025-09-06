@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Xeon.Common;
@@ -10,14 +11,49 @@ namespace Xeon.XDebugger.Profiler
 {
     public class ProfilerController : MonoBehaviour
     {
-        private const int FrameBufferSize = 400;
+        private const int FrameBufferSize = 100;
+
+        private struct FrameData : IStackedBarItemData
+        {
+            public float UpdateTime;
+            public float RenderTime;
+            public float OtherTime;
+
+            public int Count => 3;
+            public float this[int index]
+            {
+                get
+                {
+                    return index switch
+                    {
+                        0 => UpdateTime,
+                        1 => RenderTime,
+                        2 => OtherTime,
+                        _ => throw new IndexOutOfRangeException(),
+                    };
+                }
+            }
+
+            public FrameData(double totalTime, double updateTime, double renderTime)
+            {
+                UpdateTime = (float)totalTime;
+                RenderTime = UpdateTime - (float)updateTime;
+                OtherTime = RenderTime - (float)renderTime;
+
+            }
+
+            public IEnumerator<float> GetEnumerator()
+            {
+                yield return UpdateTime;
+                yield return RenderTime;
+                yield return OtherTime;
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
 
         [SerializeField]
-        private LineGraph updateTimeGraph;
-        [SerializeField]
-        private LineGraph renderTimeGraph;
-        [SerializeField]
-        private LineGraph otherTimeGraph;
+        private StackedBarChart graph;
 
         private float fps = 0f;
         private double updateDuration;
@@ -28,6 +64,7 @@ namespace Xeon.XDebugger.Profiler
 
         private Coroutine endOfFrameCoroutineHandler = null;
 
+        private DoubleCircularBuffer totalTimeBuffer = new(FrameBufferSize);
         private CircularBuffer<float> frameBuffer = new(FrameBufferSize);
 
         private void Awake()
@@ -35,9 +72,8 @@ namespace Xeon.XDebugger.Profiler
             RenderPipelineManager.beginContextRendering += RenderPipelineOnBeginFrameRendering;
             endOfFrameCoroutineHandler = StartCoroutine(EndOfFrameCoroutine());
 
-            updateTimeGraph.Initialize(FrameBufferSize);
-            renderTimeGraph.Initialize(FrameBufferSize);
-            otherTimeGraph.Initialize(FrameBufferSize);
+            var buffer = new CircularBuffer<IStackedBarItemData>(FrameBufferSize, Enumerable.Repeat<IStackedBarItemData>(new FrameData(0, 0, 0), FrameBufferSize).ToArray());
+            graph.Initialize(buffer, new Color[] {Color.cyan, Color.green, Color.magenta }, true);
         }
 
         private void Update()
@@ -66,15 +102,10 @@ namespace Xeon.XDebugger.Profiler
 
         private void PushFrameData(double totalTime, double updateTime, double renderTime)
         {
-            updateTimeGraph.AddValue(updateTime, false);
-            renderTimeGraph.AddValue(renderTime, false);
-            otherTimeGraph.AddValue(totalTime - updateTime - renderTime, false);
-
-            var max = (float)Math.Max(updateTimeGraph.MaxValue, renderTimeGraph.MaxValue);
-            max = (float)Math.Max(max, otherTimeGraph.MaxValue) * 1.2f;
-            updateTimeGraph.SetMax(max);
-            renderTimeGraph.SetMax(max);
-            otherTimeGraph.SetMax(max);
+            totalTimeBuffer.PushBack(totalTime);
+            graph.SetMax((float)totalTimeBuffer.Max * 1.2f);
+            graph.AddValue(new FrameData(totalTime, updateTime, renderTime));
+            
         }
 
         private void EndFrame()
