@@ -34,11 +34,11 @@ namespace Xeon.XDebugger.Profiler
                 }
             }
 
-            public FrameData(double totalTime, double updateTime, double renderTime)
+            public FrameData(double updateTime, double renderTime, double otherTime)
             {
-                UpdateTime = (float)totalTime;
-                RenderTime = UpdateTime - (float)updateTime;
-                OtherTime = RenderTime - (float)renderTime;
+                UpdateTime = (float)updateTime;
+                RenderTime = (float)renderTime;
+                OtherTime = (float)otherTime;
 
             }
 
@@ -53,7 +53,7 @@ namespace Xeon.XDebugger.Profiler
         }
 
         [SerializeField]
-        private StackedBarChart graph;
+        private NewStackedBarChart graph;
 
         private float fps = 0f;
         private double updateDuration;
@@ -73,7 +73,7 @@ namespace Xeon.XDebugger.Profiler
             endOfFrameCoroutineHandler = StartCoroutine(EndOfFrameCoroutine());
 
             var buffer = new CircularBuffer<IStackedBarItemData>(FrameBufferSize, Enumerable.Repeat<IStackedBarItemData>(new FrameData(0, 0, 0), FrameBufferSize).ToArray());
-            graph.Initialize(buffer, new Color[] {Color.cyan, Color.green, Color.magenta }, true);
+            graph.Initialize(buffer, new Color[] {Color.cyan, Color.green, Color.magenta });
         }
 
         private void Update()
@@ -104,7 +104,7 @@ namespace Xeon.XDebugger.Profiler
         {
             totalTimeBuffer.PushBack(totalTime);
             graph.SetMax((float)totalTimeBuffer.Max * 1.2f);
-            graph.AddValue(new FrameData(totalTime, updateTime, renderTime));
+            graph.AddValue(new FrameData(updateTime, renderTime, totalTime - updateTime - renderTime));
             
         }
 
