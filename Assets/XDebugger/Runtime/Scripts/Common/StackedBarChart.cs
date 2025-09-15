@@ -1,117 +1,175 @@
-﻿using System;
+using NUnit.Framework;
+using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Xeon.Common
 {
-    public class StackedBarChart : MonoBehaviour
+    [RequireComponent(typeof(CanvasRenderer))]
+
+    public class StackedBarChart : MaskableGraphic
     {
         [SerializeField]
-        private StackedBarChartItem itemTemplate;
+        private RectOffset padding = new RectOffset();
         [SerializeField]
-        private List<StackedBarChartItem> items = new();
-        [SerializeField, Tooltip("バーの色の設定。インデックスが大きいほど手前のバーの色")]
-        private Color[] colors;
-
+        private float min = 0f;
         [SerializeField]
         private float max = 100f;
 
+        [SerializeField]
+        private Color[] colors = new Color[0];
+
         private CircularBuffer<IStackedBarItemData> values;
 
-        public void Initialize(int capacity)
+        private float width => rectTransform.rect.width - padding.horizontal;
+        private float height => rectTransform.rect.height - padding.vertical;
+
+        public void Initialize(int bufferSize)
         {
-            values = new(capacity);
-            ReCreateItems(capacity, true);
+            values = new CircularBuffer<IStackedBarItemData>(bufferSize);
         }
 
-        public void Initialize(CircularBuffer<IStackedBarItemData> values, IEnumerable<Color> colors, bool isInitializeItems = false)
+        public void Initialize(CircularBuffer<IStackedBarItemData> buffer, Color[] colors)
         {
-            this.values = values;
-            if (colors != null)
-                this.colors = colors.ToArray();
-            ReCreateItems(values.Count, isInitializeItems);
-        }
-
-        public void SetColors(params Color[] colors)
-        {
+            values = buffer;
             this.colors = colors;
-            if (!items.Any())
-                return;
-            foreach (var item in items)
-                item.SetColors(colors);
+            SetVerticesDirty();
         }
 
-        public void SetMax(float max, bool isUpdate = false)
+        public void SetMax(float max)
         {
             this.max = max;
-            if (isUpdate)
-                UpdateValues();
+            SetVerticesDirty();
         }
 
-        public void AddValue(IStackedBarItemData item)
+        public void SetMin(float min)
         {
-            values.PushBack(item);
-            UpdateValues();
+            this.min = min;
+            SetVerticesDirty();
         }
 
         public void SetValues(CircularBuffer<IStackedBarItemData> values)
         {
-            if (values.Count != this.values.Count)
-            {
-                Initialize(values, null, true);
-                return;
-            }
             this.values = values;
-            UpdateValues();
+            SetVerticesDirty();
         }
 
-        public void ReCreateItems(int count, bool isInitializeItems = false)
+        public void AddValue(IStackedBarItemData item, bool updateVertices = true)
         {
-            foreach (var item in items)
-                Destroy(item.gameObject);
-            items.Clear();
-            for (var index = 0; index < count; index++)
+            values.PushBack(item);
+            if (updateVertices)
+                SetVerticesDirty();
+        }
+
+        public void ClearVertices()
+        {
+            values.Clear();
+            SetVerticesDirty();
+        }
+
+        protected override void OnPopulateMesh(VertexHelper vh)
+        {
+            vh.Clear();
+            if (values == null || values.Count <= 0) return;
+            if (values[0].Count != colors.Length)
+                throw new InvalidOperationException("Colors length must match category count.");
+            var stepX = width / values.Count;
+            var offsetX = rectTransform.rect.xMin + padding.left;
+            var vertexIndex = 0;
+
+            var vertices = new List<UIVertex>();
+            var indecies = new List<int>();
+            for (var index = 0; index < values.Count; index++)
             {
-                var item = Instantiate(itemTemplate, transform);
-                item.gameObject.SetActive(true);
-                if (isInitializeItems)
+                var item = values[index];
+                var left = offsetX + stepX * index;
+                var right = offsetX + stepX * (index + 1);
+                var value = 0f;
+                var positionY = ValueToHeight(value);
+                for(var dataIndex = 0; dataIndex < item.Count; dataIndex++)
                 {
-                    item.ReCreateBars(values[index].Count);
-                    item.SetValues(NormalizeValues(values[index]));
+                    var color = colors[dataIndex] * this.color;
+                    vertices.Add(CreateVertex(new Vector2(left, positionY), color));
+                    vertices.Add(CreateVertex(new Vector2(right, positionY), color));
+
+                    value += item[dataIndex];
+                    positionY = ValueToHeight(value);
+                    vertices.Add(CreateVertex(new Vector2(left, positionY), color));
+                    vertices.Add(CreateVertex(new Vector2(right, positionY), color));
+
+                    indecies.Add(vertexIndex);
+                    indecies.Add(vertexIndex + 1);
+                    indecies.Add(vertexIndex + 2);
+                    indecies.Add(vertexIndex + 1);
+                    indecies.Add(vertexIndex + 2);
+                    indecies.Add(vertexIndex + 3);
+                    vertexIndex += 4;
                 }
-                if (colors != null)
-                    item.SetColors(colors);
-                items.Add(item);
+                vh.AddUIVertexStream(vertices, indecies);
             }
         }
 
-        private float[] NormalizeValues(IStackedBarItemData values)
+        private float ValueToHeight(float value)
         {
-            var result = new float[values.Count];
-            for (var index = 0; index < values.Count; index++)
-            {
-                result[index] = values[index] / max;
-            }
-
-            return result;
+            var normzliedValue = (value - min) / (max - min);
+            return Mathf.Lerp(rectTransform.rect.yMin + padding.bottom, rectTransform.rect.yMax - padding.top, normzliedValue);
         }
 
-        private void UpdateValues()
+        private UIVertex CreateVertex(Vector2 position, Color color)
         {
-            for (var index = 0; index < values.Count; index++)
-            {
-                items[index].SetValues(NormalizeValues(values[index]));
-            }
+            var vert = UIVertex.simpleVert;
+            vert.position = new Vector3(position.x, position.y);
+            vert.color = color;
+            return vert;
         }
 
 #if UNITY_EDITOR
-        private void OnValidate()
+        [Serializable]
+        public class TestData : IStackedBarItemData
         {
+            [SerializeField]
+            private float item1;
+            [SerializeField]
+            private float item2;
+            [SerializeField]
+            private float item3;
+
+            public int Count => 3;
+
+            public float this[int index]
+            {
+                get
+                {
+                    return index switch
+                    {
+                        0 => item1,
+                        1 => item2,
+                        2 => item3,
+                        _ => throw new IndexOutOfRangeException(),
+                    };
+                }
+            }
+
+            public IEnumerator<float> GetEnumerator()
+            {
+                yield return item1;
+                yield return item2;
+                yield return item3;
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        [SerializeField]
+        private List<TestData> testData = new();
+
+        protected override void OnValidate()
+        {
+            base.OnValidate();
             if (Application.isPlaying) return;
-            if (colors == null || colors.Length == 0) return;
-            foreach (var item in items)
-                item.SetColors(colors);
+            values = new CircularBuffer<IStackedBarItemData>(testData.Count, testData.ToArray());
         }
 #endif
     }
