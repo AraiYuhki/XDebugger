@@ -14,7 +14,7 @@ namespace Xeon.XDebugger.Profiler
 {
     public class ProfilerController : PageControl
     {
-        private const int FrameBufferSize = 400;
+        private const int FrameBufferSize = 100;
 
         private struct FrameData : IStackedBarItemData
         {
@@ -95,7 +95,6 @@ namespace Xeon.XDebugger.Profiler
         private Coroutine endOfFrameCoroutineHandler = null;
 
         private DoubleCircularBuffer totalTimeBuffer = new(FrameBufferSize);
-        private CircularBuffer<float> frameBuffer = new(FrameBufferSize);
 
         private void Awake()
         {
@@ -108,6 +107,8 @@ namespace Xeon.XDebugger.Profiler
 
             memoryGauge.minValue = 0f;
             monoGauge.minValue = 0f;
+
+            graph.SetMarkers(new List<BarGraphMarkerData>() { new ("15FPS", 0.0667f), new ("30FPS", 0.0333f), new ("60FPS", 0.0167f), new ("90FPS", 0.0111f), new ("120FPS", 0.0083f) });
         }
 
         private void Update()

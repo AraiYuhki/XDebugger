@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,6 +21,15 @@ namespace Xeon.Common
 
         [SerializeField]
         private Color[] colors = new Color[0];
+
+        [SerializeField]
+        private BarGraphMarker markerPrefab;
+
+        [SerializeField, HideInInspector]
+        private List<BarGraphMarker> markers = new ();
+
+        [SerializeField]
+        private List<BarGraphMarkerData> markerDataList = new();
 
         private CircularBuffer<IStackedBarItemData> values;
 
@@ -42,12 +52,14 @@ namespace Xeon.Common
         {
             this.max = max;
             SetVerticesDirty();
+            UpdateMarkers();
         }
 
         public void SetMin(float min)
         {
             this.min = min;
             SetVerticesDirty();
+            UpdateMarkers();
         }
 
         public void SetValues(CircularBuffer<IStackedBarItemData> values)
@@ -67,6 +79,54 @@ namespace Xeon.Common
         {
             values.Clear();
             SetVerticesDirty();
+        }
+
+        public void SetMarkers(List<BarGraphMarkerData> newData)
+        {
+            markerDataList = newData;
+            RefreshMarkers();
+        }
+
+        public void AddMarker(string label, float value)
+        {
+            markerDataList.Add(new BarGraphMarkerData(label, value));
+        }
+
+        public void RemoveMarker(int index)
+        {
+            markerDataList.RemoveAt(index);
+        }
+
+        private void RefreshMarkers()
+        {
+            ClearMarkers();
+            if (markerPrefab == null)
+                return;
+            foreach (var data in markerDataList)
+            {
+                var marker = Instantiate(markerPrefab, transform);
+                marker.Data = data;
+                var position = marker.transform.localPosition;
+                position.y = ValueToHeight(data.Value, out var isInRange);
+                marker.transform.localPosition = position;
+                marker.gameObject.SetActive(isInRange);
+                markers.Add(marker);
+            }
+        }
+
+        private void UpdateMarkers()
+        {
+            foreach (var marker in markers)
+            {
+                if (marker == null)
+                    continue;
+                if (marker.Data == null)
+                    continue;
+                var position = marker.transform.localPosition;
+                position.y = ValueToHeight(marker.Data.Value, out var isInRange);
+                marker.transform.localPosition = position;
+                marker.gameObject.SetActive(isInRange);
+            }
         }
 
         protected override void OnPopulateMesh(VertexHelper vh)
@@ -113,8 +173,15 @@ namespace Xeon.Common
 
         private float ValueToHeight(float value)
         {
-            var normzliedValue = (value - min) / (max - min);
-            return Mathf.Lerp(rectTransform.rect.yMin + padding.bottom, rectTransform.rect.yMax - padding.top, normzliedValue);
+            var normalizedValue = (value - min) / (max - min);
+            return Mathf.Lerp(rectTransform.rect.yMin + padding.bottom, rectTransform.rect.yMax - padding.top, normalizedValue);
+        }
+
+        private float ValueToHeight(float value, out bool isInRange)
+        {
+            var normalizedValue = (value - min) / (max - min);
+            isInRange = 0 <= normalizedValue && normalizedValue <= 1f;
+            return Mathf.Lerp(rectTransform.rect.yMin + padding.bottom, rectTransform.rect.yMax - padding.top, normalizedValue);
         }
 
         private UIVertex CreateVertex(Vector2 position, Color color)
@@ -123,6 +190,20 @@ namespace Xeon.Common
             vert.position = new Vector3(position.x, position.y);
             vert.color = color;
             return vert;
+        }
+
+        public void ClearMarkers()
+        {
+            foreach (var marker in markers)
+            {
+                if (marker == null)
+                    continue;
+                if (Application.isPlaying)
+                    Destroy(marker.gameObject);
+                else
+                    DestroyImmediate(marker.gameObject);
+            }
+            markers.Clear();
         }
 
 #if UNITY_EDITOR
@@ -171,6 +252,20 @@ namespace Xeon.Common
             if (Application.isPlaying) return;
             values = new CircularBuffer<IStackedBarItemData>(testData.Count, testData.ToArray());
         }
+
+        [UnityEditor.CustomEditor(typeof(StackedBarChart))]
+        private class StackedBarChartEditor : UnityEditor.Editor
+        {
+            public override void OnInspectorGUI()
+            {
+                base.OnInspectorGUI();
+                if (GUILayout.Button("ApplyMarkers"))
+                    (target as StackedBarChart).RefreshMarkers();
+                if (GUILayout.Button("ClearMarkers"))
+                    (target as StackedBarChart).ClearMarkers();
+            }
+        }
+
 #endif
     }
 }
