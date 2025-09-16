@@ -14,7 +14,7 @@ namespace Xeon.XDebugger.Profiler
 {
     public class ProfilerController : PageControl
     {
-        private const int FrameBufferSize = 100;
+        private const int FrameBufferSize = 400;
 
         private struct FrameData : IStackedBarItemData
         {
