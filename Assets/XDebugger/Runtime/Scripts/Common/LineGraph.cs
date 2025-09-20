@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Xeon.Common
@@ -22,9 +23,17 @@ namespace Xeon.Common
 
         private float halfWidth => thicness * 0.5f;
 
+        private float[] normalizedValues = new float[0];
+
+        private List<UIVertex> vertices = null;
+        private List<int> indices = null;
+
         public void Initialize(int bufferSize)
         {
             values = new DoubleCircularBuffer(bufferSize);
+            normalizedValues = new float[bufferSize];
+            vertices = new List<UIVertex>(bufferSize * 4);
+            indices = new List<int>(bufferSize * 6);
         }
 
         public void SetMax(float max)
@@ -71,20 +80,19 @@ namespace Xeon.Common
             SetVerticesDirty();
         }
 
-        /// <summary>
-        /// rectTransform.rectに収まるようにデータを補正する
-        /// </summary>
-        /// <returns></returns>
-        private float[] NormzliedValues()
+        private void UpdateNormalizedValues()
         {
-            var result = new float[values.Count];
+            if (normalizedValues == null || normalizedValues.Length != values.Count)
+                normalizedValues = new float[values.Count];
             var height = max - min;
-            for (var index = 0; index < values.Count; index++)
+            var rect = rectTransform.rect;
+            var yMin = rect.yMin + halfWidth;
+            var yMax = rect.yMax - halfWidth;
+            for (int index = 0; index < normalizedValues.Length; index++)
             {
-                var percent = (values[index] - min) / height;
-                result[index] = Mathf.Lerp(rectTransform.rect.yMin + halfWidth, rectTransform.rect.yMax - halfWidth, (float)percent);
+                float percent = (float)((values[index] - min) / height);
+                normalizedValues[index] = Mathf.Lerp(yMin, yMax, percent);
             }
-            return result;
         }
 
         /// <summary>
@@ -98,48 +106,57 @@ namespace Xeon.Common
             if (this.values == null || this.values.Count <= 1)
                 return;
 
-            var values = NormzliedValues();
-            var stepX = rectTransform.rect.width / (values.Length - 1f);
+            UpdateNormalizedValues();
+            vertices.Clear();
+            indices.Clear();
+
+            var stepX = rectTransform.rect.width / (normalizedValues.Length - 1f);
             var offsetX = rectTransform.rect.xMin;
 
             var prev = Vector2.zero;
             var prevBebel = false;
 
+            var vert = UIVertex.simpleVert;
+            vert.color = color;
+
             var vertexIndex = 0;
-            for (var index = 0; index < values.Length; index++)
+            for (var index = 0; index < normalizedValues.Length; index++)
             {
-                var current = new Vector2(stepX * index + offsetX, values[index]);
+                var current = new Vector2(stepX * index + offsetX, normalizedValues[index]);
                 var isBebel = false;
                 if (index == 0)
                 {
-                    ProcessStart(vh, stepX, current, values[1]);
+                    ProcessStart(stepX, current, normalizedValues[1], ref vert);
                     prev = current;
                     continue;
                 }
-                if (index == values.Length - 1)
+                if (index == normalizedValues.Length - 1)
                 {
-                    ProcessEnd(vh, current, prev);
-                    AddTriangle(vh, vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    AddTriangle(vh, vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
+                    ProcessEnd(current, prev, ref vert);
+                    AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                    AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
                     continue;
                 }
 
-                var next = new Vector2(stepX * (index + 1) + offsetX, values[index + 1]);
+                var next = new Vector2(stepX * (index + 1) + offsetX, normalizedValues[index + 1]);
                 var (top, bottom, tmp) = GetJoinVertices(prev, current, next);
-                AddVertices(vh, top, bottom);
+                AddVertices(ref vert, top, bottom);
 
                 if (tmp.HasValue)
                 {
-                    AddVertex(vh, tmp.Value);
+                    AddVertex(tmp.Value, ref vert);
                     isBebel = true;
                 }
 
-                AddTriangles(vh, vertexIndex, (current - prev).normalized, isBebel, prevBebel);
+                var diffY = current.y - prev.y;
+
+                AddTriangles(vertexIndex, diffY, isBebel, prevBebel);
                 vertexIndex += isBebel ? 3 : 2;
 
                 prev = current;
                 prevBebel = isBebel;
             }
+            vh.AddUIVertexStream(vertices, indices);
         }
 
         /// <summary>
@@ -148,12 +165,11 @@ namespace Xeon.Common
         /// <param name="vh"></param>
         /// <param name="stepX"></param>
         /// <param name="current"></param>
-        private void ProcessStart(VertexHelper vh, float stepX, Vector2 current, float nextHeight)
+        private void ProcessStart(float stepX, Vector2 current, float nextHeight, ref UIVertex vert)
         {
             var next = new Vector2(stepX, nextHeight);
-            var direction = (next - current).normalized;
-            var (top, bottom) = GetEndCap(current, direction);
-            AddVertices(vh, top, bottom);
+            var (top, bottom) = GetEndCap(current, next - current);
+            AddVertices(ref vert, top, bottom);
         }
 
         /// <summary>
@@ -162,11 +178,10 @@ namespace Xeon.Common
         /// <param name="vh"></param>
         /// <param name="current"></param>
         /// <param name="prev"></param>
-        private void ProcessEnd(VertexHelper vh, Vector2 current, Vector2 prev)
+        private void ProcessEnd(Vector2 current, Vector2 prev, ref UIVertex vert)
         {
-            var direction = (current - prev).normalized;
-            var (top, bottom) = GetEndCap(current, direction);
-            AddVertices(vh, top, bottom);
+            var (top, bottom) = GetEndCap(current, (current - prev));
+            AddVertices(ref vert, top, bottom);
         }
 
         /// <summary>
@@ -216,7 +231,7 @@ namespace Xeon.Common
         /// <returns></returns>
         private (Vector2 top, Vector2 bottom) GetEndCap(Vector2 point, Vector2 direction)
         {
-            var normal = GetNormal(direction);
+            var normal = GetNormal(direction.normalized);
             return (point + normal * halfWidth, point - normal * halfWidth);
         }
 
@@ -232,10 +247,10 @@ namespace Xeon.Common
         /// </summary>
         /// <param name="vh"></param>
         /// <param name="positions"></param>
-        private void AddVertices(VertexHelper vh, params Vector2[] positions)
+        private void AddVertices(ref UIVertex vert, params Vector2[] positions)
         {
             foreach (var position in positions)
-                AddVertex(vh, position);
+                AddVertex(position, ref vert);
         }
 
         /// <summary>
@@ -243,12 +258,10 @@ namespace Xeon.Common
         /// </summary>
         /// <param name="vh"></param>
         /// <param name="position"></param>
-        private void AddVertex(VertexHelper vh, Vector2 position)
+        private void AddVertex(Vector2 position, ref UIVertex vert)
         {
-            var vert = UIVertex.simpleVert;
             vert.position = new Vector3(position.x, position.y);
-            vert.color = color;
-            vh.AddVert(vert);
+            vertices.Add(vert);
         }
 
         /// <summary>
@@ -259,37 +272,38 @@ namespace Xeon.Common
         /// <param name="direction"></param>
         /// <param name="isBebel"></param>
         /// <param name="prevIsBebel"></param>
-        private void AddTriangles(VertexHelper vh, int index, Vector2 direction, bool isBebel, bool prevIsBebel)
+        private void AddTriangles(int index, float diffY, bool isBebel, bool prevIsBebel)
         {
             if (isBebel)
             {
-                AddTriangle(vh, index, index + 1, index + 2);
-                AddTriangle(vh, index + 2, index + 1, index + 3);
-                AddTriangle(vh, index + 2, index + 4, index + 3);
+                AddTriangle(index, index + 1, index + 2);
+                AddTriangle(index + 2, index + 1, index + 3);
+                AddTriangle(index + 2, index + 4, index + 3);
                 return;
             }
 
-            if (direction.y >= 0 || !prevIsBebel)
+            if (diffY >= 0 || !prevIsBebel)
             {
-                AddTriangle(vh, index, index + 1, index + 2);
-                AddTriangle(vh, index + 2, index + 1, index + 3);
+                AddTriangle(index, index + 1, index + 2);
+                AddTriangle(index + 2, index + 1, index + 3);
                 return;
             }
 
-            AddTriangle(vh, index, index + 1, index + 2);
-            AddTriangle(vh, index + 3, index, index + 2);
+            AddTriangle(index, index + 1, index + 2);
+            AddTriangle(index + 3, index, index + 2);
         }
 
         /// <summary>
         /// 三角ポリゴンを追加する
         /// </summary>
-        /// <param name="vh"></param>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <param name="c"></param>
-        private void AddTriangle(VertexHelper vh, int a, int b, int c)
+        private void AddTriangle(int a, int b, int c)
         {
-            vh.AddTriangle(a, b, c);
+            indices.Add(a);
+            indices.Add(b);
+            indices.Add(c);
         }
     }
 }
