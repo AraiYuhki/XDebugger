@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
@@ -18,10 +19,13 @@ namespace Xeon.XDebugger.Control
         private Action onOpened;
         private Action onClosed;
 
+        private PageModel model;
+
         public Transform Content => content;
 
-        public void Open(Action onOpened = null)
+        public void Open(PageModel model = null, Action onOpened = null)
         {
+            this.model = model;
             this.onOpened = onOpened;
             animator.Play(OpenId);
         }
@@ -40,6 +44,11 @@ namespace Xeon.XDebugger.Control
         public void OnClosed()
         {
             onClosed?.Invoke();
+        }
+
+        private void Update()
+        {
+            model?.Update();
         }
     }
 }

@@ -51,6 +51,8 @@ namespace Xeon.XDebugger.Model
         {
             AddLabel("===== Debug Menu =====");
 
+            AddPageLinkButton<SystemPageModel>("System Info");
+
             AddButton("Start", () => Debug.Log("開始が選択されました"));
             AddButton("Exit", () => Debug.Log("終了が選択されました"));
 
@@ -90,12 +92,16 @@ namespace Xeon.XDebugger.Model
             AddButton("Refresh", () => Refresh(true), 99);
         }
 
+        public virtual void Update()
+        {
+        }
+
         public void SetGroup(IGroupModel model)
         {
             group = model;
         }
 
-        public void OpenPage(Transform parent)
+        public void OpenPage(Transform parent, PageModel pageModel)
         {
             Clear();
             Initialize();
@@ -103,7 +109,7 @@ namespace Xeon.XDebugger.Model
             control ??= Instantiate(parent);
             foreach (var model in modelList)
                 controlList.Add(model.CreateControl(control.Content));
-            control.Open();
+            control.Open(pageModel);
         }
 
         public virtual void Close(Action onClose = null)
@@ -188,42 +194,86 @@ namespace Xeon.XDebugger.Model
         }
 
         public void AddLabel(LabelModel model) => AddChild(model);
-        public void AddLabel(string text, int priority = 0) => AddLabel(new LabelModel(text, priority));
+        public LabelModel AddLabel(string text, int priority = 0)
+        {
+            var model = new LabelModel(text, priority);
+            AddLabel(model);
+            return model;
+        }
 
         public void AddButton(ActionModel model) => AddChild(model);
-        public void AddButton(string text, Action action, int priority = 0) => AddButton(new ActionModel(text, action, priority));
+        public ActionModel AddButton(string text, Action action, int priority = 0)
+        {
+            var model = new ActionModel(text, action, priority);
+            AddButton(model);
+            return model;
+        }
 
-        public void AddPageLinkButton<T>(string text, int priority = 0) where T : PageModel, new()
+
+        public ActionModel AddPageLinkButton<T>(string text, int priority = 0) where T : PageModel, new()
         {
             var model = new ActionModel(text, () => XDebugger.Instance.OpenPage<T>(), priority);
             modelList.Add(model);
+            return model;
         }
 
         public void AddText(StringModel model) => AddChild(model);
-        public void AddText(string title, string text, Action<string> onChangedValue, int priority = 0) => AddText(new StringModel(title, text, onChangedValue, priority));
+        public StringModel AddText(string title, string text, Action<string> onChangedValue, int priority = 0)
+        {
+            var model = new StringModel(title, text, onChangedValue, priority);
+            AddText(model);
+            return model;
+        }
         
         public void AddNumber(NumberModel model) => AddChild(model);
-        public void AddNumber(string title, float value, float step, Action<float> onChangedValue, int priority = 0) => AddNumber(new NumberModel(title, value, step, onChangedValue, priority));
+        public NumberModel AddNumber(string title, float value, float step, Action<float> onChangedValue, int priority = 0)
+        {
+            var model = new NumberModel(title, value, step, onChangedValue, priority);
+            AddNumber(model);
+            return model;
+        }
 
         public void AddSlider(FloatSliderModel model) => AddChild(model);
-        public void AddSlider(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0) => AddSlider(new FloatSliderModel(title, value, min, max, onChangedValue, digits, priority));
+        public FloatSliderModel AddSlider(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0)
+        {
+            var model = new FloatSliderModel(title, value, min, max, onChangedValue, digits, priority);
+            AddSlider(model);
+            return model;
+        }
 
         public void AddIntSlider(IntSliderModel model) => AddChild(model);
-        public void AddIntSlider(string title, int value, int min, int max, Action<int> onChangedValue, int priority = 0) => AddIntSlider(new IntSliderModel(title, value, min, max, onChangedValue, priority));
+        public IntSliderModel AddIntSlider(string title, int value, int min, int max, Action<int> onChangedValue, int priority = 0)
+        {
+            var model = new IntSliderModel(title, value, min, max, onChangedValue, priority);
+            AddIntSlider(model);
+            return model;
+        }
 
         public void AddToggle(BoolModel model) => AddChild(model);
-        public void AddToggle(string title, bool value, Action<bool> onChangedValue, int priority)
-            => AddToggle(new BoolModel(title, value, onChangedValue, priority));
+        public BoolModel AddToggle(string title, bool value, Action<bool> onChangedValue, int priority)
+        {
+            var model = new BoolModel(title, value, onChangedValue, priority);
+            AddToggle(model);
+            return model;
+        }
 
         public void AddDropdown<T>(DropdownModel<T> model) => AddChild(model);
-        public void AddDropdown<T>(string text, int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue, int priority = 0)
-            => AddDropdown(new DropdownModel<T>(text, value, labels, options, onChangedValue, priority));
+        public DropdownModel<T> AddDropdown<T>(string text, int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue, int priority = 0)
+        {
+            var model = new DropdownModel<T>(text, value, labels, options, onChangedValue, priority);
+            AddDropdown(model);
+            return model;
+        }
 
         public void AddEnumDropdown<T>(EnumDropdownModel<T> model) where T : Enum
             => AddChild(model);
 
-        public void AddEnumDropdown<T>(string text, T value, Action<T> onChangedValue, int priority = 0) where T : Enum
-            => AddEnumDropdown(new EnumDropdownModel<T>(text, value, onChangedValue, priority));
+        public EnumDropdownModel<T> AddEnumDropdown<T>(string text, T value, Action<T> onChangedValue, int priority = 0) where T : Enum
+        {
+            var model = new EnumDropdownModel<T>(text, value, onChangedValue, priority);
+            AddEnumDropdown(model);
+            return model;
+        }
 
     }
 

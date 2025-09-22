@@ -20,6 +20,7 @@ namespace Xeon.XDebugger
         public void Setup(IGroupModel model, ContentGroup parent)
         {
             Setup(model.Title);
+            title.gameObject.SetActive(!string.IsNullOrEmpty(model.Title));
             this.model = model;
             this.parent = parent;
         }

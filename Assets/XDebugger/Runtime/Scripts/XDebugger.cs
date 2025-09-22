@@ -167,7 +167,7 @@ namespace Xeon.XDebugger
         {
             model ??= new T();
             model.Initialize();
-            model.OpenPage(content);
+            model.OpenPage(content, model);
             pageStack.Add(model);
             currentPage = model;
             titleLabel.text = currentPage.Title;
