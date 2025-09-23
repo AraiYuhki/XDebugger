@@ -60,7 +60,7 @@ namespace Xeon.XDebugger.Model
 
             AddIntSlider("Volume", 50, 0, 100, v => Debug.Log($"ボリューム: {v}"), 2);
 
-            AddSlider("Brightness", 0.5f, 0f, 1f, v => Debug.Log($"明るさ: {v:F2}"), 2, 3);
+            AddSlider("Brightness", 0.5f, 0f, 1f, 2, v => Debug.Log($"明るさ: {v:F2}"), 3);
 
             AddText("Username", "Player", v => Debug.Log($"ユーザー名: {v}"), 4);
 
@@ -169,7 +169,7 @@ namespace Xeon.XDebugger.Model
             return instance.GetComponent<PageControl>();
         }
 
-        public GroupLayoutScope HorizontalScope(string title, int priority = 0)
+        public GroupLayoutScope HorizontalScope(string title = "", int priority = 0)
         {
             var scope = new HorizontalLayoutScope(title, this, priority);
             AddChild(scope.Model);
@@ -177,7 +177,7 @@ namespace Xeon.XDebugger.Model
             return scope;
         }
 
-        public GroupLayoutScope VerticalScope(string title, int priority = 0)
+        public GroupLayoutScope VerticalScope(string title = "", int priority = 0)
         {
             var scope = new VerticalLayoutScope(title, this, priority);
             AddChild(scope.Model);
@@ -218,7 +218,7 @@ namespace Xeon.XDebugger.Model
         }
 
         public void AddText(StringModel model) => AddChild(model);
-        public StringModel AddText(string title, string text, Action<string> onChangedValue, int priority = 0)
+        public StringModel AddText(string title, string text, Action<string> onChangedValue = null, int priority = 0)
         {
             var model = new StringModel(title, text, onChangedValue, priority);
             AddText(model);
@@ -226,7 +226,7 @@ namespace Xeon.XDebugger.Model
         }
         
         public void AddNumber(NumberModel model) => AddChild(model);
-        public NumberModel AddNumber(string title, float value, float step, Action<float> onChangedValue, int priority = 0)
+        public NumberModel AddNumber(string title, float value, float step, Action<float> onChangedValue = null, int priority = 0)
         {
             var model = new NumberModel(title, value, step, onChangedValue, priority);
             AddNumber(model);
@@ -234,7 +234,7 @@ namespace Xeon.XDebugger.Model
         }
 
         public void AddSlider(FloatSliderModel model) => AddChild(model);
-        public FloatSliderModel AddSlider(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0)
+        public FloatSliderModel AddSlider(string title, float value, float min, float max, int digits = 2, Action<float> onChangedValue = null, int priority = 0)
         {
             var model = new FloatSliderModel(title, value, min, max, onChangedValue, digits, priority);
             AddSlider(model);
@@ -242,7 +242,7 @@ namespace Xeon.XDebugger.Model
         }
 
         public void AddIntSlider(IntSliderModel model) => AddChild(model);
-        public IntSliderModel AddIntSlider(string title, int value, int min, int max, Action<int> onChangedValue, int priority = 0)
+        public IntSliderModel AddIntSlider(string title, int value, int min, int max, Action<int> onChangedValue = null, int priority = 0)
         {
             var model = new IntSliderModel(title, value, min, max, onChangedValue, priority);
             AddIntSlider(model);
@@ -250,7 +250,7 @@ namespace Xeon.XDebugger.Model
         }
 
         public void AddToggle(BoolModel model) => AddChild(model);
-        public BoolModel AddToggle(string title, bool value, Action<bool> onChangedValue, int priority)
+        public BoolModel AddToggle(string title, bool value, Action<bool> onChangedValue = null, int priority = 0)
         {
             var model = new BoolModel(title, value, onChangedValue, priority);
             AddToggle(model);
@@ -258,7 +258,7 @@ namespace Xeon.XDebugger.Model
         }
 
         public void AddDropdown<T>(DropdownModel<T> model) => AddChild(model);
-        public DropdownModel<T> AddDropdown<T>(string text, int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue, int priority = 0)
+        public DropdownModel<T> AddDropdown<T>(string text, int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue = null, int priority = 0)
         {
             var model = new DropdownModel<T>(text, value, labels, options, onChangedValue, priority);
             AddDropdown(model);
@@ -268,7 +268,7 @@ namespace Xeon.XDebugger.Model
         public void AddEnumDropdown<T>(EnumDropdownModel<T> model) where T : Enum
             => AddChild(model);
 
-        public EnumDropdownModel<T> AddEnumDropdown<T>(string text, T value, Action<T> onChangedValue, int priority = 0) where T : Enum
+        public EnumDropdownModel<T> AddEnumDropdown<T>(string text, T value, Action<T> onChangedValue = null, int priority = 0) where T : Enum
         {
             var model = new EnumDropdownModel<T>(text, value, onChangedValue, priority);
             AddEnumDropdown(model);
