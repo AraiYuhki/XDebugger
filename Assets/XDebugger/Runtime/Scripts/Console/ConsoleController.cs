@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -29,6 +30,16 @@ namespace Xeon.XDebugger.Console
         private TMP_Text errorCountLabel;
         [SerializeField]
         private ToggleGroup toggleGroup;
+        [SerializeField]
+        private TMP_Text detailLabel;
+
+        [Header("FilterToggles")]
+        [SerializeField]
+        private Toggle infoToggle;
+        [SerializeField]
+        private Toggle warningToggle;
+        [SerializeField]
+        private Toggle errorToggle;
 
         private Queue<LogItem> activeItemQueue = new();
         private int infoCount = 0;
@@ -40,12 +51,11 @@ namespace Xeon.XDebugger.Console
 
         private void Awake()
         {
+            logItemPool = new ObjectPool<LogItem>(OnCreateItem, OnGetItem, OnReleaseItem, OnDestroyItem, defaultCapacity: LogItemBufferCapacity);
             Application.logMessageReceived += OnReceivedLogMessage;
             infoCountLabel.text = "0";
             warningCountLabel.text = "0";
             errorCountLabel.text = "0";
-
-            logItemPool = new ObjectPool<LogItem>(OnCreateItem, OnGetItem, OnReleaseItem, OnDestroyItem, defaultCapacity: LogItemBufferCapacity);
         }
 
         private LogItem OnCreateItem()
@@ -53,6 +63,7 @@ namespace Xeon.XDebugger.Console
             var item = Instantiate(logItemPrefab, content);
             item.gameObject.SetActive(false);
             item.SetToggleGroup(toggleGroup);
+            item.SetOnChangedIsOn(() => OnChangedSelectItem(item));
             return item;
         }
 
@@ -72,10 +83,12 @@ namespace Xeon.XDebugger.Console
         {
             Destroy(logItem.gameObject);
         }
-
+        
+        private float elapsed = 1f;
         private void Update()
         {
-            return;
+            elapsed -= Time.deltaTime;
+            if (elapsed > 0f) return;
             switch(Random.Range(0, 3))
             {
                 case 0:
@@ -88,6 +101,7 @@ namespace Xeon.XDebugger.Console
                     Debug.LogError($"Test error {errorCount}");
                     break;
             };
+            elapsed = 0.5f;
         }
 
         private void OnDestroy()
@@ -95,10 +109,13 @@ namespace Xeon.XDebugger.Console
             Application.logMessageReceived -= OnReceivedLogMessage;
         }
 
+        private static int logIndex = 0;
+
         private void OnReceivedLogMessage(string condition, string stackTrace, LogType type)
         {
-            var data = new LogItemData(type, condition, stackTrace, true);
-            logDataList.PushBack(data);
+            var data = new LogItemData(type, condition, stackTrace, logIndex, true);
+            logIndex++;
+            logDataList.PushFront(data);
 
             if (activeItemQueue.Count >= LogItemBufferCapacity)
             {
@@ -106,7 +123,7 @@ namespace Xeon.XDebugger.Console
                 logItemPool.Release(releaseItem);
             }
             var logItem = logItemPool.Get();
-            logItem.Setup(condition, stackTrace, type);
+            logItem.Setup(data);
             activeItemQueue.Enqueue(logItem);
             scrollView.normalizedPosition = Vector2.zero;
             switch (type)
@@ -131,6 +148,16 @@ namespace Xeon.XDebugger.Console
             while(activeItemQueue.TryDequeue(out var result))
                 logItemPool.Release(result);
             logDataList.Clear();
+        }
+
+        private void OnChangedSelectItem(LogItem item)
+        {
+            if (!toggleGroup.AnyTogglesOn())
+            {
+                detailLabel.text = string.Empty;
+                return;
+            }
+            detailLabel.text = item.Data.ToString();
         }
 
     }

@@ -1,5 +1,7 @@
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Xeon.XDebugger.Console
@@ -27,10 +29,10 @@ namespace Xeon.XDebugger.Console
 
         public bool IsReleased { get; set; }
 
+        public LogItemData Data { get; private set; }
+
         private void Awake()
         {
-            toggle.onValueChanged.RemoveListener(OnChangedToggle);
-            toggle.onValueChanged.AddListener(OnChangedToggle);
         }
 
         public void SetToggleGroup(ToggleGroup group)
@@ -38,9 +40,26 @@ namespace Xeon.XDebugger.Console
             toggle.group = group;
         }
 
+        public void SetOnChangedIsOn(Action onChanged)
+        {
+            toggle.onValueChanged.AddListener(_ => onChanged?.Invoke());
+        }
+
         public void SetToggleOff()
         {
             toggle.isOn = false;
+        }
+
+        public void Setup(LogItemData data)
+        {
+            icon.sprite = data.Type switch
+            {
+                LogType.Log => infoIcon,
+                LogType.Warning => warningIcon,
+                _ => errorIcon
+            };
+            message.text = data.Contents;
+            Data = data;
         }
 
         public void Setup(string condition, string stackTrace, LogType logType)
