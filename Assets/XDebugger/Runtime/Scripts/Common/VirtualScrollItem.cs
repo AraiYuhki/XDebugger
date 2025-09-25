@@ -7,7 +7,7 @@ namespace Xeon.Common
     {
         public RectTransform RectTransform { get; private set; }
         public int Index { get; set; }
-        public bool IsInside { get; set; }
+        public bool IsInside { get; private set; }
 
         private Rect viewPortRect;
 
@@ -16,19 +16,24 @@ namespace Xeon.Common
             RectTransform ??= GetComponent<RectTransform>();
         }
 
-        public void Initialize(RectTransform viewPort)
+        public void Initialize(RectTransform viewPort, int index)
         {
             RectTransform ??= GetComponent<RectTransform>();
             viewPortRect = GetWorldRect(viewPort);
 
             var worldRect = GetWorldRect(RectTransform);
             IsInside = viewPortRect.Overlaps(worldRect);
+
+            Index = index;
+            RectTransform.anchorMin = Vector2.up;
+            RectTransform.anchorMax = Vector2.up;
+            RectTransform.pivot = Vector2.up;
         }
 
-        public bool CheckIsInside()
+        public void UpdateIsInside()
         {
             var worldRect = GetWorldRect(RectTransform);
-            return viewPortRect.Overlaps(worldRect);
+            IsInside = viewPortRect.Overlaps(worldRect);
         }
 
         private static Rect GetWorldRect(RectTransform rectTransform)
