@@ -3,10 +3,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Xeon.Common;
 
 namespace Xeon.XDebugger.Console
 {
-    public class LogItem : MonoBehaviour
+    public class LogItem : MonoBehaviour, ISetupable<LogItemData>
     {
         [SerializeField]
         private Image icon;
