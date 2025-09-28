@@ -1,11 +1,21 @@
-﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.XDebugger.Console;
 
 namespace Xeon.Common
 {
     public class VirtualVerticalScrollView : MonoBehaviour
     {
+        public enum Alignment
+        {
+            Left,
+            Center,
+            Right,
+        }
+
+        [SerializeField]
+        private LogItem prefab;
         [SerializeField]
         private ScrollRect scrollView;
         [SerializeField]
@@ -13,101 +23,50 @@ namespace Xeon.Common
         [SerializeField]
         private RectTransform content;
         [SerializeField]
-        private GameObject itemPrefab;
-
+        private RectOffset padding = new();
         [SerializeField]
-        private int itemCount = 100;
+        private float spacing = 0f;
+        [SerializeField]
+        private Alignment alignment = Alignment.Left;
 
-        private float itemHeight = 0f;
-        private int viewCount = 0;
-        
-        private int headIndex = 0;
-        private int tailIndex = 0;
-
-        private readonly LinkedList<VirtualScrollItem> itemList = new();
+        private VirtualScrollViewControllerBase controller;
         private Vector2 prevScrollPosition = Vector2.zero;
-        
-        private void Awake()
-        {
-            itemHeight = itemPrefab.GetComponent<RectTransform>().rect.height;
-            tailIndex = Mathf.CeilToInt(viewPort.rect.height / itemHeight);
-            viewCount = tailIndex + 1;
-            for (var count = 0; count < viewCount; count++)
-            {
-                CreateItem(count);
-            }
-            var size = content.sizeDelta;
-            size.y = itemCount * itemHeight;
-            content.sizeDelta = size;
 
-            scrollView.onValueChanged.AddListener(OnChangedScrollPosition);
-            prevScrollPosition = scrollView.normalizedPosition;
+        public float Spacing
+        {
+            get => spacing;
+            set
+            {
+                spacing = value;
+                controller.SetSpacing(spacing);
+            }
         }
 
-        private void CreateItem(int index)
+        public void Setup(VirtualScrollViewControllerBase controller)
         {
-            var item = Instantiate(itemPrefab, content);
-            item.name = $"Item({index})";
-            var scrollItem = item.AddComponent<VirtualScrollItem>();
-            scrollItem.Initialize(viewPort, index);
-            scrollItem.RectTransform.anchoredPosition3D = CreatePosition(index);
-            itemList.AddLast(scrollItem);
+            scrollView.onValueChanged.RemoveListener(OnChangedScrollPosition);
+            scrollView.onValueChanged.AddListener(OnChangedScrollPosition);
+            prevScrollPosition = scrollView.normalizedPosition;
+            this.controller = controller;
+            controller.Setup(viewPort, content, padding, spacing);
         }
 
         private void OnChangedScrollPosition(Vector2 position)
         {
-            var isDown = position.y - prevScrollPosition.y < 0;
+            if (controller == null)
+                return;
+
+            var isNext = position.y - prevScrollPosition.y < 0;
             prevScrollPosition = position;
-            
-            foreach (var item in itemList)
-                item.UpdateIsInside();
-            if (isDown)
-                RepositionForDown();
-            else
-                RepositionForUp();
+
+            controller.Update(isNext, position.y);
         }
 
-        private void RepositionForDown()
+#if UNITY_EDITOR
+        private void OnValidate()
         {
-            var item = itemList.First;
-            while (!item.Value.IsInside)
-            {
-                if (tailIndex >= itemCount - 1)
-                    break;
-                headIndex++;
-                tailIndex++;
-                item.Value.Index = tailIndex;
-                item.Value.RectTransform.anchoredPosition3D = CreatePosition(tailIndex);
-                item.Value.name = $"item({item.Value.Index})";
-                var tmp = item.Value;
-                item = item.Next;
-                itemList.RemoveFirst();
-                itemList.AddLast(tmp);
-            }
+            controller?.SetSpacing(spacing);
         }
-
-        private void RepositionForUp()
-        {
-            var item = itemList.Last;
-            while (!item.Value.IsInside)
-            {
-                if (headIndex <= 0)
-                    break;
-                headIndex--;
-                tailIndex--;
-                item.Value.Index = headIndex;
-                item.Value.RectTransform.anchoredPosition3D = CreatePosition(headIndex);
-                item.Value.name = $"item({item.Value.Index})";
-                var tmp = item.Value;
-                item = item.Previous;
-                itemList.RemoveLast();
-                itemList.AddFirst(tmp);
-            }
-        }
-
-        private Vector3 CreatePosition(int index)
-        {
-            return new Vector3(0f, -index * itemHeight, 0f);
-        }
+#endif
     }
 }

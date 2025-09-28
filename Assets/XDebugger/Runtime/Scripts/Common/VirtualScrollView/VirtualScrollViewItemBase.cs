@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Xeon.Common
@@ -7,14 +6,13 @@ namespace Xeon.Common
     {
         public GameObject gameObject { get; protected set; }
         public RectTransform RectTransform { get; protected set; }
-        public int Index { get; private set; }
         public bool IsInside { get; private set; }
-        private readonly Rect viewPortRect;
 
-        public VirtualScrollViewItemBase(RectTransform viewPort, int index)
+        private readonly RectTransform viewPort;
+
+        public VirtualScrollViewItemBase(RectTransform viewPort)
         {
-            viewPortRect = GetWorldRect(viewPort);
-            Index = index;
+            this.viewPort = viewPort;
         }
 
         protected virtual void InitializeRectTransform()
@@ -27,13 +25,8 @@ namespace Xeon.Common
         public void UpdateIsInside()
         {
             var worldRect = GetWorldRect(RectTransform);
+            var viewPortRect = GetWorldRect(viewPort);
             IsInside = viewPortRect.Overlaps(worldRect);
-        }
-
-        public void SetIndex(int newIndex)
-        {
-            if (Index == newIndex) return;
-            Index = newIndex;
         }
 
         public void SetPosition(Vector3 position)
