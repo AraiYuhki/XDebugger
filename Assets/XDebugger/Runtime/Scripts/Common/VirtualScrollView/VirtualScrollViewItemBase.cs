@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using UnityEngine;
 
 namespace Xeon.Common
@@ -15,11 +16,28 @@ namespace Xeon.Common
             this.viewPort = viewPort;
         }
 
-        protected virtual void InitializeRectTransform()
+        public virtual void SetHorizontalAlignment(VirtualVerticalScrollView.Alignment alignment)
         {
-            RectTransform.anchorMin = Vector2.up;
-            RectTransform.anchorMax = Vector2.up;
-            RectTransform.pivot = Vector2.up;
+            var vector = alignment switch
+            {
+                VirtualVerticalScrollView.Alignment.Left => Vector2.up,
+                VirtualVerticalScrollView.Alignment.Center => new Vector2(0.5f, 1f),
+                VirtualVerticalScrollView.Alignment.Right => Vector2.one,
+                _ => throw new InvalidEnumArgumentException()
+            };
+            RectTransform.anchorMin = vector;
+            RectTransform.anchorMax = vector;
+            RectTransform.pivot = vector;
+            var position = RectTransform.anchoredPosition3D;
+            position.x = 0f;
+            RectTransform.anchoredPosition3D = position;
+        }
+
+        public void SetFittingItemWith(float contentWidth)
+        {
+            var size = RectTransform.sizeDelta;
+            size.x = contentWidth;
+            RectTransform.sizeDelta = size;
         }
 
         public void UpdateIsInside()

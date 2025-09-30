@@ -68,8 +68,8 @@ namespace Xeon.Common
             instance.name = $"Item({index})";
             instance.gameObject.SetActive(false);
 
-            var scrollItem = new VirtualScrollItem<TItem>(instance, viewPort);
-            scrollItem.RectTransform.anchoredPosition3D = CreatePosition(index);
+            var scrollItem = new VirtualScrollItem<TItem>(instance, viewPort, horizontalAlignment);
+            scrollItem.SetPosition(CreatePosition(index));
 
             return scrollItem;
         }

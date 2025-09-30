@@ -26,6 +26,8 @@ namespace Xeon.Common
         protected RectTransform container;
         protected RectOffset padding;
         protected float spacing = 0f;
+        protected VirtualVerticalScrollView.Alignment horizontalAlignment;
+        protected bool isControlChildSize = false;
 
         // Properties
         public abstract int ItemCount { get; }
@@ -52,12 +54,14 @@ namespace Xeon.Common
         /// <summary>
         /// スクロールビューを初期化します。
         /// </summary>
-        public void Setup(RectTransform viewPort, RectTransform container, RectOffset padding, float spacing)
+        public void Setup(RectTransform viewPort, RectTransform container, RectOffset padding, float spacing, VirtualVerticalScrollView.Alignment alignment, bool isControlChildSize)
         {
             this.viewPort = viewPort;
             this.container = container;
             this.padding = padding;
             this.spacing = spacing;
+            horizontalAlignment = alignment;
+            this.isControlChildSize = isControlChildSize;
 
             headIndex = 0;
             tailIndex = Mathf.CeilToInt(viewPort.rect.height / itemHeight);
@@ -110,6 +114,13 @@ namespace Xeon.Common
             (headIndex, tailIndex) = CalculateIndex();
             CreateItems();
             UpdateView();
+        }
+
+        public void SetHorizontalAlignment(VirtualVerticalScrollView.Alignment horizontalAlignment)
+        {
+            this.horizontalAlignment = horizontalAlignment;
+            foreach (var item in itemList)
+                item.SetHorizontalAlignment(horizontalAlignment);
         }
 
 
@@ -239,7 +250,14 @@ namespace Xeon.Common
         /// </summary>
         protected Vector3 CreatePosition(int index)
         {
-            return new Vector3(padding.left, -index * itemHeight - padding.top, 0f);
+            var x = horizontalAlignment switch
+            {
+                VirtualVerticalScrollView.Alignment.Left => padding.left,
+                VirtualVerticalScrollView.Alignment.Center => 0f,
+                VirtualVerticalScrollView.Alignment.Right => padding.right,
+                _ => 0f
+            };
+            return new Vector3(x, -index * itemHeight - padding.top, 0f);
         }
 
 
@@ -278,6 +296,8 @@ namespace Xeon.Common
             for (var index = 0; index < itemCount; index++)
             {
                 var item = CreateItem(headIndex + index);
+                if (isControlChildSize)
+                    item.SetFittingItemWith(container.rect.width - padding.horizontal);
                 item.gameObject.SetActive(false);
                 itemList.AddLast(item);
             }

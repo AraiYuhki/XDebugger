@@ -7,7 +7,7 @@ namespace Xeon.Common
     {
         public T Value { get; }
 
-        public VirtualScrollItem(T value, RectTransform viewPort)
+        public VirtualScrollItem(T value, RectTransform viewPort, VirtualVerticalScrollView.Alignment horizontalAlignment)
             : base(viewPort)
         {
             Value = value;
@@ -15,7 +15,7 @@ namespace Xeon.Common
             RectTransform = value.GetComponent<RectTransform>();
             gameObject = value.gameObject;
 
-            InitializeRectTransform();
+            SetHorizontalAlignment(horizontalAlignment);
             UpdateIsInside();
         }
     }

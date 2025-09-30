@@ -28,6 +28,8 @@ namespace Xeon.Common
         private float spacing = 0f;
         [SerializeField]
         private Alignment alignment = Alignment.Left;
+        [SerializeField]
+        private bool isControlChildSize = false;
 
         private VirtualScrollViewControllerBase controller;
         private Vector2 prevScrollPosition = Vector2.zero;
@@ -48,7 +50,7 @@ namespace Xeon.Common
             scrollView.onValueChanged.AddListener(OnChangedScrollPosition);
             prevScrollPosition = scrollView.normalizedPosition;
             this.controller = controller;
-            controller.Setup(viewPort, content, padding, spacing);
+            controller.Setup(viewPort, content, padding, spacing, alignment, isControlChildSize);
         }
 
         private void OnChangedScrollPosition(Vector2 position)
@@ -66,6 +68,7 @@ namespace Xeon.Common
         private void OnValidate()
         {
             controller?.SetSpacing(spacing);
+            controller?.SetHorizontalAlignment(alignment);
         }
 #endif
     }
