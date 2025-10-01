@@ -210,7 +210,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.NewVirtualVerticalScrollView
   prefab: {fileID: 1183809732555434985, guid: fd744de0bc4353245bacd4b597be6626, type: 3}
   scrollView: {fileID: 1597581429500073951}
-  viewPort: {fileID: 6679410927468829356}
+  viewPort: {fileID: 3059205214735236701}
   content: {fileID: 4905293765551762347}
   padding:
     m_Left: 0
@@ -219,6 +219,8 @@ MonoBehaviour:
     m_Bottom: 0
   spacing: 0
   alignment: 0
+  isControlChildSize: 0
+  debugPrefab: {fileID: 7832577812277928746, guid: beabc067b8ee95d48956907e76f3b902, type: 3}
 --- !u!114 &1633579875869276952
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -267,7 +269,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -12.5, y: 0.000030517578}
-  m_SizeDelta: {x: -25, y: 100}
+  m_SizeDelta: {x: -25, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &5321728721482161242
 GameObject:
@@ -317,6 +319,7 @@ GameObject:
   - component: {fileID: 5712614011634171119}
   - component: {fileID: 785737660836399863}
   - component: {fileID: 2684117766075354735}
+  - component: {fileID: 3059205214735236701}
   m_Layer: 5
   m_Name: Viewport
   m_TagString: Untagged
@@ -396,6 +399,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3059205214735236701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7069149327871167574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e0b4339bcbcbf34c8e4f7d2ffee60b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.VirtualScrollViewport
+  rectTransform: {fileID: 6679410927468829356}
 --- !u!1 &7787050518950574628
 GameObject:
   m_ObjectHideFlags: 0

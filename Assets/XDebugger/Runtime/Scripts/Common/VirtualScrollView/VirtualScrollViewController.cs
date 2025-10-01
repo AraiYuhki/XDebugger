@@ -54,6 +54,14 @@ namespace Xeon.Common
             OnChangedItemCount(null, null);
         }
 
+        public override void Dispose()
+        {
+            dataList.Clear();
+            UpdateContainerSize();
+            dataList = null;
+            base.Dispose();
+        }
+
 
         // ====================================================================================================
         // Protected Overrides (Base Class Implementation)

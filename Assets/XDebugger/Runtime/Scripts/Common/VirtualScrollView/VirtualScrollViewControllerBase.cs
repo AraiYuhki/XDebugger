@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Xeon.Common
 {
-    public abstract class VirtualScrollViewControllerBase
+    public abstract class VirtualScrollViewControllerBase : IDisposable
     {
         // ====================================================================================================
         // Fields & Properties
@@ -123,6 +123,19 @@ namespace Xeon.Common
                 item.SetHorizontalAlignment(horizontalAlignment);
         }
 
+        public virtual void Dispose()
+        {
+            if (itemList == null) return;
+            foreach (var item in itemList)
+            {
+                if (Application.isPlaying)
+                    GameObject.Destroy(item.gameObject);
+                else
+                    GameObject.DestroyImmediate(item.gameObject);
+            }
+            itemList.Clear();
+        }
+
 
         // ====================================================================================================
         // Protected Methods (For Derived Classes & Core Logic)
@@ -223,7 +236,7 @@ namespace Xeon.Common
         /// <summary>
         /// スクロールコンテンツ全体のサイズを更新します。
         /// </summary>
-        protected void UpdateContainerSize()
+        public void UpdateContainerSize()
         {
             var size = container.sizeDelta;
             size.y = ItemCount * itemHeight + padding.vertical;
@@ -254,7 +267,7 @@ namespace Xeon.Common
             {
                 VirtualVerticalScrollView.Alignment.Left => padding.left,
                 VirtualVerticalScrollView.Alignment.Center => 0f,
-                VirtualVerticalScrollView.Alignment.Right => padding.right,
+                VirtualVerticalScrollView.Alignment.Right => -padding.right,
                 _ => 0f
             };
             return new Vector3(x, -index * itemHeight - padding.top, 0f);
