@@ -7,7 +7,7 @@ namespace Xeon.Common
     {
         public T Value { get; }
 
-        public VirtualScrollItem(T value, RectTransform viewPort, VirtualVerticalScrollView.Alignment horizontalAlignment)
+        public VirtualScrollItem(T value, RectTransform viewPort, HorizontalAlignment horizontalAlignment)
             : base(viewPort)
         {
             Value = value;

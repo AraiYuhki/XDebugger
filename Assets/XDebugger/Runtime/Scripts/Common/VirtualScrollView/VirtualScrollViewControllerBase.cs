@@ -26,8 +26,9 @@ namespace Xeon.Common
         protected RectTransform container;
         protected RectOffset padding;
         protected float spacing = 0f;
-        protected VirtualVerticalScrollView.Alignment horizontalAlignment;
+        protected HorizontalAlignment horizontalAlignment;
         protected bool isControlChildSize = false;
+        protected bool isReverse = false;
 
         // Properties
         public abstract int ItemCount { get; }
@@ -54,7 +55,7 @@ namespace Xeon.Common
         /// <summary>
         /// スクロールビューを初期化します。
         /// </summary>
-        public void Setup(RectTransform viewPort, RectTransform container, RectOffset padding, float spacing, VirtualVerticalScrollView.Alignment alignment, bool isControlChildSize)
+        public void Setup(RectTransform viewPort, RectTransform container, RectOffset padding, float spacing, HorizontalAlignment alignment, bool isControlChildSize, bool isReverse)
         {
             this.viewPort = viewPort;
             this.container = container;
@@ -62,6 +63,7 @@ namespace Xeon.Common
             this.spacing = spacing;
             horizontalAlignment = alignment;
             this.isControlChildSize = isControlChildSize;
+            this.isReverse = isReverse;
 
             headIndex = 0;
             tailIndex = Mathf.CeilToInt(viewPort.rect.height / itemHeight);
@@ -116,11 +118,18 @@ namespace Xeon.Common
             UpdateView();
         }
 
-        public void SetHorizontalAlignment(VirtualVerticalScrollView.Alignment horizontalAlignment)
+        public void SetHorizontalAlignment(HorizontalAlignment horizontalAlignment)
         {
             this.horizontalAlignment = horizontalAlignment;
             foreach (var item in itemList)
                 item.SetHorizontalAlignment(horizontalAlignment);
+        }
+
+        public void SetIsReverse(bool isReverse)
+        {
+            this.isReverse = isReverse;
+            UpdateView();
+
         }
 
         public virtual void Dispose()
@@ -218,8 +227,8 @@ namespace Xeon.Common
                 }
                 var dataIndex = headIndex + index;
                 item.gameObject.SetActive(true);
-                OnChangedItemIndex(dataIndex, item);
                 item.SetPosition(CreatePosition(dataIndex));
+                OnChangedItemIndex(dataIndex, item);
             }
         }
 
@@ -230,6 +239,11 @@ namespace Xeon.Common
         {
             UpdateContainerSize();
             UpdateInternal();
+            if (isReverse)
+            {
+                (headIndex, tailIndex) = CalculateIndex();
+                UpdateView();
+            }
             onChangedItemCount?.Invoke(ItemCount);
         }
 
@@ -265,9 +279,9 @@ namespace Xeon.Common
         {
             var x = horizontalAlignment switch
             {
-                VirtualVerticalScrollView.Alignment.Left => padding.left,
-                VirtualVerticalScrollView.Alignment.Center => 0f,
-                VirtualVerticalScrollView.Alignment.Right => -padding.right,
+                HorizontalAlignment.Left => padding.left,
+                HorizontalAlignment.Center => 0f,
+                HorizontalAlignment.Right => -padding.right,
                 _ => 0f
             };
             return new Vector3(x, -index * itemHeight - padding.top, 0f);

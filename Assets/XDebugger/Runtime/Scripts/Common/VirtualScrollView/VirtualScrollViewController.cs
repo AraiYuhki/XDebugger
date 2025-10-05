@@ -89,6 +89,8 @@ namespace Xeon.Common
         {
             if (target is not VirtualScrollItem<TItem> item) return;
             if (index < 0 || index >= dataList.Count) return;
+            if (isReverse)
+                index = dataList.Count - index - 1;
 
             var data = dataList[index];
             item.Value.Setup(data);

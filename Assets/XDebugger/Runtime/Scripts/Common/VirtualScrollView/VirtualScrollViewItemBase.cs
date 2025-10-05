@@ -16,13 +16,13 @@ namespace Xeon.Common
             this.viewPort = viewPort;
         }
 
-        public virtual void SetHorizontalAlignment(VirtualVerticalScrollView.Alignment alignment)
+        public virtual void SetHorizontalAlignment(HorizontalAlignment alignment)
         {
             var vector = alignment switch
             {
-                VirtualVerticalScrollView.Alignment.Left => Vector2.up,
-                VirtualVerticalScrollView.Alignment.Center => new Vector2(0.5f, 1f),
-                VirtualVerticalScrollView.Alignment.Right => Vector2.one,
+                HorizontalAlignment.Left => Vector2.up,
+                HorizontalAlignment.Center => new Vector2(0.5f, 1f),
+                HorizontalAlignment.Right => Vector2.one,
                 _ => throw new InvalidEnumArgumentException()
             };
             RectTransform.anchorMin = vector;
