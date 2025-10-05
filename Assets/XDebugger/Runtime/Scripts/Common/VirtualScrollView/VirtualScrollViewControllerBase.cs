@@ -27,8 +27,10 @@ namespace Xeon.Common
         protected RectOffset padding;
         protected float spacing = 0f;
         protected HorizontalAlignment horizontalAlignment;
+        protected VerticalAlignment verticalAlignment;
         protected bool isControlChildSize = false;
         protected bool isReverse = false;
+        protected bool isVertical = true;
 
         // Properties
         public abstract int ItemCount { get; }
@@ -64,9 +66,29 @@ namespace Xeon.Common
             horizontalAlignment = alignment;
             this.isControlChildSize = isControlChildSize;
             this.isReverse = isReverse;
+            isVertical = true;
 
             headIndex = 0;
             tailIndex = Mathf.CeilToInt(viewPort.rect.height / itemHeight);
+            CreateItems();
+        }
+
+        /// <summary>
+        /// スクロールビューを初期化します。
+        /// </summary>
+        public void Setup(RectTransform viewPort, RectTransform container, RectOffset padding, float spacing, VerticalAlignment alignment, bool isControlChildSize, bool isReverse)
+        {
+            this.viewPort = viewPort;
+            this.container = container;
+            this.padding = padding;
+            this.spacing = spacing;
+            verticalAlignment = alignment;
+            this.isControlChildSize = isControlChildSize;
+            this.isReverse = isReverse;
+            isVertical = false;
+
+            headIndex = 0;
+            tailIndex = Mathf.CeilToInt(viewPort.rect.width / itemWidth);
             CreateItems();
         }
 
@@ -123,6 +145,13 @@ namespace Xeon.Common
             this.horizontalAlignment = horizontalAlignment;
             foreach (var item in itemList)
                 item.SetHorizontalAlignment(horizontalAlignment);
+        }
+
+        public void SetVerticalAlignment(VerticalAlignment verticalAlignment)
+        {
+            this.verticalAlignment = verticalAlignment;
+            foreach(var item in itemList)
+                item.SetVerticalAlignment(verticalAlignment);
         }
 
         public void SetIsReverse(bool isReverse)
@@ -253,7 +282,10 @@ namespace Xeon.Common
         public void UpdateContainerSize()
         {
             var size = container.sizeDelta;
-            size.y = ItemCount * itemHeight + padding.vertical;
+            if (isVertical)
+                size.y = ItemCount * itemHeight + padding.vertical;
+            else
+                size.x = ItemCount * itemWidth + padding.horizontal;
             container.sizeDelta = size;
         }
 
@@ -262,14 +294,29 @@ namespace Xeon.Common
         /// </summary>
         protected (int headIndex, int tailIndex) CalculateIndex()
         {
+            var desiredHead = isVertical ? CalculateIndexForVertical() : CalculateIndexForHorizontal();
+
+            var maxHead = Mathf.Max(0, ItemCount - itemList.Count);
+            desiredHead = Mathf.Clamp(desiredHead, 0, maxHead);
+            return (desiredHead, desiredHead + itemList.Count - 1);
+        }
+
+        private int CalculateIndexForVertical()
+        {
             var totalContentHeight = ItemCount * itemHeight + padding.vertical;
             var viewPortHeight = viewPort.rect.height;
             var maxScroll = totalContentHeight - viewPortHeight;
             var contentOffset = (1f - Mathf.Clamp01(scrollPosition)) * maxScroll;
-            var desiredHead = Mathf.FloorToInt(contentOffset / itemHeight);
-            var maxHead = Mathf.Max(0, ItemCount - itemList.Count);
-            desiredHead = Mathf.Clamp(desiredHead, 0, maxHead);
-            return (desiredHead, desiredHead + itemList.Count - 1);
+            return Mathf.FloorToInt(contentOffset / itemHeight);
+        }
+
+        private int CalculateIndexForHorizontal()
+        {
+            var totalContentWidth = ItemCount * itemWidth + padding.horizontal;
+            var viewPortWidth = viewPort.rect.width;
+            var maxScroll = totalContentWidth - viewPortWidth;
+            var contentOffset = Mathf.Clamp01(scrollPosition) * maxScroll;
+            return Mathf.FloorToInt(contentOffset / itemWidth);
         }
 
         /// <summary>
@@ -277,14 +324,28 @@ namespace Xeon.Common
         /// </summary>
         protected Vector3 CreatePosition(int index)
         {
-            var x = horizontalAlignment switch
+            if (isVertical)
             {
-                HorizontalAlignment.Left => padding.left,
-                HorizontalAlignment.Center => 0f,
-                HorizontalAlignment.Right => -padding.right,
-                _ => 0f
-            };
-            return new Vector3(x, -index * itemHeight - padding.top, 0f);
+                var x = horizontalAlignment switch
+                {
+                    HorizontalAlignment.Left => padding.left,
+                    HorizontalAlignment.Center => 0f,
+                    HorizontalAlignment.Right => -padding.right,
+                    _ => 0f
+                };
+                return new Vector3(x, -index * itemHeight - padding.top, 0f);
+            }
+            else
+            {
+                var y = verticalAlignment switch
+                {
+                    VerticalAlignment.Top => -padding.top,
+                    VerticalAlignment.Middle => 0,
+                    VerticalAlignment.Bottom => padding.bottom,
+                    _ => 0f
+                };
+                return new Vector3(index * itemWidth + padding.left, y, 0f);
+            }
         }
 
 
@@ -307,7 +368,13 @@ namespace Xeon.Common
         /// </summary>
         private void CreateItems()
         {
-            var itemCount = Mathf.CeilToInt(viewPort.rect.height / itemHeight) + 1;
+            var itemCount = 0;
+            
+            if (isVertical)
+                itemCount = Mathf.CeilToInt(viewPort.rect.height / itemHeight) + 1;
+            else
+                itemCount = Mathf.CeilToInt(viewPort.rect.width / itemWidth) + 1;
+
             if (itemList.Count == itemCount)
                 return;
 
@@ -324,7 +391,12 @@ namespace Xeon.Common
             {
                 var item = CreateItem(headIndex + index);
                 if (isControlChildSize)
-                    item.SetFittingItemWith(container.rect.width - padding.horizontal);
+                {
+                    if (isVertical)
+                        item.SetFittingItemWith(container.rect.width - padding.horizontal);
+                    else
+                        item.SetFittingItemHeight(container.rect.height - padding.vertical);
+                }
                 item.gameObject.SetActive(false);
                 itemList.AddLast(item);
             }

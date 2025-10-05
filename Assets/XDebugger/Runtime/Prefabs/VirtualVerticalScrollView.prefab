@@ -137,7 +137,6 @@ GameObject:
   - component: {fileID: 4069624623270514785}
   - component: {fileID: 1597581429500073951}
   - component: {fileID: 7800088331860383036}
-  - component: {fileID: 1633579875869276952}
   m_Layer: 5
   m_Name: VirtualVerticalScrollView
   m_TagString: Untagged
@@ -208,33 +207,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614d2cba4524d9b40bf122da9cd76f06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.NewVirtualVerticalScrollView
-  prefab: {fileID: 1183809732555434985, guid: fd744de0bc4353245bacd4b597be6626, type: 3}
   scrollView: {fileID: 1597581429500073951}
   viewPort: {fileID: 3059205214735236701}
   content: {fileID: 4905293765551762347}
+  scrollbar: {fileID: 4174158465660255707}
   padding:
     m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
   spacing: 0
-  alignment: 0
   isControlChildSize: 0
+  isReverse: 0
   debugPrefab: {fileID: 7832577812277928746, guid: beabc067b8ee95d48956907e76f3b902, type: 3}
---- !u!114 &1633579875869276952
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2497381564939546124}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35e396037c02e464e9a806eab00cbbc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: xeon.jp.x_debugger::VirtualScrollViewTest
-  scrollView: {fileID: 7800088331860383036}
-  prefab: {fileID: 1183809732555434985, guid: fd744de0bc4353245bacd4b597be6626, type: 3}
+  prevIsReverse: 0
+  alignment: 0
 --- !u!1 &2948736241690079077
 GameObject:
   m_ObjectHideFlags: 0

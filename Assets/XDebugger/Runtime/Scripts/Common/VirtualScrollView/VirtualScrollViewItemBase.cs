@@ -33,10 +33,34 @@ namespace Xeon.Common
             RectTransform.anchoredPosition3D = position;
         }
 
+        public virtual void SetVerticalAlignment(VerticalAlignment alignment)
+        {
+            var vector = alignment switch
+            {
+                VerticalAlignment.Top => new Vector2(0f, 1f),
+                VerticalAlignment.Middle => new Vector2(0f, 0.5f),
+                VerticalAlignment.Bottom => new Vector2(0f, 0f),
+                _ => throw new InvalidEnumArgumentException()
+            };
+            RectTransform.anchorMin = vector;
+            RectTransform.anchorMax = vector;
+            RectTransform.pivot = vector;
+            var position = RectTransform.anchoredPosition3D;
+            position.y = 0f;
+            RectTransform.anchoredPosition3D = position;
+        }
+
         public void SetFittingItemWith(float contentWidth)
         {
             var size = RectTransform.sizeDelta;
             size.x = contentWidth;
+            RectTransform.sizeDelta = size;
+        }
+
+        public void SetFittingItemHeight(float contentHeight)
+        {
+            var size = RectTransform.sizeDelta;
+            size.y = contentHeight;
             RectTransform.sizeDelta = size;
         }
 

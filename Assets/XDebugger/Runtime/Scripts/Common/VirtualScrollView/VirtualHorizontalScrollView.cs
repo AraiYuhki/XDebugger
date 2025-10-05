@@ -3,10 +3,10 @@ using UnityEngine;
 namespace Xeon.Common
 {
     [ExecuteInEditMode]
-    public class VirtualVerticalScrollView : VirtualScrollView
+    public class VirtualHorizontalScrollView : VirtualScrollView
     {
         [SerializeField]
-        private HorizontalAlignment alignment = HorizontalAlignment.Left;
+        private VerticalAlignment alignment = VerticalAlignment.Top;
 
         public override void Setup(VirtualScrollViewControllerBase controller)
         {
@@ -18,26 +18,24 @@ namespace Xeon.Common
         {
             if (controller == null)
                 return;
-
-            var isNext = position.y - prevScrollPosition.y < 0;
+            var isNext = position.x - prevScrollPosition.x < 0;
             prevScrollPosition = position;
-
-            controller.Update(isNext, position.y);
+            controller.Update(isNext, position.x);
         }
 
         protected override void SetReverseMode()
         {
-            if (isReverse)
+            if (!isReverse)
             {
                 content.anchorMin = Vector2.zero;
-                content.anchorMax = Vector2.right;
-                content.pivot = new Vector2(0.5f, 0f);
+                content.anchorMax = Vector2.up;
+                content.pivot = Vector2.up;
             }
             else
             {
-                content.anchorMin = Vector2.up;
+                content.anchorMin = Vector2.right;
                 content.anchorMax = Vector2.one;
-                content.pivot = new Vector2(0.5f, 1f);
+                content.pivot = Vector2.one;
             }
             controller?.SetIsReverse(isReverse);
         }
@@ -45,7 +43,7 @@ namespace Xeon.Common
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
-            controller?.SetHorizontalAlignment(alignment);
+            controller?.SetVerticalAlignment(alignment);
             base.OnValidate();
         }
 #endif
