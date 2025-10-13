@@ -264,7 +264,7 @@ GameObject:
   - component: {fileID: 8490442162555157232}
   - component: {fileID: 5744040241386162850}
   m_Layer: 5
-  m_Name: VirtualHorizontalScrollView
+  m_Name: FlyweightHorizontalScrollView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

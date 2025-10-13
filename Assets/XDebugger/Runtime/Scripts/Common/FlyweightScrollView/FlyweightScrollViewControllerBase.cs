@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 namespace Xeon.Common
 {
-    public abstract class VirtualScrollViewControllerBase : IDisposable
+    public abstract class FlyweightScrollViewControllerBase : IDisposable
     {
         // ====================================================================================================
         // Fields & Properties
         // ====================================================================================================
 
         // Fields
-        private LinkedList<VirtualScrollViewItemBase> itemList = new();
+        private LinkedList<FlyweightScrollViewItemBase> itemList = new();
         private Action<int> onChangedItemCount;
 
         protected float scrollPosition = 0f;
@@ -42,9 +43,9 @@ namespace Xeon.Common
         // Constructor
         // ====================================================================================================
 
-        public VirtualScrollViewControllerBase() { }
+        public FlyweightScrollViewControllerBase() { }
 
-        public VirtualScrollViewControllerBase(Action<int> onChangedItemCount = null)
+        public FlyweightScrollViewControllerBase(Action<int> onChangedItemCount = null)
         {
             this.onChangedItemCount = onChangedItemCount;
         }
@@ -264,17 +265,74 @@ namespace Xeon.Common
         /// <summary>
         /// データソースのアイテム数が変更されたときに呼び出されるイベントハンドラ。
         /// </summary>
-        protected void OnChangedItemCount(object sender, EventArgs e)
+        /// <summary>
+        /// データソースのアイテム数が変更されたときに呼び出されるイベントハンドラ。
+        /// 不要な再計算を避け、差分のみを更新します。
+        /// </summary>
+        protected void OnChangedItemCount(object sender, NotifyCollectionChangedEventArgs e)
         {
-            UpdateContainerSize();
-            UpdateInternal();
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    {
+                        // 新しいアイテムが追加された場合のみサイズ更新
+                        UpdateContainerSize();
+
+                        // 表示範囲内に新規アイテムが入る場合のみ再描画
+                        if (tailIndex >= ItemCount - 1)
+                        {
+                            // ビューの範囲外なら何もしない
+                            UpdateView();
+                        }
+
+                        break;
+                    }
+
+                case NotifyCollectionChangedAction.Remove:
+                    {
+                        // アイテム削除時はサイズ更新
+                        UpdateContainerSize();
+
+                        // 表示範囲より後ろが消えた場合は再描画不要
+                        // 表示中の範囲に影響がある場合のみ再描画
+                        if (headIndex >= ItemCount)
+                        {
+                            headIndex = Mathf.Max(0, ItemCount - itemList.Count);
+                            tailIndex = headIndex + itemList.Count - 1;
+                        }
+
+                        UpdateView();
+                        break;
+                    }
+
+                case NotifyCollectionChangedAction.Reset:
+                    {
+                        // 全リセット時は完全再構築
+                        UpdateContainerSize();
+                        (headIndex, tailIndex) = CalculateIndex();
+                        UpdateView();
+                        break;
+                    }
+
+                case NotifyCollectionChangedAction.Replace:
+                case NotifyCollectionChangedAction.Move:
+                default:
+                    // 要素数に変化がない場合は再描画だけ
+                    UpdateView();
+                    break;
+            }
+
+            // 逆順モードのときのみ再計算を強制
             if (isReverse)
             {
                 (headIndex, tailIndex) = CalculateIndex();
                 UpdateView();
             }
+
+            // ItemCount変更通知
             onChangedItemCount?.Invoke(ItemCount);
         }
+
 
         /// <summary>
         /// スクロールコンテンツ全体のサイズを更新します。
@@ -410,11 +468,11 @@ namespace Xeon.Common
         /// <summary>
         /// 指定したインデックスに対応するアイテムのインスタンスを生成します。
         /// </summary>
-        protected abstract VirtualScrollViewItemBase CreateItem(int index);
+        protected abstract FlyweightScrollViewItemBase CreateItem(int index);
 
         /// <summary>
         /// アイテムの表示内容を、指定したインデックスのデータで更新します。
         /// </summary>
-        protected abstract void OnChangedItemIndex(int index, VirtualScrollViewItemBase target);
+        protected abstract void OnChangedItemIndex(int index, FlyweightScrollViewItemBase target);
     }
 }

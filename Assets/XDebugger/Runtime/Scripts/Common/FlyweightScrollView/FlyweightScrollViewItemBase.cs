@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Xeon.Common
 {
-    public abstract class VirtualScrollViewItemBase
+    public abstract class FlyweightScrollViewItemBase
     {
         public GameObject gameObject { get; protected set; }
         public RectTransform RectTransform { get; protected set; }
@@ -11,7 +11,7 @@ namespace Xeon.Common
 
         private readonly RectTransform viewPort;
 
-        public VirtualScrollViewItemBase(RectTransform viewPort)
+        public FlyweightScrollViewItemBase(RectTransform viewPort)
         {
             this.viewPort = viewPort;
         }

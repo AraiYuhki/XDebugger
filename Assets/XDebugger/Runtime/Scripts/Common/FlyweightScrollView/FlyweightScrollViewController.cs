@@ -8,14 +8,14 @@ namespace Xeon.Common
     /// </summary>
     /// <typeparam name="TData">リストに表示するデータの型</typeparam>
     /// <typeparam name="TItem">表示に使用するUIアイテムのコンポーネントの型</typeparam>
-    public class VirtualScrollViewController<TData, TItem> : VirtualScrollViewControllerBase
+    public class FlyweightScrollViewController<TData, TItem> : FlyweightScrollViewControllerBase
         where TItem : MonoBehaviour, ISetupable<TData>
     {
         // ====================================================================================================
         // Fields & Properties
         // ====================================================================================================
 
-        private ObservableCollection<TData> dataList;
+        private IObservableCollection<TData> dataList;
         private readonly TItem prefab;
 
         public override int ItemCount => dataList.Count;
@@ -25,7 +25,7 @@ namespace Xeon.Common
         // Constructor
         // ====================================================================================================
 
-        public VirtualScrollViewController(TItem prefab, ObservableCollection<TData> dataList)
+        public FlyweightScrollViewController(TItem prefab, IObservableCollection<TData> dataList)
         {
             this.prefab = prefab;
             this.itemSize = prefab.GetComponent<RectTransform>().rect.size;
@@ -41,7 +41,7 @@ namespace Xeon.Common
         /// <summary>
         /// 表示するデータリストを差し替えます。
         /// </summary>
-        public void SetDataList(ObservableCollection<TData> newDataList)
+        public void SetDataList(IObservableCollection<TData> newDataList)
         {
             if (dataList != null)
             {
@@ -70,13 +70,13 @@ namespace Xeon.Common
         /// <summary>
         /// プレハブからアイテムのインスタンスを生成します。
         /// </summary>
-        protected override VirtualScrollViewItemBase CreateItem(int index)
+        protected override FlyweightScrollViewItemBase CreateItem(int index)
         {
             var instance = GameObject.Instantiate(prefab, container);
             instance.name = $"Item({index})";
             instance.gameObject.SetActive(false);
 
-            var scrollItem = new VirtualScrollItem<TItem>(instance, viewPort, horizontalAlignment);
+            var scrollItem = new FlyweightlScrollItem<TItem>(instance, viewPort, horizontalAlignment);
             scrollItem.SetPosition(CreatePosition(index));
 
             return scrollItem;
@@ -85,9 +85,9 @@ namespace Xeon.Common
         /// <summary>
         /// アイテムの表示を、指定したインデックスのデータで更新します。
         /// </summary>
-        protected override void OnChangedItemIndex(int index, VirtualScrollViewItemBase target)
+        protected override void OnChangedItemIndex(int index, FlyweightScrollViewItemBase target)
         {
-            if (target is not VirtualScrollItem<TItem> item) return;
+            if (target is not FlyweightlScrollItem<TItem> item) return;
             if (index < 0 || index >= dataList.Count) return;
             if (isReverse)
                 index = dataList.Count - index - 1;

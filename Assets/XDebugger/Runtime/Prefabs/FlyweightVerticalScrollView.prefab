@@ -138,7 +138,7 @@ GameObject:
   - component: {fileID: 1597581429500073951}
   - component: {fileID: 7800088331860383036}
   m_Layer: 5
-  m_Name: VirtualVerticalScrollView
+  m_Name: FlyweightVerticalScrollView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -204,13 +204,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 2497381564939546124}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 614d2cba4524d9b40bf122da9cd76f06, type: 3}
+  m_Script: {fileID: 11500000, guid: 35ce79c02b9ad154080d0d517babeec6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.NewVirtualVerticalScrollView
   scrollView: {fileID: 1597581429500073951}
   viewPort: {fileID: 3059205214735236701}
   content: {fileID: 4905293765551762347}
-  scrollbar: {fileID: 4174158465660255707}
   padding:
     m_Left: 0
     m_Right: 0

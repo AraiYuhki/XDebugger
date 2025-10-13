@@ -19,12 +19,12 @@ namespace Xeon.Common
         Bottom,
     }
 
-    public abstract class VirtualScrollView : MonoBehaviour
+    public abstract class FlyweightScrollView : MonoBehaviour
     {
         [SerializeField]
         protected ScrollRect scrollView;
         [SerializeField]
-        protected VirtualScrollViewport viewPort;
+        protected FlyweightScrollViewport viewPort;
         [SerializeField]
         protected RectTransform content;
         [SerializeField]
@@ -36,7 +36,7 @@ namespace Xeon.Common
         [SerializeField]
         protected bool isReverse = false;
 
-        protected VirtualScrollViewControllerBase controller;
+        protected FlyweightScrollViewControllerBase controller;
         protected Vector2 prevScrollPosition = Vector2.zero;
 
         public float Spacing
@@ -49,7 +49,7 @@ namespace Xeon.Common
             }
         }
 
-        public virtual void Setup(VirtualScrollViewControllerBase controller)
+        public virtual void Setup(FlyweightScrollViewControllerBase controller)
         {
             scrollView.onValueChanged.RemoveListener(OnChangedScrollPosition);
             scrollView.onValueChanged.AddListener(OnChangedScrollPosition);
@@ -88,7 +88,8 @@ namespace Xeon.Common
             var dataList = new ObservableCollection<int>();
             for (var count = 0; count < 100; count++)
                 dataList.Add(count);
-            var controller = new VirtualScrollViewController<int, DebugVirtualTestItem>(debugPrefab, dataList);
+            var adapter = new FlyweightScrollViewDataAdapter<int>(dataList);
+            var controller = new FlyweightScrollViewController<int, DebugVirtualTestItem>(debugPrefab, adapter);
             Setup(controller);
             controller.UpdateContainerSize();
             controller.UpdateView();
@@ -100,16 +101,16 @@ namespace Xeon.Common
             controller = null;
         }
 
-        [UnityEditor.CustomEditor(typeof(VirtualScrollView), true)]
-        private class VirtualScrollViewEditor : UnityEditor.Editor
+        [UnityEditor.CustomEditor(typeof(FlyweightScrollView), true)]
+        private class FlyweightScrollViewEditor : UnityEditor.Editor
         {
             public override void OnInspectorGUI()
             {
                 base.OnInspectorGUI();
                 if (GUILayout.Button("Debug Simulate"))
-                    (target as VirtualScrollView).DebugCreate();
+                    (target as FlyweightScrollView).DebugCreate();
                 if (GUILayout.Button("Clear"))
-                    (target as VirtualScrollView).Clear();
+                    (target as FlyweightScrollView).Clear();
             }
         }
 #endif

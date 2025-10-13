@@ -3,12 +3,12 @@ using UnityEngine;
 namespace Xeon.Common
 {
     [ExecuteInEditMode]
-    public class VirtualHorizontalScrollView : VirtualScrollView
+    public class FlyweightVerticalScrollView : FlyweightScrollView
     {
         [SerializeField]
-        private VerticalAlignment alignment = VerticalAlignment.Top;
+        private HorizontalAlignment alignment = HorizontalAlignment.Left;
 
-        public override void Setup(VirtualScrollViewControllerBase controller)
+        public override void Setup(FlyweightScrollViewControllerBase controller)
         {
             base.Setup(controller);
             controller.Setup(viewPort.RectTransform, content, padding, spacing, alignment, isControlChildSize, isReverse);
@@ -18,24 +18,26 @@ namespace Xeon.Common
         {
             if (controller == null)
                 return;
-            var isNext = position.x - prevScrollPosition.x < 0;
+
+            var isNext = position.y - prevScrollPosition.y < 0;
             prevScrollPosition = position;
-            controller.Update(isNext, position.x);
+
+            controller.Update(isNext, position.y);
         }
 
         protected override void SetReverseMode()
         {
-            if (!isReverse)
+            if (isReverse)
             {
                 content.anchorMin = Vector2.zero;
-                content.anchorMax = Vector2.up;
-                content.pivot = Vector2.up;
+                content.anchorMax = Vector2.right;
+                content.pivot = new Vector2(0.5f, 0f);
             }
             else
             {
-                content.anchorMin = Vector2.right;
+                content.anchorMin = Vector2.up;
                 content.anchorMax = Vector2.one;
-                content.pivot = Vector2.one;
+                content.pivot = new Vector2(0.5f, 1f);
             }
             controller?.SetIsReverse(isReverse);
         }
@@ -43,7 +45,7 @@ namespace Xeon.Common
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
-            controller?.SetVerticalAlignment(alignment);
+            controller?.SetHorizontalAlignment(alignment);
             base.OnValidate();
         }
 #endif

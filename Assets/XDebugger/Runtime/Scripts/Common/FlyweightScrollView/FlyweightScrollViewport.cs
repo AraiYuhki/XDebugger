@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace Xeon.Common
 {
     [RequireComponent(typeof(RectTransform), typeof(RectMask2D))]
-    public class VirtualScrollViewport : MonoBehaviour
+    public class FlyweightScrollViewport : MonoBehaviour
     {
         [SerializeField]
         private RectTransform rectTransform;

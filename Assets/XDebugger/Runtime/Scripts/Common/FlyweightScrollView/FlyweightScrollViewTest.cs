@@ -3,21 +3,22 @@ using UnityEngine;
 using Xeon.Common;
 using Xeon.XDebugger.Console;
 
-public class VirtualScrollViewTest : MonoBehaviour
+public class FlyweightScrollViewTest : MonoBehaviour
 {
     [SerializeField]
-    private VirtualVerticalScrollView scrollView;
+    private FlyweightVerticalScrollView scrollView;
     [SerializeField]
     private LogItem prefab;
 
-    private VirtualScrollViewController<LogItemData, LogItem> controller;
+    private FlyweightScrollViewController<LogItemData, LogItem> controller;
     private ObservableCollection<LogItemData> dataList = new();
 
     private int index = 0;
 
     private void Awake()
     {
-        controller = new VirtualScrollViewController<LogItemData, LogItem>(prefab, dataList);
+        var adapter = new FlyweightScrollViewDataAdapter<LogItemData>(dataList);
+        controller = new FlyweightScrollViewController<LogItemData, LogItem>(prefab, adapter);
         scrollView.Setup(controller);
     }
 

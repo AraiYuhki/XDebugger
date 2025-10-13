@@ -2,12 +2,12 @@ using UnityEngine;
 
 namespace Xeon.Common
 {
-    public class VirtualScrollItem<T> : VirtualScrollViewItemBase
+    public class FlyweightlScrollItem<T> : FlyweightScrollViewItemBase
         where T : MonoBehaviour
     {
         public T Value { get; }
 
-        public VirtualScrollItem(T value, RectTransform viewPort, HorizontalAlignment horizontalAlignment)
+        public FlyweightlScrollItem(T value, RectTransform viewPort, HorizontalAlignment horizontalAlignment)
             : base(viewPort)
         {
             Value = value;
