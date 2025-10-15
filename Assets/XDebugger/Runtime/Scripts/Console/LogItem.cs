@@ -7,7 +7,7 @@ using Xeon.Common;
 
 namespace Xeon.XDebugger.Console
 {
-    public class LogItem : MonoBehaviour, ISetupable<LogItemData>
+    public class LogItem : MonoBehaviour, IBindable<LogItemData>
     {
         [SerializeField]
         private Image icon;
@@ -51,7 +51,7 @@ namespace Xeon.XDebugger.Console
             toggle.isOn = false;
         }
 
-        public void Setup(LogItemData data)
+        public void Bind(LogItemData data)
         {
             icon.sprite = data.Type switch
             {

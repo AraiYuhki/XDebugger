@@ -123,7 +123,7 @@ namespace Xeon.XDebugger.Console
                 logItemPool.Release(releaseItem);
             }
             var logItem = logItemPool.Get();
-            logItem.Setup(data);
+            logItem.Bind(data);
             activeItemQueue.Enqueue(logItem);
             scrollView.normalizedPosition = Vector2.zero;
             switch (type)

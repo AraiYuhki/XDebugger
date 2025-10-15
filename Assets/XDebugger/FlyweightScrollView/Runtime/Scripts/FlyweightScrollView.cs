@@ -85,6 +85,9 @@ namespace Xeon.Common
 
         private void DebugCreate()
         {
+            Clear();
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += Clear;
+            UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             var dataList = new ObservableCollection<int>();
             for (var count = 0; count < 100; count++)
                 dataList.Add(count);
@@ -97,8 +100,19 @@ namespace Xeon.Common
 
         private void Clear()
         {
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= Clear;
+            UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             controller?.Dispose();
             controller = null;
+            UnityEngine.Debug.Log("Clear");
+        }
+
+        private void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange stateChange)
+        {
+            if (stateChange is UnityEditor.PlayModeStateChange.ExitingEditMode)
+            {
+                Clear();
+            }
         }
 
         [UnityEditor.CustomEditor(typeof(FlyweightScrollView), true)]

@@ -112,6 +112,11 @@ namespace Xeon.Common
         /// </summary>
         public void UpdateView()
         {
+            if (ItemCount < itemList.Count)
+            {
+                UpdateNotEnoughData();
+                return;
+            }
             var index = headIndex;
             foreach (var item in itemList)
             {
@@ -262,6 +267,28 @@ namespace Xeon.Common
             }
         }
 
+        private void UpdateForAddItem()
+        {
+            UpdateContainerSize();
+            if (tailIndex >= ItemCount - 1)
+                UpdateView();
+        }
+
+        private void UpdateForRemove()
+        {
+            // アイテム削除時はサイズ更新
+            UpdateContainerSize();
+            // 表示範囲より後ろが消えた場合は再描画不要
+            // 表示中の範囲に影響がある場合のみ再描画
+            if (headIndex >= ItemCount)
+            {
+                headIndex = Mathf.Max(0, ItemCount - itemList.Count);
+                tailIndex = headIndex + itemList.Count - 1;
+            }
+
+            UpdateView();
+        }
+
         /// <summary>
         /// データソースのアイテム数が変更されたときに呼び出されるイベントハンドラ。
         /// </summary>
@@ -274,46 +301,19 @@ namespace Xeon.Common
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    {
-                        // 新しいアイテムが追加された場合のみサイズ更新
-                        UpdateContainerSize();
-
-                        // 表示範囲内に新規アイテムが入る場合のみ再描画
-                        if (tailIndex >= ItemCount - 1)
-                        {
-                            // ビューの範囲外なら何もしない
-                            UpdateView();
-                        }
-
-                        break;
-                    }
+                    UpdateForAddItem();
+                    break;
 
                 case NotifyCollectionChangedAction.Remove:
-                    {
-                        // アイテム削除時はサイズ更新
-                        UpdateContainerSize();
-
-                        // 表示範囲より後ろが消えた場合は再描画不要
-                        // 表示中の範囲に影響がある場合のみ再描画
-                        if (headIndex >= ItemCount)
-                        {
-                            headIndex = Mathf.Max(0, ItemCount - itemList.Count);
-                            tailIndex = headIndex + itemList.Count - 1;
-                        }
-
-                        UpdateView();
-                        break;
-                    }
+                    UpdateForRemove();
+                    break;
 
                 case NotifyCollectionChangedAction.Reset:
-                    {
-                        // 全リセット時は完全再構築
-                        UpdateContainerSize();
-                        (headIndex, tailIndex) = CalculateIndex();
-                        UpdateView();
-                        break;
-                    }
-
+                    // 全リセット時は完全再構築
+                    UpdateContainerSize();
+                    (headIndex, tailIndex) = CalculateIndex();
+                    UpdateView();
+                    break;
                 case NotifyCollectionChangedAction.Replace:
                 case NotifyCollectionChangedAction.Move:
                 default:

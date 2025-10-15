@@ -5,14 +5,14 @@ using UnityEngine.UI;
 #if UNITY_EDITOR
 namespace Xeon.Common.Debug
 {
-    public class DebugVirtualTestItem : MonoBehaviour, ISetupable<int>
+    public class DebugVirtualTestItem : MonoBehaviour, IBindable<int>
     {
         [SerializeField]
         private Image background;
         [SerializeField]
         private TMP_Text text;
 
-        public void Setup(int value)
+        public void Bind(int value)
         {
             text.text = value.ToString();
         }

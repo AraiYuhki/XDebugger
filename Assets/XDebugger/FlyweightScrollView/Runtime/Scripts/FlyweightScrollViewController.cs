@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using UnityEngine;
 
 namespace Xeon.Common
@@ -9,7 +10,7 @@ namespace Xeon.Common
     /// <typeparam name="TData">リストに表示するデータの型</typeparam>
     /// <typeparam name="TItem">表示に使用するUIアイテムのコンポーネントの型</typeparam>
     public class FlyweightScrollViewController<TData, TItem> : FlyweightScrollViewControllerBase
-        where TItem : MonoBehaviour, ISetupable<TData>
+        where TItem : MonoBehaviour, IBindable<TData>
     {
         // ====================================================================================================
         // Fields & Properties
@@ -24,6 +25,10 @@ namespace Xeon.Common
         // ====================================================================================================
         // Constructor
         // ====================================================================================================
+
+        public FlyweightScrollViewController(TItem prefab, ObservableCollection<TData> dataList) : this(prefab, new FlyweightScrollViewDataAdapter<TData>(dataList))
+        {
+        }
 
         public FlyweightScrollViewController(TItem prefab, IObservableCollection<TData> dataList)
         {
@@ -93,7 +98,7 @@ namespace Xeon.Common
                 index = dataList.Count - index - 1;
 
             var data = dataList[index];
-            item.Value.Setup(data);
+            item.Value.Bind(data);
         }
     }
 }
