@@ -79,7 +79,6 @@ namespace Xeon.Common
         {
             var instance = GameObject.Instantiate(prefab, container);
             instance.name = $"Item({index})";
-            instance.gameObject.SetActive(false);
 
             var scrollItem = new FlyweightlScrollItem<TItem>(instance, viewPort, horizontalAlignment);
             scrollItem.SetPosition(CreatePosition(index));

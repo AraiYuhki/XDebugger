@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,8 @@ namespace Xeon.Common.Debug
         private Image background;
         [SerializeField]
         private TMP_Text text;
+
+        public event Action<int> OnSelect;
 
         public void Bind(int value)
         {

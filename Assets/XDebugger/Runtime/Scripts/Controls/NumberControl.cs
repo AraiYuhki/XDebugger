@@ -1,6 +1,5 @@
 using System;
 using TMPro;
-using UnityEditor.Build.Reporting;
 using UnityEngine;
 using UnityEngine.UI;
 using Xeon.XDebugger.Model;

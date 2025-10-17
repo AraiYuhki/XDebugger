@@ -25,8 +25,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 310e8a44ce61fef46986673a0d3baaa2
+    m_Address: XDebugger/ProfilerPage
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 36780d5c10bf87a48af27b2f2a8976de
     m_Address: XDebugger/ActionControl
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 69eea5a57262ba74782a3d43ce843bef
+    m_Address: XDebugger/ConsolePage
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -69,9 +69,7 @@ namespace Xeon.Common
             this.isReverse = isReverse;
             isVertical = true;
 
-            headIndex = 0;
-            tailIndex = Mathf.CeilToInt(viewPort.rect.height / itemHeight);
-            CreateItems();
+            UpdateViewportSize();
         }
 
         /// <summary>
@@ -88,9 +86,18 @@ namespace Xeon.Common
             this.isReverse = isReverse;
             isVertical = false;
 
-            headIndex = 0;
-            tailIndex = Mathf.CeilToInt(viewPort.rect.width / itemWidth);
+            UpdateViewportSize();
+        }
+
+        public void UpdateViewportSize()
+        {
+            if (isVertical)
+                tailIndex = Mathf.CeilToInt(viewPort.rect.height / itemHeight);
+            else
+                tailIndex = Mathf.CeilToInt(viewPort.rect.width / itemWidth);
+            tailIndex += headIndex;
             CreateItems();
+            UpdateView();
         }
 
         /// <summary>

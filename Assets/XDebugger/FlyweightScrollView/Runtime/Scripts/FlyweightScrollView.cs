@@ -49,10 +49,18 @@ namespace Xeon.Common
             }
         }
 
+        public Vector2 normalizedPosition
+        {
+            get => scrollView.normalizedPosition;
+            set => scrollView.normalizedPosition = value;
+        }
+
         public virtual void Setup(FlyweightScrollViewControllerBase controller)
         {
             scrollView.onValueChanged.RemoveListener(OnChangedScrollPosition);
             scrollView.onValueChanged.AddListener(OnChangedScrollPosition);
+            viewPort.OnRectTranformDimensionsChanged -= controller.UpdateViewportSize;
+            viewPort.OnRectTranformDimensionsChanged += controller.UpdateViewportSize;
             prevScrollPosition = scrollView.normalizedPosition;
             this.controller = controller;
         }

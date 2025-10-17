@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.Profiler;
 
 namespace Xeon.XDebugger.Model
 {
@@ -52,6 +53,8 @@ namespace Xeon.XDebugger.Model
             AddLabel("===== Debug Menu =====");
 
             AddPageLinkButton<SystemPageModel>("System Info");
+            AddPageLinkButton<ProfilerPageModel>("Profiler");
+            AddPageLinkButton<ConsolePageModel>("Console");
 
             AddButton("Start", () => Debug.Log("開始が選択されました"));
             AddButton("Exit", () => Debug.Log("終了が選択されました"));

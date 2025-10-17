@@ -12,7 +12,7 @@ using Xeon.XDebugger.Control;
 
 namespace Xeon.XDebugger.Profiler
 {
-    public class ProfilerController : PageControl
+    public class ProfilerPage : PageControl
     {
         private const int FrameBufferSize = 400;
 

@@ -20,6 +20,10 @@ namespace Xeon.Common
                 return;
 
             var isNext = position.y - prevScrollPosition.y < 0;
+            if (position.y < float.Epsilon)
+                isNext = true;
+            else if (position.y >= 1f)
+                isNext = false;
             prevScrollPosition = position;
 
             controller.Update(isNext, position.y);

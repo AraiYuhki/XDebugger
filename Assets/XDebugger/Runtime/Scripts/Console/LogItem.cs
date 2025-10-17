@@ -1,7 +1,6 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 using Xeon.Common;
 
@@ -15,10 +14,6 @@ namespace Xeon.XDebugger.Console
         private TMP_Text message;
         [SerializeField]
         private Toggle toggle;
-        [SerializeField]
-        private GameObject extendGroup;
-        [SerializeField]
-        private TMP_Text stackTraceLabel;
 
         [Header("Icon sprites")]
         [SerializeField]
@@ -32,18 +27,27 @@ namespace Xeon.XDebugger.Console
 
         public LogItemData Data { get; private set; }
 
+        private event Action<LogItemData> onSelect;
+
+        public event Action<LogItemData> OnSelect
+        {
+            add
+            {
+                onSelect -= value;
+                onSelect += value;
+            }
+
+            remove => onSelect -= value;
+        }
+
         private void Awake()
         {
+            toggle.onValueChanged.AddListener(OnChangedToggle);
         }
 
         public void SetToggleGroup(ToggleGroup group)
         {
             toggle.group = group;
-        }
-
-        public void SetOnChangedIsOn(Action onChanged)
-        {
-            toggle.onValueChanged.AddListener(_ => onChanged?.Invoke());
         }
 
         public void SetToggleOff()
@@ -63,21 +67,10 @@ namespace Xeon.XDebugger.Console
             Data = data;
         }
 
-        public void Setup(string condition, string stackTrace, LogType logType)
-        {
-            icon.sprite = logType switch
-            {
-                LogType.Log => infoIcon,
-                LogType.Warning => warningIcon,
-                _ => errorIcon
-            };
-            message.text = condition;
-            stackTraceLabel.text = stackTrace;
-        }
-
         private void OnChangedToggle(bool isOn)
         {
-            extendGroup.SetActive(isOn);
+            if (!isOn) return;
+            onSelect?.Invoke(Data);
         }
     }
 }
