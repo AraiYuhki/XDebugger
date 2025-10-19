@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,8 +8,6 @@ namespace Xeon.XDebugger.Console
 {
     public class ConsoleController : MonoBehaviour
     {
-        private const int LogBufferCapacity = 1000;
-
         [SerializeField]
         private LogItem logItemPrefab;
         [SerializeField]
@@ -34,81 +33,61 @@ namespace Xeon.XDebugger.Console
         [SerializeField]
         private Toggle errorToggle;
 
-        private int infoCount = 0;
-        private int warningCount = 0;
-        private int errorCount = 0;
-
-        private CircularBuffer<LogItemData> logDataList = new(LogBufferCapacity);
         private FlyweightScrollViewController<LogItemData, LogItem> controller;
 
         private void Awake()
         {
-            controller = new FlyweightScrollViewController<LogItemData, LogItem>(logItemPrefab, logDataList);
-            scrollView.Setup(controller);
-            Application.logMessageReceived += OnReceivedLogMessage;
             infoCountLabel.text = "0";
             warningCountLabel.text = "0";
             errorCountLabel.text = "0";
         }
-        
-        private float elapsed = 1f;
-        private void Update()
-        {
-            elapsed -= Time.deltaTime;
-            if (elapsed > 0f) return;
-            switch(Random.Range(0, 3))
-            {
-                case 0:
-                    Debug.Log($"Test log {infoCount}");
-                    break;
-                case 1:
-                    Debug.LogWarning($"Test warning {warningCount}");
-                    break;
-                default:
-                    Debug.LogError($"Test error {errorCount}");
-                    break;
-            };
-            elapsed = 0.5f;
-        }
 
         private void OnDestroy()
         {
-            Application.logMessageReceived -= OnReceivedLogMessage;
+            controller.Dispose();
         }
 
-        private static int logIndex = 0;
-
-        private void OnReceivedLogMessage(string condition, string stackTrace, LogType type)
+        public void Initialize(IObservableCollection<LogItemData> logDataList)
         {
-            var data = new LogItemData(type, condition, stackTrace, logIndex, true);
-            logIndex++;
-            logDataList.PushBack(data);
-            scrollView.normalizedPosition = Vector2.zero;
-            switch (type)
-            {
-                case LogType.Log:
-                    infoCount++;
-                    infoCountLabel.text = infoCount > 999 ? "999+" : infoCount.ToString();
-                    break;
-                case LogType.Warning:
-                    warningCount++;
-                    warningCountLabel.text = warningCount > 999 ? "999+" : warningCount.ToString();
-                    break;
-                default:
-                    errorCount++;
-                    errorCountLabel.text = errorCount > 999 ? "999+" : errorCount.ToString();
-                    break;
-            }
+            logDataList.CollectionChanged += OnCollectionChanged;
+            controller = new (logItemPrefab, logDataList, OnCreatedItem);
+            scrollView.Setup(controller);
+            scrollView.normalizedPosition = Vector3.zero;
         }
 
-        private void OnChangedSelectItem(LogItem item)
+        public void OnAddInfoLog(int count)
         {
-            if (!toggleGroup.AnyTogglesOn())
+            infoCountLabel.text = count > 999 ? "999+" : count.ToString();
+        }
+
+        public void OnAddWarningLog(int count)
+        {
+            warningCountLabel.text = count > 999 ? "999+" : count.ToString();
+        }
+
+        public void OnAddErrorLog(int count)
+        {
+            errorCountLabel.text = count > 999 ? "999+" : count.ToString();
+        }
+
+        private void OnCreatedItem(LogItem item)
+        {
+            item.SetToggleGroup(toggleGroup);
+            item.OnSelect += OnChangedSelectItem;
+        }
+
+        private void OnChangedSelectItem(LogItemData data)
+        {
+            detailLabel.text = data.ToString();
+        }
+
+        protected void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add && scrollView.normalizedPosition.y <= float.Epsilon)
             {
-                detailLabel.text = string.Empty;
-                return;
+                scrollView.normalizedPosition = Vector2.zero;
+                controller.FixToLast();
             }
-            detailLabel.text = item.Data.ToString();
         }
 
     }

@@ -23,14 +23,14 @@ namespace Xeon.XDebugger.Control
 
         public Transform Content => content;
 
-        public void Open(PageModel model = null, Action onOpened = null)
+        public virtual void Open(PageModel model = null, Action onOpened = null)
         {
             this.model = model;
             this.onOpened = onOpened;
             animator.Play(OpenId);
         }
 
-        public void Close(Action onClosed = null)
+        public virtual void Close(Action onClosed = null)
         {
             this.onClosed = onClosed;
             animator.Play(CloseId);

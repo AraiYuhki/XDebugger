@@ -63,6 +63,7 @@ namespace Xeon.XDebugger
 
             mainMenu.SetActive(false);
             isShow = false;
+            ConsolePageModel.PreInitialize();
 
             DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
         }

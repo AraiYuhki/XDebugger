@@ -135,6 +135,20 @@ namespace Xeon.Common
             }
         }
 
+        public virtual void FixToHead()
+        {
+            headIndex = 0;
+            tailIndex = itemList.Count - 1;
+            UpdateView();
+        }
+
+        public virtual void FixToLast()
+        {
+            tailIndex = ItemCount - 1;
+            headIndex = Mathf.Max(0, tailIndex - itemList.Count);
+            UpdateView();
+        }
+
         /// <summary>
         /// ItemCountが変更された際のコールバックを設定します。
         /// </summary>

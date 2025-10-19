@@ -65,6 +65,7 @@ namespace Xeon.XDebugger.Console
             };
             message.text = data.Contents;
             Data = data;
+            SetToggleOff();
         }
 
         private void OnChangedToggle(bool isOn)

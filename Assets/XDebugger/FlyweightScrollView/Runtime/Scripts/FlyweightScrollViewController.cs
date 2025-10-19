@@ -19,6 +19,18 @@ namespace Xeon.Common
         private IObservableCollection<TData> dataList;
         private readonly TItem prefab;
 
+        private event Action<TItem> onItemCreated;
+
+        public event Action<TItem> OnItemCreated
+        {
+            add
+            {
+                onItemCreated -= value;
+                onItemCreated += value;
+            }
+            remove => onItemCreated -= value;
+        }
+
         public override int ItemCount => dataList.Count;
 
 
@@ -26,14 +38,15 @@ namespace Xeon.Common
         // Constructor
         // ====================================================================================================
 
-        public FlyweightScrollViewController(TItem prefab, ObservableCollection<TData> dataList) : this(prefab, new FlyweightScrollViewDataAdapter<TData>(dataList))
+        public FlyweightScrollViewController(TItem prefab, ObservableCollection<TData> dataList, Action<TItem> onCreatedItem) : this(prefab, new FlyweightScrollViewDataAdapter<TData>(dataList), onCreatedItem)
         {
         }
 
-        public FlyweightScrollViewController(TItem prefab, IObservableCollection<TData> dataList)
+        public FlyweightScrollViewController(TItem prefab, IObservableCollection<TData> dataList, Action<TItem> onItemCreated = null)
         {
             this.prefab = prefab;
             this.itemSize = prefab.GetComponent<RectTransform>().rect.size;
+            this.onItemCreated += onItemCreated;
             this.dataList = dataList;
             this.dataList.CollectionChanged += OnChangedItemCount;
         }
@@ -82,6 +95,7 @@ namespace Xeon.Common
 
             var scrollItem = new FlyweightlScrollItem<TItem>(instance, viewPort, horizontalAlignment);
             scrollItem.SetPosition(CreatePosition(index));
+            onItemCreated?.Invoke(instance);
 
             return scrollItem;
         }

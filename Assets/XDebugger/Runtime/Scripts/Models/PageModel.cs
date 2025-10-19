@@ -113,12 +113,18 @@ namespace Xeon.XDebugger.Model
             foreach (var model in modelList)
                 controlList.Add(model.CreateControl(control.Content));
             control.Open(pageModel);
+            OpenedPage();
+        }
+
+        protected virtual void OpenedPage()
+        {
         }
 
         public virtual void Close(Action onClose = null)
         {
             control.Close(() =>
             {
+                ClosedPage();
                 Clear();
                 XDebugger.Instance.ClosePage(this);
                 onClose?.Invoke();
@@ -126,6 +132,10 @@ namespace Xeon.XDebugger.Model
                 content = null;
                 control = null;
             });
+        }
+
+        protected virtual void ClosedPage()
+        {
         }
 
         public void Show(bool isRefresh = false)
