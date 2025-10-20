@@ -14,7 +14,7 @@ namespace Xeon.Common
 
         public RectTransform RectTransform => rectTransform;
 
-        public event Action OnRectTranformDimensionsChanged;
+        public event Action OnRectTransformDimensionsChanged;
 
         private void OnRectTransformDimensionsChange()
         {
@@ -25,7 +25,7 @@ namespace Xeon.Common
         {
             if (!isDirty)
                 return;
-            OnRectTranformDimensionsChanged?.Invoke();
+            OnRectTransformDimensionsChanged?.Invoke();
             isDirty = false;
         }
     }

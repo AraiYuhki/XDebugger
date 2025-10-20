@@ -92,7 +92,7 @@ namespace Xeon.Common.FlyweightScrollView
             var instance = GameObject.Instantiate(prefab, container);
             instance.name = $"Item({index})";
 
-            var scrollItem = new FlyweightlScrollItem<TItem>(instance, viewPort, horizontalAlignment);
+            var scrollItem = new FlyweightScrollItem<TItem>(instance, viewPort, horizontalAlignment);
             scrollItem.SetPosition(CreatePosition(index));
             onItemCreated?.Invoke(instance);
 
@@ -104,7 +104,7 @@ namespace Xeon.Common.FlyweightScrollView
         /// </summary>
         protected override void OnChangedItemIndex(int index, FlyweightScrollViewItemBase target)
         {
-            if (target is not FlyweightlScrollItem<TItem> item) return;
+            if (target is not FlyweightScrollItem<TItem> item) return;
             if (index < 0 || index >= dataList.Count) return;
             if (isReverse)
                 index = dataList.Count - index - 1;

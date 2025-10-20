@@ -31,5 +31,16 @@ namespace Xeon.Common.FlyweightScrollView
         public abstract int CalculateIndex(int itemCount, float scrollPosition);
         public abstract Vector3 GetPosition(int index);
         public abstract float GetContentSize(int itemCount);
+
+        /// <summary>
+        /// 現在のnormalizedPositionからスクロールのピクセルオフセットを算出します。
+        /// </summary>
+        public abstract float GetContentOffset(int itemCount, float scrollPosition);
+
+        /// <summary>
+        /// ピクセルオフセットからnormalizedPositionへ復元します。
+        /// </summary>
+        public abstract float GetScrollPositionFromOffset(int itemCount, float contentOffset);
+
     }
 }

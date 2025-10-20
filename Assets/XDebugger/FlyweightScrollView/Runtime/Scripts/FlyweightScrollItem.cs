@@ -2,12 +2,12 @@ using UnityEngine;
 
 namespace Xeon.Common.FlyweightScrollView
 {
-    public class FlyweightlScrollItem<T> : FlyweightScrollViewItemBase
+    public class FlyweightScrollItem<T> : FlyweightScrollViewItemBase
         where T : MonoBehaviour
     {
         public T Value { get; }
 
-        public FlyweightlScrollItem(T value, RectTransform viewPort, HorizontalAlignment horizontalAlignment)
+        public FlyweightScrollItem(T value, RectTransform viewPort, HorizontalAlignment horizontalAlignment)
             : base(viewPort)
         {
             Value = value;

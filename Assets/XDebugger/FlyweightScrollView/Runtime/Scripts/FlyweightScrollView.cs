@@ -39,8 +39,8 @@ namespace Xeon.Common.FlyweightScrollView
         {
             scrollView.onValueChanged.RemoveListener(OnChangedScrollPosition);
             scrollView.onValueChanged.AddListener(OnChangedScrollPosition);
-            viewPort.OnRectTranformDimensionsChanged -= controller.UpdateViewportSize;
-            viewPort.OnRectTranformDimensionsChanged += controller.UpdateViewportSize;
+            viewPort.OnRectTransformDimensionsChanged -= controller.UpdateViewportSize;
+            viewPort.OnRectTransformDimensionsChanged += controller.UpdateViewportSize;
             prevScrollPosition = scrollView.normalizedPosition;
             this.controller = controller;
             if (param.IsAtLastSticky)

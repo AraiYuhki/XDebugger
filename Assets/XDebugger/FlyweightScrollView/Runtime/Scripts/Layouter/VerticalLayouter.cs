@@ -57,5 +57,24 @@ namespace Xeon.Common.FlyweightScrollView
             var contentOffset = (1f - Mathf.Clamp01(scrollPosition)) * maxScroll;
             return Mathf.FloorToInt(contentOffset / ItemSize);
         }
+
+        public override float GetContentOffset(int itemCount, float scrollPosition)
+        {
+            var totalContentHeight = itemCount * ItemSize + padding.vertical;
+            var viewPortHeight = viewPort.rect.height;
+            var maxScroll = Mathf.Max(0f, totalContentHeight - viewPortHeight);
+            // vertical uses inverted normalized (1 at top)
+            return (1f - Mathf.Clamp01(scrollPosition)) * maxScroll;
+        }
+
+        public override float GetScrollPositionFromOffset(int itemCount, float contentOffset)
+        {
+            var totalContentHeight = itemCount * ItemSize + padding.vertical;
+            var viewPortHeight = viewPort.rect.height;
+            var maxScroll = Mathf.Max(0f, totalContentHeight - viewPortHeight);
+            if (maxScroll <= 0f) return 1f; // stick to top if no scrollable area
+            var t = Mathf.Clamp01(contentOffset / maxScroll);
+            return 1f - t;
+        }
     }
 }
