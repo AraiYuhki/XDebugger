@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     [ExecuteInEditMode]
     public class FlyweightHorizontalScrollView : FlyweightScrollView
@@ -11,7 +11,7 @@ namespace Xeon.Common
         public override void Setup(FlyweightScrollViewControllerBase controller)
         {
             base.Setup(controller);
-            controller.Setup(viewPort.RectTransform, content, padding, spacing, alignment, isControlChildSize, isReverse);
+            controller.Setup(scrollView, param, content, alignment);
         }
 
         protected override void OnChangedScrollPosition(Vector2 position)
@@ -20,12 +20,13 @@ namespace Xeon.Common
                 return;
             var isNext = position.x - prevScrollPosition.x < 0;
             prevScrollPosition = position;
-            controller.Update(isNext, position.x);
+            var isPositionLast = position.x <= float.Epsilon;
+            controller.Update(isNext, position.x, isPositionLast);
         }
 
         protected override void SetReverseMode()
         {
-            if (!isReverse)
+            if (!param.IsReverse)
             {
                 content.anchorMin = Vector2.zero;
                 content.anchorMax = Vector2.up;
@@ -37,7 +38,7 @@ namespace Xeon.Common
                 content.anchorMax = Vector2.one;
                 content.pivot = Vector2.one;
             }
-            controller?.SetIsReverse(isReverse);
+            controller?.SetIsReverse(param.IsReverse);
         }
 
 #if UNITY_EDITOR

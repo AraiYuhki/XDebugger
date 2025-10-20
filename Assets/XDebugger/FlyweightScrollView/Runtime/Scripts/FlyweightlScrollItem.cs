@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     public class FlyweightlScrollItem<T> : FlyweightScrollViewItemBase
         where T : MonoBehaviour

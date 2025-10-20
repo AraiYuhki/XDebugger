@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using UnityEngine;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     public abstract class FlyweightScrollViewItemBase
     {
@@ -50,7 +50,7 @@ namespace Xeon.Common
             RectTransform.anchoredPosition3D = position;
         }
 
-        public void SetFittingItemWith(float contentWidth)
+        public void SetFittingItemWidth(float contentWidth)
         {
             var size = RectTransform.sizeDelta;
             size.x = contentWidth;

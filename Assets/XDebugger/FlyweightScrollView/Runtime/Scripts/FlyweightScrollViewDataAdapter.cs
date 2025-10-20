@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     public class FlyweightScrollViewDataAdapter<T> : IObservableCollection<T>
     {

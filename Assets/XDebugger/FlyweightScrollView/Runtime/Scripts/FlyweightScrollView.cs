@@ -3,22 +3,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Xeon.Common.Debug;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
-    public enum HorizontalAlignment
-    {
-        Left,
-        Center,
-        Right,
-    }
-
-    public enum VerticalAlignment
-    {
-        Top,
-        Middle,
-        Bottom,
-    }
-
     public abstract class FlyweightScrollView : MonoBehaviour
     {
         [SerializeField]
@@ -28,24 +14,18 @@ namespace Xeon.Common
         [SerializeField]
         protected RectTransform content;
         [SerializeField]
-        protected RectOffset padding = new();
-        [SerializeField]
-        protected float spacing = 0f;
-        [SerializeField]
-        protected bool isControlChildSize = false;
-        [SerializeField]
-        protected bool isReverse = false;
+        protected FlyweightScrollViewParam param = new();
 
         protected FlyweightScrollViewControllerBase controller;
         protected Vector2 prevScrollPosition = Vector2.zero;
 
         public float Spacing
         {
-            get => spacing;
+            get => param.Spacing;
             set
             {
-                spacing = value;
-                controller?.SetSpacing(spacing);
+                param.Spacing = value;
+                controller?.SetSpacing(param.Spacing);
             }
         }
 
@@ -63,6 +43,8 @@ namespace Xeon.Common
             viewPort.OnRectTranformDimensionsChanged += controller.UpdateViewportSize;
             prevScrollPosition = scrollView.normalizedPosition;
             this.controller = controller;
+            if (param.IsAtLastSticky)
+                controller.SetIsPositionLast(true);
         }
 
         private void OnDestroy()
@@ -82,11 +64,11 @@ namespace Xeon.Common
 
         protected virtual void OnValidate()
         {
-            controller?.SetSpacing(spacing);
-            if (prevIsReverse != isReverse)
+            controller?.SetSpacing(Spacing);
+            if (prevIsReverse != param.IsReverse)
             {
                 SetReverseMode();
-                prevIsReverse = isReverse;
+                prevIsReverse = param.IsReverse;
             }
         }
 

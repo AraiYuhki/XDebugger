@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using Xeon.Common.FlyweightScrollView;
 
 namespace Xeon.Common
 {

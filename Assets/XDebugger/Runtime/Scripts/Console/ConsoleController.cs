@@ -2,7 +2,7 @@ using System.Collections.Specialized;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Xeon.Common;
+using Xeon.Common.FlyweightScrollView;
 
 namespace Xeon.XDebugger.Console
 {

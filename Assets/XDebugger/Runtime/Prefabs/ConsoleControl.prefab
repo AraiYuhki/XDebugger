@@ -2189,7 +2189,19 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7800088331860383036, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
+      propertyPath: isAtLastSticky
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7800088331860383036, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
       propertyPath: isControlChildSize
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7800088331860383036, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
+      propertyPath: param.isAtLastSticky
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7800088331860383036, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
+      propertyPath: param.isControlChildSize
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []

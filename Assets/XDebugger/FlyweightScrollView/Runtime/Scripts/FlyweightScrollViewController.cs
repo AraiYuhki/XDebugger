@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using UnityEngine;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     /// <summary>
     /// VirtualScrollViewControllerBaseのジェネリックな実装クラス。
@@ -31,7 +31,7 @@ namespace Xeon.Common
             remove => onItemCreated -= value;
         }
 
-        public override int ItemCount => dataList.Count;
+        public override int ItemCount => dataList == null ? 0 : dataList.Count;
 
 
         // ====================================================================================================
@@ -74,12 +74,11 @@ namespace Xeon.Common
 
         public override void Dispose()
         {
-            dataList.Clear();
+            dataList?.Clear();
             UpdateContainerSize();
             dataList = null;
             base.Dispose();
         }
-
 
         // ====================================================================================================
         // Protected Overrides (Base Class Implementation)

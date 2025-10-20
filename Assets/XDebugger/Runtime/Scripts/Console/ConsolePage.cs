@@ -1,5 +1,5 @@
 using UnityEngine;
-using Xeon.Common;
+using Xeon.Common.FlyweightScrollView;
 using Xeon.XDebugger.Control;
 
 namespace Xeon.XDebugger.Console

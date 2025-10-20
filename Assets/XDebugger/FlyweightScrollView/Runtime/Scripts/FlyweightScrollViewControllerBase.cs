@@ -4,8 +4,9 @@ using System.Collections.Specialized;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     public abstract class FlyweightScrollViewControllerBase : IDisposable
     {
@@ -23,20 +24,26 @@ namespace Xeon.Common
 
         // Setupで初期化される変数
         protected Vector2 itemSize;
-        protected RectTransform viewPort;
+        protected ScrollRect scrollView;
+        protected FlyweightScrollViewParam param;
+        protected RectTransform viewPort => param.ViewPort;
         protected RectTransform container;
-        protected RectOffset padding;
-        protected float spacing = 0f;
-        protected HorizontalAlignment horizontalAlignment;
+        protected RectOffset padding => param.Padding;
+        protected float spacing => param.Spacing;
+        protected bool isControlChildSize => param.IsControlChildSize;
+        protected bool isReverse => param.IsReverse;
+        protected bool isAtLastSticky => param.IsAtLastSticky;
+
         protected VerticalAlignment verticalAlignment;
-        protected bool isControlChildSize = false;
-        protected bool isReverse = false;
-        protected bool isVertical = true;
+        protected HorizontalAlignment horizontalAlignment;
+
+        protected bool isPositionLast = false;
+        protected bool isItemCountChanging = false;
+
+        protected Layouter layouter;
 
         // Properties
         public abstract int ItemCount { get; }
-        protected float itemHeight => itemSize.y + spacing;
-        protected float itemWidth => itemSize.x + spacing;
 
 
         // ====================================================================================================
@@ -58,16 +65,13 @@ namespace Xeon.Common
         /// <summary>
         /// スクロールビューを初期化します。
         /// </summary>
-        public void Setup(RectTransform viewPort, RectTransform container, RectOffset padding, float spacing, HorizontalAlignment alignment, bool isControlChildSize, bool isReverse)
+        public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
         {
-            this.viewPort = viewPort;
+            this.scrollView = scrollView;
             this.container = container;
-            this.padding = padding;
-            this.spacing = spacing;
+            this.param = param;
             horizontalAlignment = alignment;
-            this.isControlChildSize = isControlChildSize;
-            this.isReverse = isReverse;
-            isVertical = true;
+            layouter = new VerticalLayouter(container, param, itemSize, alignment);
 
             UpdateViewportSize();
         }
@@ -75,26 +79,20 @@ namespace Xeon.Common
         /// <summary>
         /// スクロールビューを初期化します。
         /// </summary>
-        public void Setup(RectTransform viewPort, RectTransform container, RectOffset padding, float spacing, VerticalAlignment alignment, bool isControlChildSize, bool isReverse)
+        public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, VerticalAlignment alignment)
         {
-            this.viewPort = viewPort;
+            this.scrollView = scrollView;
             this.container = container;
-            this.padding = padding;
-            this.spacing = spacing;
+            this.param = param;
             verticalAlignment = alignment;
-            this.isControlChildSize = isControlChildSize;
-            this.isReverse = isReverse;
-            isVertical = false;
+            layouter = new HorizontalLayouter(container, param, itemSize, alignment);
 
             UpdateViewportSize();
         }
 
         public void UpdateViewportSize()
         {
-            if (isVertical)
-                tailIndex = Mathf.CeilToInt(viewPort.rect.height / itemHeight);
-            else
-                tailIndex = Mathf.CeilToInt(viewPort.rect.width / itemWidth);
+            tailIndex = layouter.GetTailIndex();
             tailIndex += headIndex;
             CreateItems();
             UpdateView();
@@ -103,9 +101,14 @@ namespace Xeon.Common
         /// <summary>
         /// スクロール位置に応じてビューを更新します。
         /// </summary>
-        public void Update(bool isNext, float normalizedPosition)
+        public void Update(bool isNext, float normalizedPosition, bool isPositionLast)
         {
             scrollPosition = normalizedPosition;
+            if (!isItemCountChanging)
+            {
+                this.isPositionLast = isPositionLast;
+            }
+            isItemCountChanging = false;
             UpdateInternal();
 
             if (isNext)
@@ -144,7 +147,7 @@ namespace Xeon.Common
 
         public virtual void FixToLast()
         {
-            tailIndex = ItemCount - 1;
+            tailIndex = ItemCount;
             headIndex = Mathf.Max(0, tailIndex - itemList.Count);
             UpdateView();
         }
@@ -160,7 +163,7 @@ namespace Xeon.Common
         /// </summary>
         public void SetSpacing(float spacing)
         {
-            this.spacing = spacing;
+            layouter.Spacing = spacing;
             UpdateContainerSize();
             (headIndex, tailIndex) = CalculateIndex();
             CreateItems();
@@ -170,6 +173,8 @@ namespace Xeon.Common
         public void SetHorizontalAlignment(HorizontalAlignment horizontalAlignment)
         {
             this.horizontalAlignment = horizontalAlignment;
+            if (layouter is VerticalLayouter verticalLayouter)
+                verticalLayouter.SetAlignment(horizontalAlignment);
             foreach (var item in itemList)
                 item.SetHorizontalAlignment(horizontalAlignment);
         }
@@ -177,15 +182,24 @@ namespace Xeon.Common
         public void SetVerticalAlignment(VerticalAlignment verticalAlignment)
         {
             this.verticalAlignment = verticalAlignment;
+            if (layouter is HorizontalLayouter horizontalLayouter)
+                horizontalLayouter.SetAlignment(verticalAlignment);
             foreach(var item in itemList)
                 item.SetVerticalAlignment(verticalAlignment);
         }
 
         public void SetIsReverse(bool isReverse)
         {
-            this.isReverse = isReverse;
+            param.IsReverse = isReverse;
             UpdateView();
 
+        }
+
+        public void SetIsPositionLast(bool flag)
+        {
+            isPositionLast = flag;
+            if (isPositionLast)
+                FixToLast();
         }
 
         public virtual void Dispose()
@@ -291,6 +305,12 @@ namespace Xeon.Common
         private void UpdateForAddItem()
         {
             UpdateContainerSize();
+            if (isAtLastSticky && isPositionLast)
+            {
+                scrollView.normalizedPosition = Vector2.zero;
+                FixToLast();
+                return;
+            }
             if (tailIndex >= ItemCount - 1)
                 UpdateView();
         }
@@ -322,15 +342,18 @@ namespace Xeon.Common
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
+                    isItemCountChanging = true;
                     UpdateForAddItem();
                     break;
 
                 case NotifyCollectionChangedAction.Remove:
+                    isItemCountChanging = true;
                     UpdateForRemove();
                     break;
 
                 case NotifyCollectionChangedAction.Reset:
                     // 全リセット時は完全再構築
+                    isItemCountChanging = true;
                     UpdateContainerSize();
                     (headIndex, tailIndex) = CalculateIndex();
                     UpdateView();
@@ -360,12 +383,7 @@ namespace Xeon.Common
         /// </summary>
         public void UpdateContainerSize()
         {
-            var size = container.sizeDelta;
-            if (isVertical)
-                size.y = ItemCount * itemHeight + padding.vertical;
-            else
-                size.x = ItemCount * itemWidth + padding.horizontal;
-            container.sizeDelta = size;
+            layouter.UpdateContainerSize(ItemCount);
         }
 
         /// <summary>
@@ -373,29 +391,11 @@ namespace Xeon.Common
         /// </summary>
         protected (int headIndex, int tailIndex) CalculateIndex()
         {
-            var desiredHead = isVertical ? CalculateIndexForVertical() : CalculateIndexForHorizontal();
+            var desiredHead = layouter.CalculateIndex(ItemCount, scrollPosition);
 
             var maxHead = Mathf.Max(0, ItemCount - itemList.Count);
             desiredHead = Mathf.Clamp(desiredHead, 0, maxHead);
             return (desiredHead, desiredHead + itemList.Count - 1);
-        }
-
-        private int CalculateIndexForVertical()
-        {
-            var totalContentHeight = ItemCount * itemHeight + padding.vertical;
-            var viewPortHeight = viewPort.rect.height;
-            var maxScroll = totalContentHeight - viewPortHeight;
-            var contentOffset = (1f - Mathf.Clamp01(scrollPosition)) * maxScroll;
-            return Mathf.FloorToInt(contentOffset / itemHeight);
-        }
-
-        private int CalculateIndexForHorizontal()
-        {
-            var totalContentWidth = ItemCount * itemWidth + padding.horizontal;
-            var viewPortWidth = viewPort.rect.width;
-            var maxScroll = totalContentWidth - viewPortWidth;
-            var contentOffset = Mathf.Clamp01(scrollPosition) * maxScroll;
-            return Mathf.FloorToInt(contentOffset / itemWidth);
         }
 
         /// <summary>
@@ -403,28 +403,7 @@ namespace Xeon.Common
         /// </summary>
         protected Vector3 CreatePosition(int index)
         {
-            if (isVertical)
-            {
-                var x = horizontalAlignment switch
-                {
-                    HorizontalAlignment.Left => padding.left,
-                    HorizontalAlignment.Center => 0f,
-                    HorizontalAlignment.Right => -padding.right,
-                    _ => 0f
-                };
-                return new Vector3(x, -index * itemHeight - padding.top, 0f);
-            }
-            else
-            {
-                var y = verticalAlignment switch
-                {
-                    VerticalAlignment.Top => -padding.top,
-                    VerticalAlignment.Middle => 0,
-                    VerticalAlignment.Bottom => padding.bottom,
-                    _ => 0f
-                };
-                return new Vector3(index * itemWidth + padding.left, y, 0f);
-            }
+            return layouter.GetPosition(index);
         }
 
 
@@ -447,12 +426,7 @@ namespace Xeon.Common
         /// </summary>
         private void CreateItems()
         {
-            var itemCount = 0;
-            
-            if (isVertical)
-                itemCount = Mathf.CeilToInt(viewPort.rect.height / itemHeight) + 1;
-            else
-                itemCount = Mathf.CeilToInt(viewPort.rect.width / itemWidth) + 1;
+            var itemCount = layouter.GetItemCount();
 
             if (itemList.Count == itemCount)
                 return;
@@ -471,10 +445,7 @@ namespace Xeon.Common
                 var item = CreateItem(headIndex + index);
                 if (isControlChildSize)
                 {
-                    if (isVertical)
-                        item.SetFittingItemWith(container.rect.width - padding.horizontal);
-                    else
-                        item.SetFittingItemHeight(container.rect.height - padding.vertical);
+                    layouter.SetItemSize(item);
                 }
                 item.gameObject.SetActive(false);
                 itemList.AddLast(item);

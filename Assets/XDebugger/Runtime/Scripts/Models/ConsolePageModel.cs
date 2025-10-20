@@ -13,13 +13,13 @@ namespace Xeon.XDebugger.Model
         private static int infoCount = 0;
         private static int warningCount = 0;
         private static int errorCount = 0;
+        private static event Action<int> onAddInfoLog;
+        private static event Action<int> onAddWarningLog;
+        private static event Action<int> onAddErrorLog;
 
         protected override string prefabAddress => $"XDebugger/{nameof(ConsolePage)}";
         private ConsolePage page;
 
-        private event Action<int> onAddInfoLog;
-        private event Action<int> onAddWarningLog;
-        private event Action<int> onAddErrorLog;
 
         public static void PreInitialize()
         {
@@ -55,7 +55,7 @@ namespace Xeon.XDebugger.Model
                     break;
             }
             ;
-            elapsed = 0.5f;
+            elapsed = 1f;
         }
 
         protected override void OpenedPage()
@@ -83,12 +83,15 @@ namespace Xeon.XDebugger.Model
             {
                 case LogType.Log:
                     infoCount++;
+                    onAddInfoLog?.Invoke(infoCount);
                     break;
                 case LogType.Warning:
                     warningCount++;
+                    onAddWarningLog?.Invoke(warningCount);
                     break;
                 default:
                     errorCount++;
+                    onAddErrorLog?.Invoke(errorCount);
                     break;
             }
         }

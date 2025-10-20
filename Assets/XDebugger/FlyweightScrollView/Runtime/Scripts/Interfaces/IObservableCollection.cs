@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     public interface IObservableCollection<T> : IEnumerable<T>, INotifyCollectionChanged
     {

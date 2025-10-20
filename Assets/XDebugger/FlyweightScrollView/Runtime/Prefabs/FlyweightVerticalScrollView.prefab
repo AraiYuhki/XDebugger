@@ -218,6 +218,18 @@ MonoBehaviour:
   spacing: 0
   isControlChildSize: 0
   isReverse: 0
+  isAtLastSticky: 0
+  param:
+    viewPort: {fileID: 6679410927468829356}
+    padding:
+      m_Left: 0
+      m_Right: 0
+      m_Top: 0
+      m_Bottom: 0
+    spacing: 0
+    isControlChildSize: 0
+    isReverse: 0
+    isAtLastSticky: 0
   debugPrefab: {fileID: 7832577812277928746, guid: beabc067b8ee95d48956907e76f3b902, type: 3}
   prevIsReverse: 0
   alignment: 0
