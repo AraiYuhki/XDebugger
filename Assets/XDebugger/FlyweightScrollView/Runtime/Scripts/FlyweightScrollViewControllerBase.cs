@@ -339,17 +339,38 @@ namespace Xeon.Common.FlyweightScrollView
         /// </summary>
         protected void OnChangedItemCount(object sender, NotifyCollectionChangedEventArgs e)
         {
-            switch (e.Action)
+            var action = e?.Action ?? NotifyCollectionChangedAction.Reset;
+
+            switch (action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    isItemCountChanging = true;
-                    UpdateForAddItem();
-                    break;
+                    {
+                        isItemCountChanging = true;
+
+                        var insertedIndex = e?.NewStartingIndex ?? -1;
+                        var insertedCount = e?.NewItems?.Count ?? 1;
+                        var shouldRefreshView = AdjustRangeForAdd(insertedIndex, insertedCount);
+
+                        ClampVisibleRange();
+                        UpdateForAddItem();
+
+                        if (shouldRefreshView && !(isAtLastSticky && isPositionLast) && tailIndex < ItemCount - 1)
+                            UpdateView();
+                        break;
+                    }
 
                 case NotifyCollectionChangedAction.Remove:
-                    isItemCountChanging = true;
-                    UpdateForRemove();
-                    break;
+                    {
+                        isItemCountChanging = true;
+
+                        var removedIndex = e?.OldStartingIndex ?? -1;
+                        var removedCount = e?.OldItems?.Count ?? 1;
+                        AdjustRangeForRemove(removedIndex, removedCount);
+
+                        ClampVisibleRange();
+                        UpdateForRemove();
+                        break;
+                    }
 
                 case NotifyCollectionChangedAction.Reset:
                     // 全リセット時は完全再構築
@@ -358,6 +379,7 @@ namespace Xeon.Common.FlyweightScrollView
                     (headIndex, tailIndex) = CalculateIndex();
                     UpdateView();
                     break;
+
                 case NotifyCollectionChangedAction.Replace:
                 case NotifyCollectionChangedAction.Move:
                 default:
@@ -375,6 +397,73 @@ namespace Xeon.Common.FlyweightScrollView
 
             // ItemCount変更通知
             onChangedItemCount?.Invoke(ItemCount);
+        }
+
+        private bool AdjustRangeForAdd(int insertedIndex, int insertedCount)
+        {
+            if (insertedIndex < 0 || insertedCount <= 0)
+                return false;
+
+            var lastVisibleIndex = GetLastVisibleIndex();
+            var affectsVisibleRange = insertedIndex <= lastVisibleIndex;
+
+            var previousItemCount = Mathf.Max(0, ItemCount - insertedCount);
+            var hasVisibleItems = previousItemCount > 0 && itemList.Count > 0;
+
+            if (hasVisibleItems && insertedIndex <= headIndex)
+            {
+                headIndex += insertedCount;
+                tailIndex += insertedCount;
+            }
+            else if (hasVisibleItems && insertedIndex <= lastVisibleIndex)
+            {
+                tailIndex += insertedCount;
+            }
+
+            return affectsVisibleRange;
+        }
+
+        private void AdjustRangeForRemove(int removedIndex, int removedCount)
+        {
+            if (removedIndex < 0 || removedCount <= 0)
+                return;
+
+            if (removedIndex < headIndex)
+            {
+                var shift = Mathf.Min(removedCount, headIndex - removedIndex);
+                headIndex -= shift;
+                tailIndex -= shift;
+            }
+        }
+
+        private void ClampVisibleRange()
+        {
+            headIndex = Mathf.Max(0, headIndex);
+
+            if (itemList.Count == 0 || ItemCount <= 0)
+            {
+                tailIndex = headIndex;
+                return;
+            }
+
+            headIndex = Mathf.Min(headIndex, Mathf.Max(0, ItemCount - 1));
+
+            var lastVisibleIndex = GetLastVisibleIndex();
+            var maxTail = Mathf.Min(ItemCount, lastVisibleIndex + 1);
+            tailIndex = Mathf.Clamp(tailIndex, lastVisibleIndex, maxTail);
+        }
+
+        private int GetLastVisibleIndex()
+        {
+            if (itemList.Count == 0 || ItemCount <= 0)
+                return headIndex;
+
+            var remaining = ItemCount - headIndex;
+            if (remaining <= 0)
+                return headIndex;
+
+            var visibleCount = Mathf.Min(itemList.Count, remaining);
+            return headIndex + visibleCount - 1;
         }
 
 
