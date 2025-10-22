@@ -39,11 +39,11 @@ namespace Xeon.Common.FlyweightScrollView
 
         protected bool isPositionLast = false;
         protected bool isItemCountChanging = false;
-
         protected Layouter layouter;
 
         // Properties
         public abstract int ItemCount { get; }
+        public bool IsDirty { get; set; }
 
 
         // ====================================================================================================
@@ -95,7 +95,7 @@ namespace Xeon.Common.FlyweightScrollView
             tailIndex = layouter.GetTailIndex();
             tailIndex += headIndex;
             CreateItems();
-            UpdateView();
+            IsDirty = true;
         }
 
         /// <summary>
@@ -127,6 +127,7 @@ namespace Xeon.Common.FlyweightScrollView
                 UpdateNotEnoughData();
                 return;
             }
+            (headIndex, tailIndex) = CalculateIndex();
             var index = headIndex;
             foreach (var item in itemList)
             {
@@ -142,14 +143,14 @@ namespace Xeon.Common.FlyweightScrollView
         {
             headIndex = 0;
             tailIndex = itemList.Count - 1;
-            UpdateView();
+            IsDirty = true;
         }
 
         public virtual void FixToLast()
         {
             tailIndex = ItemCount;
             headIndex = Mathf.Max(0, tailIndex - itemList.Count);
-            UpdateView();
+            IsDirty = true;
         }
 
         /// <summary>
@@ -165,9 +166,8 @@ namespace Xeon.Common.FlyweightScrollView
         {
             layouter.Spacing = spacing;
             UpdateContainerSize();
-            (headIndex, tailIndex) = CalculateIndex();
             CreateItems();
-            UpdateView();
+            IsDirty = true;
         }
 
         public void SetHorizontalAlignment(HorizontalAlignment horizontalAlignment)
@@ -191,8 +191,7 @@ namespace Xeon.Common.FlyweightScrollView
         public void SetIsReverse(bool isReverse)
         {
             param.IsReverse = isReverse;
-            UpdateView();
-
+            IsDirty = true;
         }
 
         public void SetIsPositionLast(bool flag)
@@ -231,7 +230,7 @@ namespace Xeon.Common.FlyweightScrollView
             {
                 headIndex = newHeadIndex;
                 tailIndex = newTailIndex;
-                UpdateView();
+                IsDirty = true;
                 return;
             }
 
@@ -261,7 +260,7 @@ namespace Xeon.Common.FlyweightScrollView
             {
                 headIndex = newHeadIndex;
                 tailIndex = newTailIndex;
-                UpdateView();
+                IsDirty = true;
                 return;
             }
 
@@ -312,7 +311,7 @@ namespace Xeon.Common.FlyweightScrollView
                 return;
             }
             if (tailIndex >= ItemCount - 1)
-                UpdateView();
+                IsDirty = true;
         }
 
         private void UpdateForRemove()
@@ -327,7 +326,7 @@ namespace Xeon.Common.FlyweightScrollView
                 tailIndex = headIndex + itemList.Count - 1;
             }
 
-            UpdateView();
+            IsDirty = true;
         }
 
         /// <summary>
@@ -355,23 +354,19 @@ namespace Xeon.Common.FlyweightScrollView
                     // 全リセット時は完全再構築
                     isItemCountChanging = true;
                     UpdateContainerSize();
-                    (headIndex, tailIndex) = CalculateIndex();
-                    UpdateView();
+                    IsDirty = true;
                     break;
                 case NotifyCollectionChangedAction.Replace:
                 case NotifyCollectionChangedAction.Move:
                 default:
                     // 要素数に変化がない場合は再描画だけ
-                    UpdateView();
+                    IsDirty = true;
                     break;
             }
 
             // 逆順モードのときのみ再計算を強制
             if (isReverse)
-            {
-                (headIndex, tailIndex) = CalculateIndex();
-                UpdateView();
-            }
+                IsDirty = true;
 
             // ItemCount変更通知
             onChangedItemCount?.Invoke(ItemCount);

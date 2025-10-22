@@ -53,6 +53,15 @@ namespace Xeon.Common.FlyweightScrollView
             controller = null;
         }
 
+        private void Update()
+        {
+            if (controller.IsDirty)
+            {
+                controller.UpdateView();
+                controller.IsDirty = false;
+            }
+        }
+
         protected abstract void SetReverseMode();
         protected abstract void OnChangedScrollPosition(Vector2 position);
 
