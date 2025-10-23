@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Xeon.Common.FlyweightScrollView
 {
     /// <summary>
-    /// VirtualScrollViewControllerBaseのジェネリックな実装クラス。
+    /// FlyweightScrollViewControllerBaseのジェネリックな実装クラス。
     /// </summary>
     /// <typeparam name="TData">リストに表示するデータの型</typeparam>
     /// <typeparam name="TItem">表示に使用するUIアイテムのコンポーネントの型</typeparam>

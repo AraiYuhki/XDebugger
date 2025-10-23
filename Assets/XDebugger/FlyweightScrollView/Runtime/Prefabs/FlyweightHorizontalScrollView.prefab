@@ -213,7 +213,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e0b4339bcbcbf34c8e4f7d2ffee60b7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.FlyweightScrollViewport
+  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.FlyweightScrollView.FlyweightScrollViewport
   rectTransform: {fileID: 7536843215638963026}
 --- !u!1 &5538785195052415381
 GameObject:

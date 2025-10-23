@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Xeon.Common
+namespace Xeon.Common.FlyweightScrollView
 {
     [RequireComponent(typeof(RectTransform), typeof(RectMask2D))]
     public class FlyweightScrollViewport : MonoBehaviour
