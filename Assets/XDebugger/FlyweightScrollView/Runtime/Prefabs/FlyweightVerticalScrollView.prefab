@@ -206,7 +206,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 35ce79c02b9ad154080d0d517babeec6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.NewVirtualVerticalScrollView
+  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.FlyweightScrollView.FlyweightVerticalScrollView
   scrollView: {fileID: 1597581429500073951}
   viewPort: {fileID: 3059205214735236701}
   content: {fileID: 4905293765551762347}
@@ -407,7 +407,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e0b4339bcbcbf34c8e4f7d2ffee60b7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.VirtualScrollViewport
+  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.FlyweightScrollViewport
   rectTransform: {fileID: 6679410927468829356}
 --- !u!1 &7787050518950574628
 GameObject:

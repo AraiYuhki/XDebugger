@@ -2219,7 +2219,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 35ce79c02b9ad154080d0d517babeec6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.NewVirtualVerticalScrollView
+  m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.Common.FlyweightScrollView.FlyweightVerticalScrollView
 --- !u!224 &8753190297336426977 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4069624623270514785, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
