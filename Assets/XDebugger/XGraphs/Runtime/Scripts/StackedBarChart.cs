@@ -272,15 +272,6 @@ namespace Xeon.Common
             return premultipliedColors[premultipliedColors.Length - 1]; // 足りない場合は最後
         }
 
-        // 旧API互換: マーカー計算用 (範囲チェック付き)
-        private float ValueToHeight(float value)
-        {
-            if (rangeDirty)
-                RecalculateRange();
-            
-            return FastValueToHeight(value);
-        }
-
         private float ValueToHeight(float value, out bool isInRange)
         {
             if (rangeDirty)
