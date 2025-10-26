@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,23 +18,36 @@ namespace Xeon.Common
         [SerializeField]
         private float max = 100f;
 
+        [SerializeField, Tooltip("Seriesデータから値を取得する際に使用するSeries")]
+        private Series seriesSource;
+
+        [SerializeField, Tooltip("LegendからSeriesを解決する際に使用する参照")]
+        private Legend legend;
+
+        [SerializeField, Tooltip("Legend内で使用するSeries名。未指定の場合は最初の要素を使用します")]
+        private string legendSeriesName = string.Empty;
+
         private DoubleCircularBuffer values;
 
-        public double MaxValue => values.Max;
+        private bool usingSeriesSource = false;
+        private bool seriesDataDirty = false;
+
+        public double MaxValue => values != null && values.Count > 0 ? values.Max : 0d;
 
         private float halfWidth => thicness * 0.5f;
 
-        private float[] normalizedValues = new float[0];
+        private float[] normalizedValues = Array.Empty<float>();
 
         private List<UIVertex> vertices = null;
         private List<int> indices = null;
 
         public void Initialize(int bufferSize)
         {
-            values = new DoubleCircularBuffer(bufferSize);
-            normalizedValues = new float[bufferSize];
-            vertices = new List<UIVertex>(bufferSize * 4);
-            indices = new List<int>(bufferSize * 6);
+            var capacity = Mathf.Max(2, bufferSize);
+            values = new DoubleCircularBuffer(capacity);
+            normalizedValues = new float[capacity];
+            EnsureMeshBuffers(capacity);
+            DisableSeriesBinding();
         }
 
         public void SetMax(float max)
@@ -54,7 +68,13 @@ namespace Xeon.Common
         /// <param name="newValues"></param>
         public void SetValues(DoubleCircularBuffer newValues)
         {
+            if (newValues == null)
+                throw new ArgumentNullException(nameof(newValues));
+
             values = newValues;
+            EnsureMeshBuffers(Mathf.Max(2, newValues.Capacity));
+            normalizedValues = newValues.Count == 0 ? Array.Empty<float>() : new float[newValues.Count];
+            DisableSeriesBinding();
             SetVerticesDirty();
         }
 
@@ -66,6 +86,10 @@ namespace Xeon.Common
         /// <param name="value"></param>
         public void AddValue(double value, bool updateVertices = true)
         {
+            if (values == null)
+                Initialize(2);
+
+            DisableSeriesBinding();
             values.PushBack(value);
             if (updateVertices)
                 SetVerticesDirty();
@@ -76,8 +100,141 @@ namespace Xeon.Common
         /// </summary>
         public void ClearVertices()
         {
-            values.Clear();
+            if (values != null)
+                values.Clear();
+            if (usingSeriesSource)
+                seriesDataDirty = true;
             SetVerticesDirty();
+        }
+
+        public void SetSeries(Series newSeries)
+        {
+            seriesSource = newSeries;
+            usingSeriesSource = newSeries != null;
+            if (usingSeriesSource)
+            {
+                legendSeriesName = string.Empty;
+                seriesDataDirty = true;
+                SetVerticesDirty();
+            }
+            else
+            {
+                DisableSeriesBinding();
+            }
+        }
+
+        public void SetLegend(Legend newLegend, string seriesName = "")
+        {
+            legend = newLegend;
+            legendSeriesName = seriesName ?? string.Empty;
+            usingSeriesSource = newLegend != null;
+            seriesSource = null;
+            if (usingSeriesSource)
+            {
+                seriesDataDirty = true;
+                SetVerticesDirty();
+            }
+            else
+            {
+                DisableSeriesBinding();
+            }
+        }
+
+        public void SetLegendSeriesName(string seriesName)
+        {
+            legendSeriesName = seriesName ?? string.Empty;
+            if (usingSeriesSource)
+            {
+                seriesDataDirty = true;
+                SetVerticesDirty();
+            }
+        }
+
+        public void MarkSeriesDirty()
+        {
+            if (!usingSeriesSource)
+                return;
+
+            seriesDataDirty = true;
+            SetVerticesDirty();
+        }
+
+        private void DisableSeriesBinding()
+        {
+            usingSeriesSource = false;
+            seriesSource = null;
+            legendSeriesName = string.Empty;
+            seriesDataDirty = false;
+        }
+
+        private void EnsureSeriesData()
+        {
+            if (!usingSeriesSource || !seriesDataDirty)
+                return;
+
+            var resolvedSeries = ResolveSeries();
+            if (resolvedSeries == null || resolvedSeries.Values == null)
+            {
+                if (values != null)
+                    values.Clear();
+                normalizedValues = Array.Empty<float>();
+                seriesDataDirty = false;
+                return;
+            }
+
+            var sourceValues = resolvedSeries.Values;
+            var count = sourceValues.Count;
+            var targetCapacity = Mathf.Max(2, count == 0 ? (values?.Capacity ?? 2) : count);
+
+            if (values == null || values.Capacity != targetCapacity)
+            {
+                values = new DoubleCircularBuffer(targetCapacity);
+            }
+            else
+            {
+                values.Clear();
+            }
+
+            for (var i = 0; i < count; i++)
+                values.PushBack(sourceValues[i]);
+
+            normalizedValues = count == 0 ? Array.Empty<float>() : new float[count];
+            EnsureMeshBuffers(targetCapacity);
+            seriesDataDirty = false;
+        }
+
+        private Series ResolveSeries()
+        {
+            if (seriesSource != null)
+                return seriesSource;
+
+            if (legend == null)
+                return null;
+
+            if (!string.IsNullOrEmpty(legendSeriesName))
+                return legend.GetSeries(legendSeriesName);
+
+            var legendSeries = legend.SeriesList;
+            if (legendSeries == null || legendSeries.Count == 0)
+                return null;
+
+            return legendSeries[0];
+        }
+
+        private void EnsureMeshBuffers(int minimumCount)
+        {
+            var vertexCapacity = Mathf.Max(minimumCount * 4, 8);
+            var indexCapacity = Mathf.Max(minimumCount * 6, 12);
+
+            if (vertices == null)
+                vertices = new List<UIVertex>(vertexCapacity);
+            else if (vertices.Capacity < vertexCapacity)
+                vertices.Capacity = vertexCapacity;
+
+            if (indices == null)
+                indices = new List<int>(indexCapacity);
+            else if (indices.Capacity < indexCapacity)
+                indices.Capacity = indexCapacity;
         }
 
         private void UpdateNormalizedValues()
@@ -95,6 +252,16 @@ namespace Xeon.Common
             }
         }
 
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            if (usingSeriesSource)
+            {
+                seriesDataDirty = true;
+                SetVerticesDirty();
+            }
+        }
+
         /// <summary>
         /// 頂点の作成
         /// </summary>
@@ -103,8 +270,12 @@ namespace Xeon.Common
         {
             vh.Clear();
 
+            EnsureSeriesData();
+
             if (this.values == null || this.values.Count <= 1)
                 return;
+
+            EnsureMeshBuffers(values.Count);
 
             UpdateNormalizedValues();
             vertices.Clear();

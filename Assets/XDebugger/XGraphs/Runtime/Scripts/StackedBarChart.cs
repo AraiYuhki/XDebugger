@@ -24,14 +24,27 @@ namespace Xeon.Common
         
         [SerializeField]
         private BarGraphMarker markerPrefab; // マーカーPrefab
-        
+
         [SerializeField, HideInInspector]
         private List<BarGraphMarker> markers = new(); // 実体化済みマーカー
-        
+
         [SerializeField]
         private List<BarGraphMarkerData> markerDataList = new(); // マーカー定義
 
+        [SerializeField, Tooltip("Seriesを直接割り当ててスタックデータを生成する場合に使用します")]
+        private List<Series> seriesBinding = new();
+
+        [SerializeField, Tooltip("LegendからSeriesを解決する場合に参照するLegend")]
+        private Legend legendSource;
+
+        [SerializeField, Tooltip("Legendから取得するSeries名。空の場合は全Seriesを使用します")]
+        private List<string> legendSeriesNames = new();
+
         private CircularBuffer<IStackedBarItemData> values; // 値バッファ
+
+        private bool seriesBindingActive = false;
+        private bool seriesBufferDirty = false;
+        private readonly List<Series> resolvedSeries = new();
 
         // 最適化用キャッシュ/フラグ
         private bool geometryDirty = true; // 頂点再生成必要
@@ -50,6 +63,7 @@ namespace Xeon.Common
         {
             values = buffer;
             this.colors = colors;
+            DisableSeriesBinding();
             geometryDirty = true;
             rangeDirty = true;
             colorDirty = true;
@@ -77,12 +91,14 @@ namespace Xeon.Common
         public void SetValues(CircularBuffer<IStackedBarItemData> values)
         {
             this.values = values;
+            DisableSeriesBinding();
             geometryDirty = true;
             SetVerticesDirty();
         }
 
         public void AddValue(IStackedBarItemData item)
         {
+            DisableSeriesBinding();
             values.PushBack(item);
             geometryDirty = true;
             SetVerticesDirty();
@@ -90,8 +106,96 @@ namespace Xeon.Common
 
         public void ClearVertices()
         {
-            values.Clear();
+            if (values != null)
+                values.Clear();
+            if (seriesBindingActive)
+            {
+                seriesBufferDirty = true;
+                BuildSeriesBufferIfDirty();
+            }
             geometryDirty = true;
+            SetVerticesDirty();
+        }
+
+        public void SetSeries(IEnumerable<Series> newSeries)
+        {
+            seriesBinding.Clear();
+            if (newSeries != null)
+                seriesBinding.AddRange(newSeries);
+
+            seriesBindingActive = seriesBinding.Count > 0;
+            if (seriesBindingActive)
+            {
+                legendSource = null;
+                legendSeriesNames.Clear();
+                seriesBufferDirty = true;
+                geometryDirty = true;
+                rangeDirty = true;
+                colorDirty = true;
+                SetVerticesDirty();
+            }
+            else
+            {
+                DisableSeriesBinding();
+            }
+        }
+
+        public void SetLegend(Legend legend, IEnumerable<string> seriesNames = null)
+        {
+            legendSource = legend;
+            seriesBinding.Clear();
+            legendSeriesNames.Clear();
+            if (seriesNames != null)
+            {
+                foreach (var name in seriesNames)
+                {
+                    if (!string.IsNullOrEmpty(name))
+                        legendSeriesNames.Add(name);
+                }
+            }
+            seriesBindingActive = legendSource != null;
+            seriesBufferDirty = seriesBindingActive;
+            if (seriesBindingActive)
+            {
+                geometryDirty = true;
+                rangeDirty = true;
+                colorDirty = true;
+                SetVerticesDirty();
+            }
+            else
+            {
+                DisableSeriesBinding();
+            }
+        }
+
+        public void SetLegendSeriesNames(IEnumerable<string> seriesNames)
+        {
+            legendSeriesNames.Clear();
+            if (seriesNames != null)
+            {
+                foreach (var name in seriesNames)
+                {
+                    if (!string.IsNullOrEmpty(name))
+                        legendSeriesNames.Add(name);
+                }
+            }
+
+            if (seriesBindingActive)
+            {
+                seriesBufferDirty = true;
+                geometryDirty = true;
+                rangeDirty = true;
+                colorDirty = true;
+                SetVerticesDirty();
+            }
+        }
+
+        public void RefreshSeriesBinding()
+        {
+            if (!seriesBindingActive)
+                return;
+
+            seriesBufferDirty = true;
             SetVerticesDirty();
         }
 
@@ -126,12 +230,19 @@ namespace Xeon.Common
             markers.Clear();
         }
 
+        private void DisableSeriesBinding()
+        {
+            seriesBindingActive = false;
+            seriesBufferDirty = false;
+            resolvedSeries.Clear();
+        }
+
         //================= 内部処理 =================
         private void RefreshMarkers()
         {
             ClearMarkers();
             if (markerPrefab == null) return;
-            
+
             foreach (var data in markerDataList)
             {
                 var marker = Instantiate(markerPrefab, transform);
@@ -150,7 +261,7 @@ namespace Xeon.Common
             {
                 if (marker == null || marker.Data == null)
                     continue;
-                
+
                 var position = marker.transform.localPosition;
                 position.y = ValueToHeight(marker.Data.Value, out var inRange);
                 marker.transform.localPosition = position;
@@ -158,10 +269,97 @@ namespace Xeon.Common
             }
         }
 
+        private class SeriesStackedBarItemData : IStackedBarItemData
+        {
+            private readonly Series series;
+
+            public SeriesStackedBarItemData(Series series)
+            {
+                this.series = series;
+            }
+
+            public float this[int index] => series?.GetValue(index) ?? 0f;
+
+            public int Count => series?.Values?.Count ?? 0;
+
+            public IEnumerator<float> GetEnumerator()
+            {
+                if (series?.Values == null)
+                    yield break;
+
+                for (var i = 0; i < series.Values.Count; i++)
+                    yield return series.Values[i];
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        private void BuildSeriesBufferIfDirty()
+        {
+            if (!seriesBindingActive || !seriesBufferDirty)
+                return;
+
+            resolvedSeries.Clear();
+
+            if (seriesBinding != null && seriesBinding.Count > 0)
+            {
+                foreach (var series in seriesBinding)
+                {
+                    if (series != null)
+                        resolvedSeries.Add(series);
+                }
+            }
+            else if (legendSource != null)
+            {
+                if (legendSeriesNames != null && legendSeriesNames.Count > 0)
+                {
+                    foreach (var name in legendSeriesNames)
+                    {
+                        if (string.IsNullOrEmpty(name))
+                            continue;
+
+                        var series = legendSource.GetSeries(name);
+                        if (series != null)
+                            resolvedSeries.Add(series);
+                    }
+                }
+                else
+                {
+                    var legendSeries = legendSource.SeriesList;
+                    if (legendSeries != null)
+                    {
+                        foreach (var series in legendSeries)
+                        {
+                            if (series != null)
+                                resolvedSeries.Add(series);
+                        }
+                    }
+                }
+            }
+
+            if (resolvedSeries.Count == 0)
+            {
+                values = null;
+                seriesBufferDirty = false;
+                return;
+            }
+
+            var adapters = new IStackedBarItemData[resolvedSeries.Count];
+            for (var i = 0; i < resolvedSeries.Count; i++)
+                adapters[i] = new SeriesStackedBarItemData(resolvedSeries[i]);
+
+            values = new CircularBuffer<IStackedBarItemData>(adapters.Length, adapters);
+            seriesBufferDirty = false;
+            geometryDirty = true;
+            rangeDirty = true;
+            colorDirty = true;
+        }
+
         //================= Mesh生成 =================
         protected override void OnPopulateMesh(VertexHelper vh)
         {
             vh.Clear();
+            BuildSeriesBufferIfDirty();
             if (values == null || values.Count == 0) return;
 
             if (rangeDirty)
@@ -290,6 +488,10 @@ namespace Xeon.Common
         protected override void OnEnable()
         {
             base.OnEnable();
+            if (!seriesBindingActive)
+                seriesBindingActive = (seriesBinding != null && seriesBinding.Count > 0) || legendSource != null;
+            if (seriesBindingActive)
+                seriesBufferDirty = true;
             geometryDirty = true; rangeDirty = true; colorDirty = true; SetVerticesDirty();
         }
 
@@ -316,9 +518,16 @@ namespace Xeon.Common
             base.OnValidate();
             if (!Application.isPlaying)
             {
-                // エディタ用テストデータ反映
-                if (testData != null)
+                seriesBindingActive = (seriesBinding != null && seriesBinding.Count > 0) || legendSource != null;
+                if (seriesBindingActive)
+                {
+                    seriesBufferDirty = true;
+                    BuildSeriesBufferIfDirty();
+                }
+                else if (testData != null)
+                {
                     values = new CircularBuffer<IStackedBarItemData>(testData.Count, testData.ToArray());
+                }
             }
             geometryDirty = true;
             rangeDirty = true;
