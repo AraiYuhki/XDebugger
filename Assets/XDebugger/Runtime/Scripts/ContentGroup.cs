@@ -1,7 +1,8 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Model;
+using TMPro;
+using System.Collections.Generic;
 
 namespace Xeon.XDebugger
 {
@@ -16,6 +17,8 @@ namespace Xeon.XDebugger
         private List<ControlBase> children;
 
         public Transform GetContent() => content;
+
+        public TMP_Text TitleLabel => title;
 
         public void Setup(IGroupModel model, ContentGroup parent)
         {

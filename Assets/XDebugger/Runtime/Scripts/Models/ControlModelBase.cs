@@ -9,11 +9,13 @@ namespace Xeon.XDebugger.Model
     {
         protected abstract string prefabAddress { get; }
 
-        protected bool isActive = true;
+        protected bool isInteractable = true;
         public string Title { get; protected set; } = string.Empty;
         public int Priority { get; protected set; } = 0;
 
         public IGroupModel Parent { get; private set; }
+
+        public bool IsInteractable => isInteractable;
 
         public ControlModelBase(string title, int priority = 0)
         {
@@ -29,6 +31,8 @@ namespace Xeon.XDebugger.Model
         }
 
         public void SetParent(IGroupModel parent) => Parent = parent;
+
+        public void SetInteractable(bool interactable) => isInteractable = interactable;
 
         protected virtual T Instantiate<T>(Transform parent) where T : ControlBase, new()
         {

@@ -23,6 +23,7 @@ namespace Xeon.XDebugger.Model
         {
             control = uiFactory.CreateControl<ActionControl>(parent);
             control.Setup(this);
+            control.SetInteractable(IsInteractable);
             return control;
         }
     }

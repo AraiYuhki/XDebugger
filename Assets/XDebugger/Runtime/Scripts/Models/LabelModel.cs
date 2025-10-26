@@ -18,6 +18,7 @@ namespace Xeon.XDebugger.Model
         {
             control = uiFactory.CreateControl<LabelControl>(parent);
             control.Setup(Title);
+            control.SetInteractable(IsInteractable);
 
             return control;
         }

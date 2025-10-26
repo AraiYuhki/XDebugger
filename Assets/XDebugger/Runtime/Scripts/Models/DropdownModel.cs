@@ -92,6 +92,7 @@ namespace Xeon.XDebugger.Model
         {
             control = uiFactory.CreateControl<DropdownControl>(parent);
             control.Setup(this, OnChangedValue);
+            control.SetInteractable(IsInteractable);
             return control;
         }
 

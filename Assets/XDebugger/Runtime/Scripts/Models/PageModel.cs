@@ -20,6 +20,8 @@ namespace Xeon.XDebugger.Model
 
         protected IGroupModel group;
 
+        private readonly Stack<bool> disabledStack = new();
+
         protected List<ControlModelBase> modelList = new List<ControlModelBase>();
         protected List<ControlBase> controlList = new();
         protected string title;
@@ -207,12 +209,68 @@ namespace Xeon.XDebugger.Model
             return scope;
         }
 
+        public DisableGroupScope DisableScope(bool disabled)
+            => DisableGroupScope.Create(() => PushDisabled(disabled), PopDisabled);
+
+        public FoldingLayoutScope FoldingScope(string title, ref bool expanded, int priority = 0)
+        {
+            var initialState = expanded;
+            Action<bool> onChanged = value => expanded = value;
+            var scope = FoldingLayoutScope.Create(title, this, initialState, onChanged, priority);
+            AddChild(scope.Model);
+            SetGroup(scope.Model as IGroupModel);
+            return scope;
+        }
+
+        public FoldingLayoutScope FoldingScope(string title, bool expanded, Action<bool> onChanged, int priority = 0)
+        {
+            var scope = FoldingLayoutScope.Create(title, this, expanded, onChanged, priority);
+            AddChild(scope.Model);
+            SetGroup(scope.Model as IGroupModel);
+            return scope;
+        }
+
         private void AddChild(ControlModelBase model)
         {
+            model.SetParent(group);
+            model.SetInteractable(!IsCurrentDisabled());
+
             if (group is null)
                 modelList.Add(model);
             else
                 group.AddChild(model);
+        }
+
+        private bool IsCurrentDisabled()
+        {
+            if (disabledStack.Count > 0 && disabledStack.Peek())
+                return true;
+
+            var currentGroup = group;
+            while (currentGroup != null)
+            {
+                if (currentGroup is ControlModelBase control && !control.IsInteractable)
+                    return true;
+
+                currentGroup = (currentGroup as ControlModelBase)?.Parent;
+            }
+
+            return false;
+        }
+
+        private void PushDisabled(bool disabled)
+        {
+            var aggregated = disabled;
+            if (disabledStack.Count > 0 && disabledStack.Peek())
+                aggregated = true;
+
+            disabledStack.Push(aggregated);
+        }
+
+        private void PopDisabled()
+        {
+            if (disabledStack.Count > 0)
+                disabledStack.Pop();
         }
 
         public void AddLabel(LabelModel model) => AddChild(model);

@@ -49,6 +49,7 @@ namespace Xeon.XDebugger.Model
         {
             control = uiFactory.CreateControl<NumberControl>(parent);
             control.Setup(this, OnValueChanged);
+            control.SetInteractable(IsInteractable);
             return control;
         }
 

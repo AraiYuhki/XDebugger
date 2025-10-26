@@ -64,6 +64,7 @@ namespace Xeon.XDebugger.Model
         {
             control = uiFactory.CreateControl<IntSliderControl>(parent);
             control.Setup(this, OnValueChanged);
+            control.SetInteractable(IsInteractable);
             return control;
         }
 

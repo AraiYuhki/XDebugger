@@ -19,7 +19,12 @@ namespace Xeon.XDebugger.Model
         {
         }
 
-        public void AddChild(ControlModelBase model) => children.Add(model);
+        public void AddChild(ControlModelBase model)
+        {
+            if (model.Parent != this)
+                model.SetParent(this);
+            children.Add(model);
+        }
 
         public IReadOnlyCollection<ControlModelBase> Children => children;
 
@@ -34,6 +39,8 @@ namespace Xeon.XDebugger.Model
             {
                 childrenControlls.Add(child.CreateControl(control.GetContent(), uiFactory));
             }
+
+            control.SetInteractable(IsInteractable);
 
             return control;
         }

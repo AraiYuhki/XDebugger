@@ -44,6 +44,7 @@ namespace Xeon.XDebugger.Model
         {
             control = uiFactory.CreateControl<BoolControl>(parent);
             control.Setup(this, OnChangedValue);
+            control.SetInteractable(IsInteractable);
             return control;
         }
 

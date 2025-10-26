@@ -68,6 +68,7 @@ namespace Xeon.XDebugger.Model
         {
             control = uiFactory.CreateControl<FloatSliderControl>(parent);
             control.Setup(this, OnValueChanged);
+            control.SetInteractable(IsInteractable);
             return control;
         }
 
