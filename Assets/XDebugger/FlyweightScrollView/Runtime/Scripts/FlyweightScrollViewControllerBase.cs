@@ -175,6 +175,8 @@ namespace Xeon.Common.FlyweightScrollView
             this.horizontalAlignment = horizontalAlignment;
             if (layouter is VerticalLayouter verticalLayouter)
                 verticalLayouter.SetAlignment(horizontalAlignment);
+            else if (layouter is GridLayouter gridLayouter)
+                gridLayouter.SetHorizontalAlignment(horizontalAlignment);
             foreach (var item in itemList)
                 item.SetHorizontalAlignment(horizontalAlignment);
         }
@@ -184,7 +186,9 @@ namespace Xeon.Common.FlyweightScrollView
             this.verticalAlignment = verticalAlignment;
             if (layouter is HorizontalLayouter horizontalLayouter)
                 horizontalLayouter.SetAlignment(verticalAlignment);
-            foreach(var item in itemList)
+            else if (layouter is GridLayouter gridLayouter)
+                gridLayouter.SetVerticalAlignment(verticalAlignment);
+            foreach (var item in itemList)
                 item.SetVerticalAlignment(verticalAlignment);
         }
 
