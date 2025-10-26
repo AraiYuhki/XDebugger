@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -11,6 +12,6 @@ namespace Xeon.XDebugger.Model
         int Priority { get; }
         IReadOnlyCollection<ControlModelBase> Children { get; }
         void AddChild(ControlModelBase model);
-        ControlBase CreateControl(Transform parent);
+        ControlBase CreateControl(Transform parent, IUIFactory uiFactory);
     }
 }

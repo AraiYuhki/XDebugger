@@ -1,5 +1,6 @@
 using UnityEngine;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -13,9 +14,9 @@ namespace Xeon.XDebugger.Model
         {
         }
 
-        public override ControlBase CreateControl(Transform parent)
+        public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = Instantiate<LabelControl>(parent);
+            control = uiFactory.CreateControl<LabelControl>(parent);
             control.Setup(Title);
 
             return control;

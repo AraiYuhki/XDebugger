@@ -452,6 +452,7 @@ MonoBehaviour:
   titleLabel: {fileID: 787554029}
   animator: {fileID: 298842786}
   backButton: {fileID: 785780568}
+  uiFactory: {fileID: 11400000, guid: 92a9a93e0f8647240ac682d4f8dc694c, type: 2}
   clickCount: 3
   content: {fileID: 808209368}
   inputGraceTime: 0.2

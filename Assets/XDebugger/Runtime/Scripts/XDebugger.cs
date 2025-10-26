@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Xeon.XDebugger.Model;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger
 {
@@ -32,8 +33,10 @@ namespace Xeon.XDebugger
         private Animator animator;   // メニュー表示アニメーション
         [SerializeField]
         private Button backButton;   // 戻るボタン
-        
-        private bool isShow = false; // メニュー表示状態
+
+        [Header("UI")]
+        [SerializeField]
+        private UIFactoryBase uiFactory;
 
         [Header("Trigger")]
         [SerializeField]
@@ -43,11 +46,17 @@ namespace Xeon.XDebugger
         [SerializeField]
         private float inputGraceTime = 0.2f; // 入力受付猶予時間
 
+        private bool isShow = false; // メニュー表示状態
         private float elapsedTime = 0f; // 経過時間
         private int clickedCount = 0;   // クリック回数カウント
         private PageModel currentPage;  // 現在表示中のページ
 
         private List<PageModel> pageStack = new (); // ページ履歴スタック
+
+        public void SetUIFactory(UIFactoryBase uiFactory)
+        {
+            this.uiFactory = uiFactory;
+        }
 
         /// <summary>
         /// インスタンス初期化。シングルトン化と初期状態設定。
@@ -167,8 +176,8 @@ namespace Xeon.XDebugger
         private void CreatePage<T>(T model) where T : PageModel, new()
         {
             model ??= new T();
-            model.Initialize();
-            model.OpenPage(content, model);
+            model.Initialize(uiFactory);
+            model.OpenPage(content, model, uiFactory);
             pageStack.Add(model);
             currentPage = model;
             titleLabel.text = currentPage.Title;

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -59,9 +60,9 @@ namespace Xeon.XDebugger.Model
                 control?.Refresh();
         }
 
-        public override ControlBase CreateControl(Transform parent)
+        public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = Instantiate<IntSliderControl>(parent);
+            control = uiFactory.CreateControl<IntSliderControl>(parent);
             control.Setup(this, OnValueChanged);
             return control;
         }

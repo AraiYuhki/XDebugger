@@ -1,4 +1,6 @@
+using UnityEngine;
 using Xeon.XDebugger.Profiler;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -6,8 +8,14 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(ProfilerPage)}";
 
-        public override void Initialize()
+        public override void Initialize(IUIFactory uiFactory)
         {
+            this.uiFactory = uiFactory;
+        }
+
+        protected override void CreateControl(Transform parent, IUIFactory uiFactory)
+        {
+            control ??= uiFactory.CreatePage<ProfilerPage>(parent);
         }
     }
 }

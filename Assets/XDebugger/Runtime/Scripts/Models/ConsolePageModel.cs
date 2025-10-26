@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Xeon.Common;
 using Xeon.XDebugger.Console;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -33,8 +34,9 @@ namespace Xeon.XDebugger.Model
         }
 
 
-        public override void Initialize()
+        public override void Initialize(IUIFactory uiFactory)
         {
+            this.uiFactory = uiFactory;
         }
 
         private static float elapsed = 1f;
@@ -56,6 +58,11 @@ namespace Xeon.XDebugger.Model
             }
             ;
             elapsed = 1f;
+        }
+
+        protected override void CreateControl(Transform parent, IUIFactory uiFactory)
+        {
+            control ??= uiFactory.CreatePage<ConsolePage>(parent);
         }
 
         protected override void OpenedPage()

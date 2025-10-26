@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -39,9 +40,9 @@ namespace Xeon.XDebugger.Model
             this.onChangedValue = onChangedValue;
         }
 
-        public override ControlBase CreateControl(Transform parent)
+        public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = Instantiate<BoolControl>(parent);
+            control = uiFactory.CreateControl<BoolControl>(parent);
             control.Setup(this, OnChangedValue);
             return control;
         }

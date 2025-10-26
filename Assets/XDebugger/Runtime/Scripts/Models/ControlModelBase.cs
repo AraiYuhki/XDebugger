@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -36,6 +37,6 @@ namespace Xeon.XDebugger.Model
             return instance.GetComponent<T>();
         }
 
-        public abstract ControlBase CreateControl(Transform parent);
+        public abstract ControlBase CreateControl(Transform parent, IUIFactory uiFactory);
     }
 }

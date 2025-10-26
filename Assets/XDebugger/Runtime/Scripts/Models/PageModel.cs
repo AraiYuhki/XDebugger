@@ -6,12 +6,15 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Profiler;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
     public class PageModel
     {
         protected virtual string prefabAddress => "XDebugger/Page";
+
+        protected IUIFactory uiFactory;
 
         protected Transform content;
 
@@ -48,8 +51,9 @@ namespace Xeon.XDebugger.Model
             modelList = copyItemModels.ToList();
         }
 
-        public virtual void Initialize()
+        public virtual void Initialize(IUIFactory uiFactory)
         {
+            this.uiFactory = uiFactory;
             AddLabel("===== Debug Menu =====");
 
             AddPageLinkButton<SystemPageModel>("System Info");
@@ -104,16 +108,21 @@ namespace Xeon.XDebugger.Model
             group = model;
         }
 
-        public void OpenPage(Transform parent, PageModel pageModel)
+        public void OpenPage(Transform parent, PageModel pageModel, IUIFactory uiFactory)
         {
             Clear();
-            Initialize();
+            Initialize(uiFactory);
             content = parent;
-            control ??= Instantiate(parent);
+            CreateControl(parent, uiFactory);
             foreach (var model in modelList)
-                controlList.Add(model.CreateControl(control.Content));
+                controlList.Add(model.CreateControl(control.Content, uiFactory));
             control.Open(pageModel);
             OpenedPage();
+        }
+
+        protected virtual void CreateControl(Transform parent, IUIFactory uiFactory)
+        {
+            control ??= uiFactory.CreatePage<PageControl>(parent);
         }
 
         protected virtual void OpenedPage()
@@ -161,7 +170,7 @@ namespace Xeon.XDebugger.Model
             if (doRecreate)
             {
                 Clear();
-                Initialize();
+                Initialize(uiFactory);
             }
             foreach (var control in controlList)
                 control.Refresh();
@@ -301,8 +310,9 @@ namespace Xeon.XDebugger.Model
     // テスト用ページ
     public class TestPageModel : PageModel
     {
-        public override void Initialize()
+        public override void Initialize(IUIFactory uiFactory)
         {
+            this.uiFactory = uiFactory;
             AddLabel("Detail Page");
             AddButton("Back", () => XDebugger.Instance.ClosePage(this));
         }

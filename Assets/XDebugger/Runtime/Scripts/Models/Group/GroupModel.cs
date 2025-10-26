@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -22,7 +23,7 @@ namespace Xeon.XDebugger.Model
 
         public IReadOnlyCollection<ControlModelBase> Children => children;
 
-        public override ControlBase CreateControl(Transform parent)
+        public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
             var control = Instantiate<ContentGroup>(parent);
             control.Setup(this, parent.GetComponent<ContentGroup>());
@@ -31,7 +32,7 @@ namespace Xeon.XDebugger.Model
 
             foreach (var child in children)
             {
-                childrenControlls.Add(child.CreateControl(control.GetContent()));
+                childrenControlls.Add(child.CreateControl(control.GetContent(), uiFactory));
             }
 
             return control;

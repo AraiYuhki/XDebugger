@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -11,8 +12,9 @@ namespace Xeon.XDebugger.Model
         private LabelModel currentLevel;
         private LabelModel qualityLabel;
 
-        public override void Initialize()
+        public override void Initialize(IUIFactory uiFactory)
         {
+            this.uiFactory = uiFactory;
             using (HorizontalScope(string.Empty))
             {
                 using (VerticalScope("System"))

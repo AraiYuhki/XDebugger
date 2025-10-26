@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -87,9 +88,9 @@ namespace Xeon.XDebugger.Model
         }
 
 
-        public override ControlBase CreateControl(Transform parent)
+        public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = Instantiate<DropdownControl>(parent);
+            control = uiFactory.CreateControl<DropdownControl>(parent);
             control.Setup(this, OnChangedValue);
             return control;
         }
