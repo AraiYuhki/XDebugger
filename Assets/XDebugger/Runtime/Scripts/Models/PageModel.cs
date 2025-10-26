@@ -212,19 +212,23 @@ namespace Xeon.XDebugger.Model
         public DisableGroupScope DisableScope(bool disabled)
             => DisableGroupScope.Create(() => PushDisabled(disabled), PopDisabled);
 
-        public FoldingLayoutScope FoldingScope(string title, ref bool expanded, int priority = 0)
+        public FoldingLayoutScope FoldingScope(string title, bool expanded, Action<bool> onChanged, int priority = 0)
         {
-            var initialState = expanded;
-            Action<bool> onChanged = value => expanded = value;
-            var scope = FoldingLayoutScope.Create(title, this, initialState, onChanged, priority);
+            var scope = new FoldingLayoutScope(title, this, expanded, onChanged, priority);
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;
         }
 
-        public FoldingLayoutScope FoldingScope(string title, bool expanded, Action<bool> onChanged, int priority = 0)
+        public FoldingLayoutScope FoldingScope(string title, Func<bool> stateGetter, Action<bool> stateSetter, int priority = 0)
         {
-            var scope = FoldingLayoutScope.Create(title, this, expanded, onChanged, priority);
+            if (stateGetter is null)
+                throw new ArgumentNullException(nameof(stateGetter));
+            if (stateSetter is null)
+                throw new ArgumentNullException(nameof(stateSetter));
+
+            var initialState = stateGetter();
+            var scope = new FoldingLayoutScope(title, this, initialState, stateSetter, stateSetter, priority);
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;

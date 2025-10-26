@@ -4,29 +4,27 @@ namespace Xeon.XDebugger.Model
 {
     public sealed class FoldingLayoutScope : GroupLayoutScope
     {
-        private static bool pendingInitialState;
-        private static Action<bool> pendingCallback;
+        private readonly Action<bool> disposeCallback;
 
-        public FoldingGroupModel FoldingModel => model as FoldingGroupModel;
+        public new FoldingGroupModel Model => (FoldingGroupModel)base.Model;
 
-        private FoldingLayoutScope(string title, PageModel parent, int priority)
-            : base(title, parent, priority)
+        public FoldingLayoutScope(string title, PageModel parent, bool initialState, Action<bool> onChanged, int priority = 0)
+            : base(parent, new FoldingGroupModel(title, initialState, onChanged, priority))
         {
         }
 
-        public static FoldingLayoutScope Create(string title, PageModel parent, bool initialState, Action<bool> onChanged, int priority)
+        public FoldingLayoutScope(string title, PageModel parent, bool initialState, Action<bool> onChanged, Action<bool> onDispose, int priority = 0)
+            : this(title, parent, initialState, onChanged, priority)
         {
-            pendingInitialState = initialState;
-            pendingCallback = onChanged;
-            var scope = new FoldingLayoutScope(title, parent, priority);
-            pendingInitialState = false;
-            pendingCallback = null;
-            return scope;
+            disposeCallback = onDispose;
         }
 
-        protected override ControlModelBase CreateModel(string title, int priority = 0)
-            => new FoldingGroupModel(title, pendingInitialState, pendingCallback, priority);
+        public bool IsExpanded => Model.IsExpanded;
 
-        public bool IsExpanded => (model as FoldingGroupModel)?.IsExpanded ?? false;
+        public override void Dispose()
+        {
+            base.Dispose();
+            disposeCallback?.Invoke(Model.IsExpanded);
+        }
     }
 }

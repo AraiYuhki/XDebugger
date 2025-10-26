@@ -20,6 +20,9 @@ namespace Xeon.XDebugger
 
         public TMP_Text TitleLabel => title;
 
+        public void SetChildren(List<ControlBase> controls)
+            => children = controls;
+
         public void Setup(IGroupModel model, ContentGroup parent)
         {
             Setup(model.Title);

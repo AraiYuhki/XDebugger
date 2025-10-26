@@ -44,6 +44,8 @@ namespace Xeon.XDebugger.Model
                 childrenControlls.Add(child.CreateControl(control.GetContent(), uiFactory));
             }
 
+            control.SetChildren(childrenControlls);
+
             view.ApplyState(isExpanded);
             control.SetInteractable(IsInteractable);
 
