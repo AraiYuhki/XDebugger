@@ -65,6 +65,57 @@ namespace Xeon.Common.FlyweightScrollView
         protected abstract void SetReverseMode();
         protected abstract void OnChangedScrollPosition(Vector2 position);
 
+        protected static (bool isNext, bool isPositionLast) EvaluateHorizontalScroll(Vector2 current, Vector2 previous)
+        {
+            var isNext = current.x - previous.x < 0f;
+            var isPositionLast = current.x <= float.Epsilon;
+            return (isNext, isPositionLast);
+        }
+
+        protected static (bool isNext, bool isPositionLast) EvaluateVerticalScroll(Vector2 current, Vector2 previous)
+        {
+            var isNext = current.y - previous.y < 0f;
+            if (current.y < float.Epsilon)
+                isNext = true;
+            else if (current.y >= 1f)
+                isNext = false;
+
+            var isPositionLast = current.y <= float.Epsilon;
+            return (isNext, isPositionLast);
+        }
+
+        protected static void ApplyHorizontalAnchors(RectTransform target, bool isReverse)
+        {
+            if (!isReverse)
+            {
+                target.anchorMin = Vector2.zero;
+                target.anchorMax = Vector2.up;
+                target.pivot = Vector2.up;
+            }
+            else
+            {
+                target.anchorMin = Vector2.right;
+                target.anchorMax = Vector2.one;
+                target.pivot = Vector2.one;
+            }
+        }
+
+        protected static void ApplyVerticalAnchors(RectTransform target, bool isReverse)
+        {
+            if (isReverse)
+            {
+                target.anchorMin = Vector2.zero;
+                target.anchorMax = Vector2.right;
+                target.pivot = new Vector2(0.5f, 0f);
+            }
+            else
+            {
+                target.anchorMin = Vector2.up;
+                target.anchorMax = Vector2.one;
+                target.pivot = new Vector2(0.5f, 1f);
+            }
+        }
+
 #if UNITY_EDITOR
         [SerializeField]
         protected DebugVirtualTestItem debugPrefab;

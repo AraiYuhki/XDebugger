@@ -17,8 +17,8 @@ namespace Xeon.Common.FlyweightScrollView
         public override void Setup(FlyweightScrollViewControllerBase controller)
         {
             base.Setup(controller);
+            gridCounts = new Vector2Int(Mathf.Max(1, gridCounts.x), Mathf.Max(1, gridCounts.y));
             controller.Setup(scrollView, param, content, gridCounts, orientation, horizontalAlignment, verticalAlignment);
-
         }
 
         protected override void OnChangedScrollPosition(Vector2 position)
@@ -26,17 +26,42 @@ namespace Xeon.Common.FlyweightScrollView
             if (controller == null)
                 return;
 
+            bool isNext;
+            bool isPositionLast;
+            float normalizedPosition;
+
+            switch (orientation)
+            {
+                case GridScrollOrientation.Horizontal:
+                    (isNext, isPositionLast) = EvaluateHorizontalScroll(position, prevScrollPosition);
+                    normalizedPosition = position.x;
+                    break;
+                case GridScrollOrientation.Vertical:
+                case GridScrollOrientation.Both:
+                    (isNext, isPositionLast) = EvaluateVerticalScroll(position, prevScrollPosition);
+                    normalizedPosition = position.y;
+                    break;
+                default:
+                    throw new System.Exception($"{orientation} is not supported");
+            }
+
+            prevScrollPosition = position;
+            controller.Update(isNext, normalizedPosition, isPositionLast);
         }
 
         protected override void SetReverseMode()
         {
-            if (param.IsReverse)
+            switch (orientation)
             {
-
-            }
-            else
-            {
-
+                case GridScrollOrientation.Horizontal:
+                    ApplyHorizontalAnchors(content, param.IsReverse);
+                    break;
+                case GridScrollOrientation.Vertical:
+                case GridScrollOrientation.Both:
+                    ApplyVerticalAnchors(content, param.IsReverse);
+                    break;
+                default:
+                    throw new System.Exception($"{orientation} is not supported");
             }
 
             controller?.SetIsReverse(param.IsReverse);
@@ -44,6 +69,8 @@ namespace Xeon.Common.FlyweightScrollView
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
+            gridCounts.x = Mathf.Max(1, gridCounts.x);
+            gridCounts.y = Mathf.Max(1, gridCounts.y);
             controller?.SetGridCounts(gridCounts);
             switch (orientation)
             {
@@ -59,6 +86,7 @@ namespace Xeon.Common.FlyweightScrollView
                 default:
                     throw new System.Exception($"{orientation} is not supported");
             }
+            SetReverseMode();
             base.OnValidate();
         }
 #endif

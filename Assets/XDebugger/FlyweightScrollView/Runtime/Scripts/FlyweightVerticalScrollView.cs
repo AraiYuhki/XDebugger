@@ -18,32 +18,14 @@ namespace Xeon.Common.FlyweightScrollView
         {
             if (controller == null)
                 return;
-
-            var isNext = position.y - prevScrollPosition.y < 0;
-            if (position.y < float.Epsilon)
-                isNext = true;
-            else if (position.y >= 1f)
-                isNext = false;
+            var (isNext, isPositionLast) = EvaluateVerticalScroll(position, prevScrollPosition);
             prevScrollPosition = position;
-
-            var isPositionLast = position.y <= float.Epsilon;
             controller.Update(isNext, position.y, isPositionLast);
         }
 
         protected override void SetReverseMode()
         {
-            if (param.IsReverse)
-            {
-                content.anchorMin = Vector2.zero;
-                content.anchorMax = Vector2.right;
-                content.pivot = new Vector2(0.5f, 0f);
-            }
-            else
-            {
-                content.anchorMin = Vector2.up;
-                content.anchorMax = Vector2.one;
-                content.pivot = new Vector2(0.5f, 1f);
-            }
+            ApplyVerticalAnchors(content, param.IsReverse);
             controller?.SetIsReverse(param.IsReverse);
         }
 
