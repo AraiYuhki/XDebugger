@@ -12,6 +12,7 @@ namespace Xeon.Common.FlyweightScrollView
         {
             base.Setup(controller);
             controller.Setup(scrollView, param, content, alignment);
+            controller.ConfigureForHorizontal(alignment);
         }
 
         protected override void OnChangedScrollPosition(Vector2 position)
