@@ -34,12 +34,15 @@ namespace Xeon.Common.FlyweightScrollView
         protected bool isReverse => param.IsReverse;
         protected bool isAtLastSticky => param.IsAtLastSticky;
 
+        protected GridScrollOrientation orientation;
         protected VerticalAlignment verticalAlignment;
         protected HorizontalAlignment horizontalAlignment;
 
         protected bool isPositionLast = false;
         protected bool isItemCountChanging = false;
         protected Layouter layouter;
+
+        protected Vector2Int gridCounts = Vector2Int.one;
 
         // Properties
         public abstract int ItemCount { get; }
@@ -63,13 +66,11 @@ namespace Xeon.Common.FlyweightScrollView
         // ====================================================================================================
 
         /// <summary>
-        /// スクロールビューを初期化します。
+        /// 縦向きスクロールビューを初期化します。
         /// </summary>
         public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
         {
-            this.scrollView = scrollView;
-            this.container = container;
-            this.param = param;
+            Setup(scrollView, param, container);
             horizontalAlignment = alignment;
             layouter = new VerticalLayouter(container, param, itemSize, alignment);
 
@@ -77,17 +78,34 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// スクロールビューを初期化します。
+        /// 横向きスクロールビューを初期化します。
         /// </summary>
         public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, VerticalAlignment alignment)
         {
-            this.scrollView = scrollView;
-            this.container = container;
-            this.param = param;
+            Setup(scrollView, param, container);
             verticalAlignment = alignment;
             layouter = new HorizontalLayouter(container, param, itemSize, alignment);
 
             UpdateViewportSize();
+        }
+
+        /// <summary>
+        /// グリッドスクロールビューを初期化する
+        /// </summary>
+        public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, Vector2Int gridCounts, GridScrollOrientation orientation, HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment)
+        {
+            Setup(scrollView, param, container);
+            this.horizontalAlignment = horizontalAlignment;
+            this.verticalAlignment = verticalAlignment;
+            layouter = new GridLayouter(container, param, itemSize, orientation, gridCounts, horizontalAlignment, verticalAlignment);
+            UpdateViewportSize();
+        }
+
+        private void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container)
+        {
+            this.scrollView = scrollView;
+            this.container = container;
+            this.param = param;
         }
 
         public void UpdateViewportSize()
@@ -190,6 +208,70 @@ namespace Xeon.Common.FlyweightScrollView
                 gridLayouter.SetVerticalAlignment(verticalAlignment);
             foreach (var item in itemList)
                 item.SetVerticalAlignment(verticalAlignment);
+        }
+
+        public void SetColumnCount(int count)
+        {
+            gridCounts.x = Mathf.Max(1, count);
+            if (layouter is GridLayouter gridLayouter)
+            {
+                gridLayouter.SetColumnCount(count);
+                UpdateContainerSize();
+                UpdateViewportSize();
+            }
+        }
+
+        public void SetRowCount(int count)
+        {
+            gridCounts.y = Mathf.Max(1, count);
+            if (layouter is GridLayouter gridLayouter)
+            {
+                gridLayouter.SetRowCount(count);
+                UpdateContainerSize();
+                UpdateViewportSize();
+            }
+        }
+
+        public void SetOrientation(GridScrollOrientation orientation)
+        {
+            this.orientation = orientation;
+            if (layouter is GridLayouter gridLayouter)
+            {
+                gridLayouter.SetOrientation(orientation);
+            }
+        }
+
+        public void SetGridCounts(Vector2Int gridCounts)
+        {
+            this.gridCounts = new Vector2Int(Mathf.Max(1, gridCounts.x), Mathf.Max(1, gridCounts.y));
+            if (layouter is GridLayouter gridLayouter)
+            {
+                gridLayouter.SetGridCounts(this.gridCounts);
+                UpdateContainerSize();
+                UpdateViewportSize();
+            }
+        }
+
+        public void ConfigureForVertical(HorizontalAlignment alignment)
+        {
+            orientation = GridScrollOrientation.Vertical;
+            horizontalAlignment = alignment;
+            EnsureLayouter();
+        }
+
+        public void ConfigureForHorizontal(VerticalAlignment alignment)
+        {
+            orientation = GridScrollOrientation.Horizontal;
+            verticalAlignment = alignment;
+            EnsureLayouter();
+        }
+
+        public void ConfigureForBoth(HorizontalAlignment horizontalAlignment,  VerticalAlignment verticalAlignment)
+        {
+            orientation = GridScrollOrientation.Both;
+            this.horizontalAlignment = horizontalAlignment;
+            this.verticalAlignment = verticalAlignment;
+            EnsureLayouter();
         }
 
         public void SetIsReverse(bool isReverse)
@@ -449,6 +531,25 @@ namespace Xeon.Common.FlyweightScrollView
                 item.gameObject.SetActive(false);
                 itemList.AddLast(item);
             }
+        }
+
+        protected void EnsureLayouter()
+        {
+            if (container == null || param == null)
+                return;
+            if (layouter is GridLayouter gridLayouter)
+            {
+                gridLayouter.SetOrientation(orientation);
+                gridLayouter.SetGridCounts(gridCounts);
+                gridLayouter.SetHorizontalAlignment(horizontalAlignment);
+                gridLayouter.SetVerticalAlignment(verticalAlignment);
+            }
+            else
+            {
+                layouter = new GridLayouter(container, param, itemSize, orientation, gridCounts, horizontalAlignment, verticalAlignment);
+            }
+            UpdateContainerSize();
+            UpdateViewportSize();
         }
 
 
