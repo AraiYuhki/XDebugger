@@ -107,6 +107,11 @@ namespace Xeon.Common
             return buffer[lastIndex];
         }
 
+        public virtual void Add(T item)
+        {
+            PushBack(item);
+        }
+
         /// <summary>
         /// 末尾に要素を追加（満杯の場合は先頭を上書き）
         /// </summary>
