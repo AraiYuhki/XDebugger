@@ -21,6 +21,28 @@ namespace Xeon.XGraph.View
         [SerializeField] private List<BarGraphMarkerData> markerDataList = new();
         
         private List<Series> buffers = new();
+        // SeriesBase 参照配列キャッシュ(再利用) ※外部で変更しない前提
+        private readonly List<SeriesBase> _bufferCache = new();
+
+        private List<SeriesBase> GetBuffer()
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                _bufferCache.Clear();
+                if (testBuffer != null)
+                {
+                    for (int i = 0; i < testBuffer.Count; i++)
+                        _bufferCache.Add(testBuffer[i]);
+                }
+                return _bufferCache;
+            }
+#endif
+            _bufferCache.Clear();
+            for (int i = 0; i < buffers.Count; i++)
+                _bufferCache.Add(buffers[i]);
+            return _bufferCache;
+        }
 
         private bool geometryDirty = false;
         private bool rangeDirty = false;
@@ -242,7 +264,7 @@ namespace Xeon.XGraph.View
         }
         
 #if UNITY_EDITOR
-        [SerializeField] private List<TestSeries> testData;
+        [SerializeField] private List<TestSeries> testBuffer;
         protected override void OnValidate()
         {
             base.OnValidate();

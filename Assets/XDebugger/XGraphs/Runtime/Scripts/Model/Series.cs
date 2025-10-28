@@ -11,26 +11,20 @@ namespace Xeon.XGraph.Model
     /// グラフで使用するデータ系列 (List / float[] / CircularBuffer をソースにできる)
     /// </summary>
     [Serializable]
-    public class Series : IEnumerable<float>
+    public class Series : SeriesBase
     {
-        [SerializeField] private string name;
-        [SerializeField] private Color color = Color.white;
-        
-        public event Action OnChangedCollection
+        public override event Action OnChangedCollection
         {
             add => data.OnChangedCollection += value;
             remove => data.OnChangedCollection -= value;
         }
 
-        public float this[int index] => data[index];
-        public float MaxValue => data.Max();
-
+        public override float this[int index] => data[index];
+        public override float MaxValue => data.Max();
         
-        private ISeriesDataAdapter data; 
-
-        public string Name => name;
-        public Color Color => color;
-        public int Count => data.Count;
+        private ISeriesDataAdapter data;
+        
+        public override int Count => data.Count;
 
         public Series(string name, Color color, float[] values) : this(name, color)
         {
@@ -57,8 +51,6 @@ namespace Xeon.XGraph.Model
 
         public void Clear() => data.Clear();
 
-        public IEnumerator<float> GetEnumerator() => data.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public override IEnumerator<float> GetEnumerator() => data.GetEnumerator();
     }
 }
