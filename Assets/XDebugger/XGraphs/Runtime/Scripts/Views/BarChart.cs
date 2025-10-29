@@ -20,7 +20,7 @@ namespace Xeon.XGraph.View
         [SerializeField] private BarGraphMarker markerPrefab;
         [SerializeField, HideInInspector] private List<BarGraphMarker> markers = new();
         [SerializeField] private List<BarGraphMarkerData> markerDataList = new();
-        [SerializeField] private SingleSeriesContainer buffer = new();
+        [SerializeField] private Series buffer = new();
 
         private bool geometryDirty = false;
         private bool rangeDirty = false;
@@ -31,10 +31,10 @@ namespace Xeon.XGraph.View
 
         private float width => rectTransform.rect.width - padding.horizontal;
         
-        public void Initialize(Series buffers)
+        public void Initialize(Series buffer)
         {
-            this.buffer = new SingleSeriesContainer(buffers);
-            buffer.Series.OnChangedCollection += OnChangedCollection;
+            this.buffer = buffer;
+            buffer.OnChangedCollection += OnChangedCollection;
             geometryDirty = true;
             rangeDirty = true;
             colorDirty = true;
@@ -61,9 +61,9 @@ namespace Xeon.XGraph.View
 
         public void SetSeries(Series newData)
         {
-            buffer.Series.OnChangedCollection -= OnChangedCollection;
-            this.buffer = new SingleSeriesContainer(newData);
-            buffer.Series.OnChangedCollection += OnChangedCollection;
+            buffer.OnChangedCollection -= OnChangedCollection;
+            buffer = newData;
+            buffer.OnChangedCollection += OnChangedCollection;
             geometryDirty = true;
             SetVerticesDirty();
         }
@@ -137,18 +137,16 @@ namespace Xeon.XGraph.View
             if (!geometryDirty)
                 return;
 
-            var series = buffer.Series;
-
-            var barCount = series.Count;
+            var barCount = buffer.Count;
             if (barCount <= 0)
                 return;
 
             var stepX = width / barCount;
             var offsetX = rectTransform.rect.xMin + padding.left;
-            var color = series.Color * this.color;
+            var color = buffer.Color * this.color;
             for (var barIndex = 0; barIndex < barCount; barIndex++)
             {
-                var data = series[barIndex];
+                var data = buffer[barIndex];
                 var left = offsetX + stepX * barIndex;
                 var right = offsetX + stepX * (barIndex + 1);
                 var bottom = FastValueToHeight(0f);

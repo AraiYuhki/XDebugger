@@ -85,6 +85,8 @@ namespace Xeon.XGraph.Model
             data = SeriesDataAdapterFactory.Create(values, null);
         }
 
+        public Series() { }
+
         private Series(string name, Color color)
         {
             this.name = name;
