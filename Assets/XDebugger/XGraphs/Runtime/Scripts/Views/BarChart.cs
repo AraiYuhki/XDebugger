@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,7 +11,7 @@ namespace Xeon.XGraph.View
     /// <summary>
     /// 棒グラフビュー
     /// </summary>
-    [RequireComponent(typeof(CanvasRenderer))]
+    [RequireComponent(typeof(CanvasRenderer)), ExecuteInEditMode]
     public class BarChart : MaskableGraphic
     {
         [SerializeField] private RectOffset padding = new();
@@ -19,30 +20,7 @@ namespace Xeon.XGraph.View
         [SerializeField] private BarGraphMarker markerPrefab;
         [SerializeField, HideInInspector] private List<BarGraphMarker> markers = new();
         [SerializeField] private List<BarGraphMarkerData> markerDataList = new();
-        
-        private List<Series> buffers = new();
-        // SeriesBase 参照配列キャッシュ(再利用) ※外部で変更しない前提
-        private readonly List<SeriesBase> _bufferCache = new();
-
-        private List<SeriesBase> GetBuffer()
-        {
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                _bufferCache.Clear();
-                if (testBuffer != null)
-                {
-                    for (int i = 0; i < testBuffer.Count; i++)
-                        _bufferCache.Add(testBuffer[i]);
-                }
-                return _bufferCache;
-            }
-#endif
-            _bufferCache.Clear();
-            for (int i = 0; i < buffers.Count; i++)
-                _bufferCache.Add(buffers[i]);
-            return _bufferCache;
-        }
+        [SerializeField] private SingleSeriesContainer buffer = new();
 
         private bool geometryDirty = false;
         private bool rangeDirty = false;
@@ -53,11 +31,10 @@ namespace Xeon.XGraph.View
 
         private float width => rectTransform.rect.width - padding.horizontal;
         
-        public void Initialize(List<Series> buffers)
+        public void Initialize(Series buffers)
         {
-            this.buffers = buffers;
-            foreach (var buffer in buffers)
-                buffer.OnChangedCollection += OnChangedCollection;
+            this.buffer = new SingleSeriesContainer(buffers);
+            buffer.Series.OnChangedCollection += OnChangedCollection;
             geometryDirty = true;
             rangeDirty = true;
             colorDirty = true;
@@ -82,13 +59,11 @@ namespace Xeon.XGraph.View
             UpdateMarkers();
         }
 
-        public void SetSeries(List<Series> newData)
+        public void SetSeries(Series newData)
         {
-            foreach (var buffer in buffers)
-                buffer.OnChangedCollection -= OnChangedCollection;
-            this.buffers = newData;
-            foreach (var buffer in buffers)
-                buffer.OnChangedCollection += OnChangedCollection;
+            buffer.Series.OnChangedCollection -= OnChangedCollection;
+            this.buffer = new SingleSeriesContainer(newData);
+            buffer.Series.OnChangedCollection += OnChangedCollection;
             geometryDirty = true;
             SetVerticesDirty();
         }
@@ -153,7 +128,7 @@ namespace Xeon.XGraph.View
         protected override void OnPopulateMesh(VertexHelper vh)
         {
             vh.Clear();
-            if (buffers == null || buffers.Count == 0)
+            if (buffer == null)
                 return;
 
             if (rangeDirty)
@@ -162,24 +137,23 @@ namespace Xeon.XGraph.View
             if (!geometryDirty)
                 return;
 
-            foreach (var series in buffers.OrderByDescending(series => series.MaxValue))
-            {
-                var barCount = series.Count;
-                if (barCount <= 0)
-                    return;
-                var stepX = width / barCount;
-                var offsetX = rectTransform.rect.xMin + padding.left;
-                var color = series.Color * this.color;
+            var series = buffer.Series;
 
-                for (var barIndex = 0; barIndex < barCount; barIndex++)
-                {
-                    var data = series[barIndex];
-                    var left = offsetX + stepX * barIndex;
-                    var right = offsetX + stepX * (barIndex + 1);
-                    var bottom = FastValueToHeight(0f);
-                    var top = FastValueToHeight(data);
-                    AddQuad(vh, left, right, bottom, top, color);
-                }
+            var barCount = series.Count;
+            if (barCount <= 0)
+                return;
+
+            var stepX = width / barCount;
+            var offsetX = rectTransform.rect.xMin + padding.left;
+            var color = series.Color * this.color;
+            for (var barIndex = 0; barIndex < barCount; barIndex++)
+            {
+                var data = series[barIndex];
+                var left = offsetX + stepX * barIndex;
+                var right = offsetX + stepX * (barIndex + 1);
+                var bottom = FastValueToHeight(0f);
+                var top = FastValueToHeight(data);
+                AddQuad(vh, left, right, bottom, top, color);
             }
 
             geometryDirty = false;
@@ -264,10 +238,14 @@ namespace Xeon.XGraph.View
         }
         
 #if UNITY_EDITOR
-        [SerializeField] private List<TestSeries> testBuffer;
         protected override void OnValidate()
         {
             base.OnValidate();
+            if (Application.isPlaying)
+                return;
+            geometryDirty = true;
+            rangeDirty = true;
+            SetVerticesDirty();
         }
 
         [UnityEditor.CustomEditor(typeof(BarChart))]

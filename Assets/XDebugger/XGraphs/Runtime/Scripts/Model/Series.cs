@@ -8,23 +8,67 @@ using Xeon.Common;
 namespace Xeon.XGraph.Model
 {
     /// <summary>
-    /// グラフで使用するデータ系列 (List / float[] / CircularBuffer をソースにできる)
+    /// グラフで使用するデータ系列
     /// </summary>
     [Serializable]
-    public class Series : SeriesBase
+    public class Series : IEnumerable<float>
     {
-        public override event Action OnChangedCollection
+        [SerializeField] private string name;
+        [SerializeField] private Color color = Color.white;
+#if UNITY_EDITOR
+        [SerializeField] private List<float> testData = new();
+#endif
+
+        public event Action OnChangedCollection
         {
             add => data.OnChangedCollection += value;
             remove => data.OnChangedCollection -= value;
         }
 
-        public override float this[int index] => data[index];
-        public override float MaxValue => data.Max();
+        public float this[int index]
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (Application.isPlaying)
+                    return data[index];
+                return testData[index];
+#else
+                return data[index];
+#endif
+            }
+            
+        }
+        public float MaxValue
+        {
+            get
+            {
+#if UNITY_EDITOR
+                if (Application.isPlaying)
+                    return data.Max();
+                return testData.Max();
+#else
+                return data.Max();
+#endif
+            }
+        }
         
         private ISeriesDataAdapter data;
         
-        public override int Count => data.Count;
+        public int Count {
+            get
+            {
+#if UNITY_EDITOR
+                if (Application.isPlaying)
+                    return data.Count;
+                return testData.Count;
+#else
+                return data.Count;
+#endif
+            }
+        }
+        public string Name => name;
+        public Color Color => color;
 
         public Series(string name, Color color, float[] values) : this(name, color)
         {
@@ -51,6 +95,7 @@ namespace Xeon.XGraph.Model
 
         public void Clear() => data.Clear();
 
-        public override IEnumerator<float> GetEnumerator() => data.GetEnumerator();
+        public IEnumerator<float> GetEnumerator() => data.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
