@@ -9,22 +9,22 @@ using UnityEditorInternal;
 namespace Xeon.XGraph.Model
 {
     [Serializable]
-    public class MultiSeriesContainer
+    public class MultiValueSeries
     {
         [SerializeField]
         private Series[] series;
 
-        public IReadOnlyCollection<Series> Series => series;
-        public int Count => series.Length;
+        public IReadOnlyList<Series> Series => series;
+        public int Count => series == null ? 0 : series.Length;
 
-        public MultiSeriesContainer() { }
+        public MultiValueSeries() { }
 
-        public MultiSeriesContainer(List<Series> source)
+        public MultiValueSeries(List<Series> source)
         {
             series = source.ToArray();
         }
 
-        public MultiSeriesContainer(int legendCount)
+        public MultiValueSeries(int legendCount)
         {
             series = new Series[legendCount];
         }
@@ -45,8 +45,8 @@ namespace Xeon.XGraph.Model
                 series.Clear();
         }
 #if UNITY_EDITOR
-        [CustomPropertyDrawer(typeof(MultiSeriesContainer))]
-        private class MultiSeriesContainerEditor : PropertyDrawer
+        [CustomPropertyDrawer(typeof(MultiValueSeries))]
+        private class MultiValueSeriesEditor : PropertyDrawer
         {
             private const string SeriesPropertyName = "series";
             private const string SeriesNamePropertyName = "name";

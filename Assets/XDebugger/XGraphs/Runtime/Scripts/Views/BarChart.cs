@@ -15,12 +15,13 @@ namespace Xeon.XGraph.View
     public class BarChart : MaskableGraphic
     {
         [SerializeField] private RectOffset padding = new();
+        [SerializeField] private float spacing = 0f;
         [SerializeField] private float min = 0f;
         [SerializeField] private float max = 100f;
         [SerializeField] private BarGraphMarker markerPrefab;
         [SerializeField, HideInInspector] private List<BarGraphMarker> markers = new();
         [SerializeField] private List<BarGraphMarkerData> markerDataList = new();
-        [SerializeField] private Series buffer = new();
+        [SerializeField] private MultiValueSeries buffer = new MultiValueSeries();
 
         private bool geometryDirty = false;
         private bool rangeDirty = false;
@@ -30,11 +31,23 @@ namespace Xeon.XGraph.View
         private float baseY = 0f;
 
         private float width => rectTransform.rect.width - padding.horizontal;
+
+        public float Spacing
+        {
+            get => spacing;
+            set
+            {
+                spacing = value;
+                geometryDirty = true;
+                SetVerticesDirty();
+            }
+        }
         
-        public void Initialize(Series buffer)
+        public void Initialize(MultiValueSeries buffer)
         {
             this.buffer = buffer;
-            buffer.OnChangedCollection += OnChangedCollection;
+            foreach (var series in buffer.Series)
+                series.OnChangedCollection += OnChangedCollection;
             geometryDirty = true;
             rangeDirty = true;
             colorDirty = true;
@@ -59,11 +72,13 @@ namespace Xeon.XGraph.View
             UpdateMarkers();
         }
 
-        public void SetSeries(Series newData)
+        public void SetSeries(MultiValueSeries newData)
         {
-            buffer.OnChangedCollection -= OnChangedCollection;
+            foreach (var series in buffer.Series)
+                series.OnChangedCollection -= OnChangedCollection;
             buffer = newData;
-            buffer.OnChangedCollection += OnChangedCollection;
+            foreach (var series in buffer.Series)
+                series.OnChangedCollection += OnChangedCollection;
             geometryDirty = true;
             SetVerticesDirty();
         }
@@ -137,21 +152,36 @@ namespace Xeon.XGraph.View
             if (!geometryDirty)
                 return;
 
-            var barCount = buffer.Count;
-            if (barCount <= 0)
+            if (buffer.Count <= 0 || buffer.Series.Count <= 0)
                 return;
 
-            var stepX = width / barCount;
-            var offsetX = rectTransform.rect.xMin + padding.left;
-            var color = buffer.Color * this.color;
-            for (var barIndex = 0; barIndex < barCount; barIndex++)
+            var legendCount = buffer.Count;
+            var groupCount = buffer.Series.First().Count;
+
+            var contentLeft = rectTransform.rect.xMin + padding.left;
+            var contentRight = rectTransform.rect.xMax - padding.right;
+            var contentWidth = Mathf.Max(0, contentRight - contentLeft);
+
+            var groupGaps = groupCount - 1;
+            var totalGroupGap = groupGaps * Mathf.Max(0f, spacing);
+            var groupWidth = (contentWidth - totalGroupGap) / groupCount;
+
+            var barWidth = Mathf.Max(0, groupWidth / legendCount);
+
+            for (var groupIndex = 0; groupIndex < groupCount; groupIndex++)
             {
-                var data = buffer[barIndex];
-                var left = offsetX + stepX * barIndex;
-                var right = offsetX + stepX * (barIndex + 1);
-                var bottom = FastValueToHeight(0f);
-                var top = FastValueToHeight(data);
-                AddQuad(vh, left, right, bottom, top, color);
+                var groupLeft = contentLeft + groupIndex * (groupWidth + spacing);
+                for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
+                {
+                    var series = buffer.Series[legendIndex];
+                    var color = series.Color * this.color;
+                    var left = Mathf.Round(groupLeft + legendIndex * barWidth);
+                    var right = Mathf.Round(left + barWidth);
+                    var bottom = FastValueToHeight(0f);
+                    var top = FastValueToHeight(series[groupIndex]);
+
+                    AddQuad(vh, left, right, bottom, top, color);
+                }
             }
 
             geometryDirty = false;
