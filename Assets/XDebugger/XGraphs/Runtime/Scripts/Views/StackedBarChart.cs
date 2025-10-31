@@ -27,6 +27,15 @@ namespace Xeon.XGraph.View
         private float scale = 1f;
         private float baseY = 0f;
 
+        public override Color Color
+        {
+            set
+            {
+                colorManager.SetDirty();
+                base.Color = value;
+            }
+        }
+
         public void Initialize(MultiValueSeries buffer)
         {
             rangeDirty = true;
@@ -58,6 +67,7 @@ namespace Xeon.XGraph.View
             InitializeSeries(buffer);
             colorManager.SetBuffer(buffer);
 
+            geometryDirty = true;
             rangeDirty = true;
             SetVerticesDirty();
         }
@@ -225,12 +235,6 @@ namespace Xeon.XGraph.View
         {
             colorManager.SetBuffer(null);
             base.OnDisable();
-        }
-
-        protected override void OnChangedColor()
-        {
-            geometryDirty = true;
-            base.OnChangedColor();
         }
 
         private static void AddQuad(VertexHelper vh, float left, float right, float top, float bottom, Color color)

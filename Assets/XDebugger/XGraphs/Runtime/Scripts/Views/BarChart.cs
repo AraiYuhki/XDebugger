@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -23,10 +24,19 @@ namespace Xeon.XGraph.View
         
         private bool rangeDirty = false;
 
-        private readonly ColorManager colorManager = new();
+        private ColorManager colorManager = new();
 
         private float scale = 1f;
         private float baseY = 0f;
+
+        public override Color Color
+        {
+            set
+            {
+                colorManager.SetDirty();
+                base.Color = value;
+            }
+        }
         
         public void Initialize(MultiValueSeries buffer)
         {
@@ -58,8 +68,9 @@ namespace Xeon.XGraph.View
             buffer = newData;
             InitializeSeries(buffer);
             colorManager.SetBuffer(buffer);
-
+            
             geometryDirty = true;
+            rangeDirty = true;
             SetVerticesDirty();
         }
 
@@ -223,12 +234,6 @@ namespace Xeon.XGraph.View
         {
             colorManager.SetBuffer(null);
             base.OnDisable();
-        }
-
-        protected override void OnChangedColor()
-        {
-            geometryDirty = true;
-            base.OnChangedColor();
         }
 
         protected override void OnRectTransformDimensionsChange()

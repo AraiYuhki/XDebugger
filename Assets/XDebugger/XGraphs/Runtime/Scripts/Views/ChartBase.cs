@@ -99,6 +99,7 @@ namespace Xeon.XGraph.View
 
         protected virtual void OnChangedColor()
         {
+            geometryDirty = true;
             SetVerticesDirty();
         }
         

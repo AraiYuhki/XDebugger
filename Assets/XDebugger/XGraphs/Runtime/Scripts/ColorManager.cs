@@ -15,11 +15,13 @@ namespace Xeon.XGraph.Controller
         private bool hasLastGraphicsColor;
         private bool isDirty = true;
 
+        public void SetDirty() => isDirty = true;
+
         public void SetBuffer(MultiValueSeries newBuffer)
         {
             if (ReferenceEquals(buffer, newBuffer))
             {
-                isDirty = true;
+                SetDirty();
                 hasLastGraphicsColor = false;
                 return;
             }
@@ -32,7 +34,7 @@ namespace Xeon.XGraph.Controller
                 preMultipliedColors = Array.Empty<Color>();
 
             hasLastGraphicsColor = false;
-            isDirty = true;
+            SetDirty();
         }
 
         public void RecalculateColors(Color graphicsColor)
@@ -50,13 +52,13 @@ namespace Xeon.XGraph.Controller
             {
                 lastGraphicsColor = graphicsColor;
                 hasLastGraphicsColor = true;
-                isDirty = true;
+                SetDirty();
             }
 
             if (preMultipliedColors.Length != buffer.Count)
             {
                 preMultipliedColors = new Color[buffer.Count];
-                isDirty = true;
+                SetDirty();
             }
 
             if (!isDirty)
@@ -93,7 +95,7 @@ namespace Xeon.XGraph.Controller
             {
                 if (series == null)
                     continue;
-                series.OnChangedColor += OnSeriesColorChanged;
+                series.OnChangedColor += SetDirty;
             }
         }
 
@@ -106,13 +108,8 @@ namespace Xeon.XGraph.Controller
             {
                 if (series == null)
                     continue;
-                series.OnChangedColor -= OnSeriesColorChanged;
+                series.OnChangedColor -= SetDirty;
             }
-        }
-
-        private void OnSeriesColorChanged()
-        {
-            isDirty = true;
         }
     }
 }
