@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Xeon.Common;
+using Xeon.XGraph.Controller;
 using Xeon.XGraph.Model;
 
 namespace Xeon.XGraph.View
@@ -22,15 +23,23 @@ namespace Xeon.XGraph.View
         [SerializeField] private MultiValueSeries buffer = new();
 
         private bool rangeDirty = false;
-        private Color[] premultipliedColors = Array.Empty<Color>();
+        private ColorManager colorManager;
 
         private float scale = 1f;
         private float baseY = 0f;
 
+        public override Color Color
+        {
+            set
+            {
+                colorManager.IsDirty = true;
+                base.Color = value;
+            }
+        }
+
         public void Initialize(MultiValueSeries buffer)
         {
             rangeDirty = true;
-            colorDirty = true;
             SetSeries(buffer);
         }
 
@@ -57,6 +66,7 @@ namespace Xeon.XGraph.View
             FinalizeSeries(buffer);
             buffer = newData;
             InitializeSeries(buffer);
+            colorManager = new ColorManager(buffer, color);
             
             rangeDirty = true;
             SetVerticesDirty();
@@ -174,8 +184,9 @@ namespace Xeon.XGraph.View
 
             if (rangeDirty)
                 RecalculateRange();
-            if (colorDirty)
-                RecalculateColors();
+            
+            colorManager.RecalculateColors(color);
+                
             if (!geometryDirty)
                 return;
 
@@ -205,30 +216,26 @@ namespace Xeon.XGraph.View
 
                     var bottom = FastValueToHeight(cumulative);
                     var top = FastValueToHeight(cumulative + value);
-                    AddQuad(vh, left, right, bottom, top, GetSegmentColor(legendIndex));
+                    AddQuad(vh, left, right, bottom, top, colorManager.GetSegmentColor(legendIndex, color));
                     cumulative += value;
                 }
             }
 
             geometryDirty = false;
         }
-        
-        protected override void RecalculateColors()
+
+        protected override void OnEnable()
         {
-            if (premultipliedColors == null || premultipliedColors.Length != buffer.Count)
-                premultipliedColors = new Color[buffer.Count];
-            for (var index = 0; index < buffer.Count; index++)
-                premultipliedColors[index] = buffer.Series[index].Color * color;
-            colorDirty = false;
+            rangeDirty = true;
+            colorManager ??= new ColorManager(buffer, color);
+            colorManager.IsDirty = true;
+            base.OnEnable();
         }
 
-        private Color GetSegmentColor(int index)
+        protected override void OnChangedColor()
         {
-            if (premultipliedColors == null || premultipliedColors.Length == 0)
-                return color; // フォールバック
-            if (index < premultipliedColors.Length)
-                return premultipliedColors[index];
-            return premultipliedColors[premultipliedColors.Length - 1]; // 足りない場合は最後
+            base.OnChangedColor();
+            colorManager.IsDirty = true;
         }
 
         private static void AddQuad(VertexHelper vh, float left, float right, float top, float bottom, Color color)
@@ -254,6 +261,8 @@ namespace Xeon.XGraph.View
             base.OnValidate();
             if (Application.isPlaying)
                 return;
+            colorManager ??= new ColorManager(buffer, color);
+            colorManager.IsDirty = true;
             rangeDirty = true;
         }
 

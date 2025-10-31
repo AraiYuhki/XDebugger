@@ -14,7 +14,6 @@ namespace Xeon.XGraph.View
         [SerializeField] protected float spacing = 0f;
 
         protected bool geometryDirty = false;
-        protected bool colorDirty = false;
 
         protected float width => rectTransform.rect.width - padding.horizontal;
         protected float height => rectTransform.rect.height - padding.vertical;
@@ -29,11 +28,19 @@ namespace Xeon.XGraph.View
             }
         }
 
+        public virtual Color Color
+        {
+            set
+            {
+                color = value;
+                SetVerticesDirty();
+            }
+        }
+
         protected override void OnEnable()
         {
             base.OnEnable();
             geometryDirty = true;
-            colorDirty = true;
             SetVerticesDirty();
         }
         
@@ -87,13 +94,10 @@ namespace Xeon.XGraph.View
             SetVerticesDirty();
         }
 
-        protected void OnChangedColor()
+        protected virtual void OnChangedColor()
         {
-            colorDirty = true;
             SetVerticesDirty();
         }
-
-        protected abstract void RecalculateColors();
         
 #if UNITY_EDITOR
         protected override void OnValidate()
