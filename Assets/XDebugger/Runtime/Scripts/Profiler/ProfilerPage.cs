@@ -6,56 +6,19 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Xeon.Common;
 using Xeon.XDebugger.Control;
+using Xeon.XGraph.Model;
+using Xeon.XGraph.View;
 
 namespace Xeon.XDebugger.Profiler
 {
     public class ProfilerPage : PageControl
     {
         private const int FrameBufferSize = 400;
-
-        private struct FrameData : IStackedBarItemData
-        {
-            public float UpdateTime;
-            public float RenderTime;
-            public float OtherTime;
-
-            public int Count => 3;
-            public float this[int index]
-            {
-                get
-                {
-                    return index switch
-                    {
-                        0 => UpdateTime,
-                        1 => RenderTime,
-                        2 => OtherTime,
-                        _ => throw new IndexOutOfRangeException(),
-                    };
-                }
-            }
-
-            public FrameData(double updateTime, double renderTime, double otherTime)
-            {
-                UpdateTime = (float)updateTime;
-                RenderTime = (float)renderTime;
-                OtherTime = (float)otherTime;
-
-            }
-
-            public IEnumerator<float> GetEnumerator()
-            {
-                yield return UpdateTime;
-                yield return RenderTime;
-                yield return OtherTime;
-            }
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-
-        [SerializeField]
+        [FormerlySerializedAs("newGraph")] [SerializeField]
         private StackedBarChart graph;
         [SerializeField]
         private TMP_Text totalAllocatedMemoryText;
@@ -74,14 +37,6 @@ namespace Xeon.XDebugger.Profiler
 
         private static readonly string[] suffixList = { "B", "KB", "MB", "GB", "TB" };
 
-        public string TotalAllocatedMemoryText { get; private set; }
-        public string CurrentUsedMemoryText { get; private set; }
-        public float UsedMemoryPercentage { get; private set; }
-
-        public string TotalAllocatedMonoText { get; private set; }
-        public string CurrentUsedMonoText { get; private set; }
-        public float UsedMonoPercentage { get; private set; }
-
         public bool IsMonoSupported { get; private set; } = false;
 
         private float fps = 0f;
@@ -94,20 +49,28 @@ namespace Xeon.XDebugger.Profiler
 
         private Coroutine endOfFrameCoroutineHandler = null;
 
+        private MultiValueSeries timeBuffer;
+
         private DoubleCircularBuffer totalTimeBuffer = new(FrameBufferSize);
 
         private void Awake()
         {
+            timeBuffer = new MultiValueSeries(new List<Series>()
+            {
+                new Series("UpdateTime", Color.darkSeaGreen, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
+                new Series("RenderTime", Color.cadetBlue, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
+                new Series("OtherTime", Color.burlywood, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray()))
+            });
+            
             RenderPipelineManager.beginContextRendering += RenderPipelineOnBeginFrameRendering;
             endOfFrameCoroutineHandler = StartCoroutine(EndOfFrameCoroutine());
-
-            var buffer = new CircularBuffer<IStackedBarItemData>(FrameBufferSize, Enumerable.Repeat<IStackedBarItemData>(new FrameData(0, 0, 0), FrameBufferSize).ToArray());
-            graph.Initialize(buffer, new Color[] {Color.cyan, Color.green, Color.magenta });
+            
+            graph.Initialize(timeBuffer);
             IsMonoSupported = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() > 0;
 
             memoryGauge.minValue = 0f;
             monoGauge.minValue = 0f;
-
+            
             graph.SetMarkers(new List<BarGraphMarkerData>() { new ("15FPS", 0.0667f), new ("30FPS", 0.0333f), new ("60FPS", 0.0167f), new ("90FPS", 0.0111f), new ("120FPS", 0.0083f) });
         }
 
@@ -146,9 +109,9 @@ namespace Xeon.XDebugger.Profiler
         private void PushFrameData(double totalTime, double updateTime, double renderTime)
         {
             totalTimeBuffer.PushBack(totalTime);
-            graph.SetMax((float)totalTimeBuffer.Max * 1.2f);
-            graph.AddValue(new FrameData(updateTime, renderTime, totalTime - updateTime - renderTime));
             
+            graph.SetMax((float)totalTimeBuffer.Max * 1.1f);
+            timeBuffer.AddValue((float)updateTime, (float)renderTime, (float)(totalTime - updateTime - renderTime));
         }
 
         private void EndFrame()

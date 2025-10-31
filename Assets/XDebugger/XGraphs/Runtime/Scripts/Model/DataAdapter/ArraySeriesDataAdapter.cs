@@ -37,7 +37,7 @@ namespace Xeon.XGraph.Model
         public ArraySeriesDataAdapter(float[] data, Action onChangedCollection)
         {
             values = data;
-            this.onChangedCollection = onChangedCollection;
+            this.onChangedCollection += onChangedCollection;
         }
 
         public void Add(float value) => values = values.Append(value).ToArray();

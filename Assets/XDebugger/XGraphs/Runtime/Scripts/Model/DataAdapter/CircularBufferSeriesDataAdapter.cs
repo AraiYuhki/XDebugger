@@ -25,7 +25,7 @@ namespace Xeon.XGraph.Model
         public CircularBufferSeriesDataAdapter(CircularBuffer<float> values, Action onChangedCollection)
         {
             this.values = values;
-            this.onChangedCollection = onChangedCollection;
+            this.onChangedCollection += onChangedCollection;
         }
 
         public int Count => values.Count;

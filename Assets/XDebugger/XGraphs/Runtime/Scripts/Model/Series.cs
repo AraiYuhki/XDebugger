@@ -19,10 +19,24 @@ namespace Xeon.XGraph.Model
         [SerializeField] private List<float> testData = new();
 #endif
 
+        private event Action onChangedCollection;
+        private event Action onChangedColor;
+
         public event Action OnChangedCollection
         {
-            add => data.OnChangedCollection += value;
-            remove => data.OnChangedCollection -= value;
+            add => onChangedCollection += value;
+            remove => onChangedCollection -= value;
+        }
+        
+        public event Action OnChangedColor
+        {
+            add
+            {
+                onChangedColor -= value;
+                onChangedColor += value;
+                value?.Invoke();
+            }
+            remove => onChangedColor -= value;
         }
 
         public float this[int index]
@@ -68,21 +82,30 @@ namespace Xeon.XGraph.Model
             }
         }
         public string Name => name;
-        public Color Color => color;
+
+        public Color Color
+        {
+            get => color;
+            set
+            {
+                color = value;
+                onChangedColor?.Invoke();
+            }
+        }
 
         public Series(string name, Color color, float[] values) : this(name, color)
         {
-            data = SeriesDataAdapterFactory.Create(values, null);
+            data = SeriesDataAdapterFactory.Create(values, OnChangedCollectionInternal);
         }
 
         public Series(string name, Color color, List<float> values) : this(name, color)
         {
-            data = SeriesDataAdapterFactory.Create(values, null);
+            data = SeriesDataAdapterFactory.Create(values, OnChangedCollectionInternal);
         }
 
         public Series(string name, Color color, CircularBuffer<float> values) : this(name, color)
         {
-            data = SeriesDataAdapterFactory.Create(values, null);
+            data = SeriesDataAdapterFactory.Create(values, OnChangedCollectionInternal);
         }
 
         public Series() { }
@@ -91,6 +114,11 @@ namespace Xeon.XGraph.Model
         {
             this.name = name;
             this.color = color;
+        }
+
+        private void OnChangedCollectionInternal()
+        {
+            onChangedCollection?.Invoke();
         }
 
         public void Add(float value) => data.Add(value);

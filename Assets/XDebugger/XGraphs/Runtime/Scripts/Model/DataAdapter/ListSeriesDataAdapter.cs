@@ -37,7 +37,7 @@ namespace Xeon.XGraph.Model
         public ListSeriesDataAdapter(List<float> values, Action onChangedCollection)
         {
             this.values = values;
-            this.onChangedCollection = onChangedCollection;
+            this.onChangedCollection += onChangedCollection;
         }
 
         public void Add(float value)

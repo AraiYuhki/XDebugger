@@ -12,46 +12,27 @@ namespace Xeon.XGraph.View
     /// 棒グラフビュー
     /// </summary>
     [RequireComponent(typeof(CanvasRenderer)), ExecuteInEditMode]
-    public class BarChart : MaskableGraphic
+    public class BarChart : ChartBase
     {
-        [SerializeField] private RectOffset padding = new();
-        [SerializeField] private float spacing = 0f;
         [SerializeField] private float min = 0f;
         [SerializeField] private float max = 100f;
         [SerializeField] private BarGraphMarker markerPrefab;
         [SerializeField, HideInInspector] private List<BarGraphMarker> markers = new();
         [SerializeField] private List<BarGraphMarkerData> markerDataList = new();
-        [SerializeField] private MultiValueSeries buffer = new MultiValueSeries();
-
-        private bool geometryDirty = false;
+        [SerializeField] private MultiValueSeries buffer = new ();
+        
         private bool rangeDirty = false;
-        private bool colorDirty = false;
+
+        private Color[] premultipliedColors = Array.Empty<Color>();
 
         private float scale = 1f;
         private float baseY = 0f;
-
-        private float width => rectTransform.rect.width - padding.horizontal;
-
-        public float Spacing
-        {
-            get => spacing;
-            set
-            {
-                spacing = value;
-                geometryDirty = true;
-                SetVerticesDirty();
-            }
-        }
         
         public void Initialize(MultiValueSeries buffer)
         {
-            this.buffer = buffer;
-            foreach (var series in buffer.Series)
-                series.OnChangedCollection += OnChangedCollection;
-            geometryDirty = true;
             rangeDirty = true;
             colorDirty = true;
-            SetVerticesDirty();
+            SetSeries(buffer);
         }
 
         public void SetMax(float max)
@@ -74,11 +55,10 @@ namespace Xeon.XGraph.View
 
         public void SetSeries(MultiValueSeries newData)
         {
-            foreach (var series in buffer.Series)
-                series.OnChangedCollection -= OnChangedCollection;
+            FinalizeSeries(buffer);
             buffer = newData;
-            foreach (var series in buffer.Series)
-                series.OnChangedCollection += OnChangedCollection;
+            InitializeSeries(buffer);
+            
             geometryDirty = true;
             SetVerticesDirty();
         }
@@ -88,12 +68,18 @@ namespace Xeon.XGraph.View
             markerDataList = newData;
             RefreshMarkers();
         }
-        
+
         public void AddMarker(string label, float value)
-            => markerDataList.Add(new BarGraphMarkerData(label, value));
+        {
+            markerDataList.Add(new BarGraphMarkerData(label, value));
+            RefreshMarkers();
+        }
 
         public void RemoveMarker(int index)
-            => markerDataList.RemoveAt(index);
+        {
+            markerDataList.RemoveAt(index);
+            RefreshMarkers();
+        }
         
         private void ClearMarkers()
         {
@@ -118,6 +104,8 @@ namespace Xeon.XGraph.View
                     continue;
                 var position = marker.transform.localPosition;
                 position.y = ValueToHeight(marker.Data.Value, out var inRange);
+                marker.transform.localPosition = position;
+                marker.gameObject.SetActive(inRange);
             }
         }
 
@@ -151,6 +139,9 @@ namespace Xeon.XGraph.View
 
             if (!geometryDirty)
                 return;
+            
+            if (colorDirty)
+                RecalculateColors();
 
             if (buffer.Count <= 0 || buffer.Series.Count <= 0)
                 return;
@@ -159,8 +150,7 @@ namespace Xeon.XGraph.View
             var groupCount = buffer.Series.First().Count;
 
             var contentLeft = rectTransform.rect.xMin + padding.left;
-            var contentRight = rectTransform.rect.xMax - padding.right;
-            var contentWidth = Mathf.Max(0, contentRight - contentLeft);
+            var contentWidth = width;
 
             var groupGaps = groupCount - 1;
             var totalGroupGap = groupGaps * Mathf.Max(0f, spacing);
@@ -174,7 +164,7 @@ namespace Xeon.XGraph.View
                 for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
                 {
                     var series = buffer.Series[legendIndex];
-                    var color = series.Color * this.color;
+                    var color = GetSegmentColor(legendIndex);
                     var left = Mathf.Round(groupLeft + legendIndex * barWidth);
                     var right = Mathf.Round(left + barWidth);
                     var bottom = FastValueToHeight(0f);
@@ -187,10 +177,13 @@ namespace Xeon.XGraph.View
             geometryDirty = false;
         }
 
-        private void OnChangedCollection()
+        protected override void RecalculateColors()
         {
-            geometryDirty = true;
-            SetVerticesDirty();
+            if (premultipliedColors == null || premultipliedColors.Length != buffer.Count)
+                premultipliedColors = new Color[buffer.Count];
+            for (var index = 0; index < buffer.Count; index++)
+                premultipliedColors[index] = buffer.Series[index].Color * color;
+            colorDirty = false;
         }
 
         private float ValueToHeight(float value, out bool isInRange)
@@ -233,19 +226,23 @@ namespace Xeon.XGraph.View
 
         protected override void OnEnable()
         {
-            base.OnEnable();
-            geometryDirty = true;
             rangeDirty = true;
-            colorDirty = true;
-            SetVerticesDirty();
+            base.OnEnable();
         }
 
         protected override void OnRectTransformDimensionsChange()
         {
-            base.OnRectTransformDimensionsChange();
             rangeDirty = true;
-            geometryDirty = true;
-            SetVerticesDirty();
+            base.OnRectTransformDimensionsChange();
+        }
+        
+        private Color GetSegmentColor(int index)
+        {
+            if (premultipliedColors == null || premultipliedColors.Length == 0)
+                return color; // フォールバック
+            if (index < premultipliedColors.Length)
+                return premultipliedColors[index];
+            return premultipliedColors[premultipliedColors.Length - 1]; // 足りない場合は最後
         }
 
         private static void AddQuad(VertexHelper vh, float left, float right, float bottom, float top, Color color)
@@ -271,9 +268,7 @@ namespace Xeon.XGraph.View
             base.OnValidate();
             if (Application.isPlaying)
                 return;
-            geometryDirty = true;
             rangeDirty = true;
-            SetVerticesDirty();
         }
 
         [UnityEditor.CustomEditor(typeof(BarChart))]
