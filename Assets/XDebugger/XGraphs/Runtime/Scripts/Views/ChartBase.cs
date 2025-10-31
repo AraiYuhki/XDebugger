@@ -32,8 +32,11 @@ namespace Xeon.XGraph.View
         {
             set
             {
+                if (color == value)
+                    return;
+
                 color = value;
-                SetVerticesDirty();
+                OnChangedColor();
             }
         }
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -23,19 +22,10 @@ namespace Xeon.XGraph.View
         [SerializeField] private MultiValueSeries buffer = new();
 
         private bool rangeDirty = false;
-        private ColorManager colorManager;
+        private readonly ColorManager colorManager = new();
 
         private float scale = 1f;
         private float baseY = 0f;
-
-        public override Color Color
-        {
-            set
-            {
-                colorManager.IsDirty = true;
-                base.Color = value;
-            }
-        }
 
         public void Initialize(MultiValueSeries buffer)
         {
@@ -66,8 +56,8 @@ namespace Xeon.XGraph.View
             FinalizeSeries(buffer);
             buffer = newData;
             InitializeSeries(buffer);
-            colorManager = new ColorManager(buffer, color);
-            
+            colorManager.SetBuffer(buffer);
+
             rangeDirty = true;
             SetVerticesDirty();
         }
@@ -184,9 +174,9 @@ namespace Xeon.XGraph.View
 
             if (rangeDirty)
                 RecalculateRange();
-            
+
             colorManager.RecalculateColors(color);
-                
+
             if (!geometryDirty)
                 return;
 
@@ -227,15 +217,20 @@ namespace Xeon.XGraph.View
         protected override void OnEnable()
         {
             rangeDirty = true;
-            colorManager ??= new ColorManager(buffer, color);
-            colorManager.IsDirty = true;
+            colorManager.SetBuffer(buffer);
             base.OnEnable();
+        }
+
+        protected override void OnDisable()
+        {
+            colorManager.SetBuffer(null);
+            base.OnDisable();
         }
 
         protected override void OnChangedColor()
         {
+            geometryDirty = true;
             base.OnChangedColor();
-            colorManager.IsDirty = true;
         }
 
         private static void AddQuad(VertexHelper vh, float left, float right, float top, float bottom, Color color)
@@ -261,8 +256,7 @@ namespace Xeon.XGraph.View
             base.OnValidate();
             if (Application.isPlaying)
                 return;
-            colorManager ??= new ColorManager(buffer, color);
-            colorManager.IsDirty = true;
+            colorManager.SetBuffer(buffer);
             rangeDirty = true;
         }
 
