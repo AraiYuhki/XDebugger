@@ -1,10 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using Xeon.Common;
 using Xeon.XGraph.Controller;
+using Xeon.XGraph.Manager;
 using Xeon.XGraph.Model;
 
 namespace Xeon.XGraph.View
@@ -17,9 +15,7 @@ namespace Xeon.XGraph.View
     {
         [SerializeField] private float min = 0f;
         [SerializeField] private float max = 100f;
-        [SerializeField] private BarGraphMarker markerPrefab;
-        [SerializeField, HideInInspector] private List<BarGraphMarker> markers = new();
-        [SerializeField] private List<BarGraphMarkerData> markerDataList = new();
+        [SerializeField] private MarkerManager markerManager; 
         [SerializeField] private MultiValueSeries buffer = new ();
         
         private bool rangeDirty = false;
@@ -37,10 +33,13 @@ namespace Xeon.XGraph.View
                 base.Color = value;
             }
         }
+
+        public MarkerManager MarkerManager => markerManager;
         
         public void Initialize(MultiValueSeries buffer)
         {
             rangeDirty = true;
+            markerManager.Initialize(ValueToHeight);
             SetSeries(buffer);
         }
 
@@ -50,7 +49,7 @@ namespace Xeon.XGraph.View
             rangeDirty = true;
             geometryDirty = true;
             SetVerticesDirty();
-            UpdateMarkers();
+            markerManager.UpdateMarkers();
         }
 
         public void SetMin(float min)
@@ -59,7 +58,7 @@ namespace Xeon.XGraph.View
             rangeDirty = true;
             geometryDirty = true;
             SetVerticesDirty();
-            UpdateMarkers();
+            markerManager.UpdateMarkers();
         }
 
         public void SetSeries(MultiValueSeries newData)
@@ -72,71 +71,6 @@ namespace Xeon.XGraph.View
             geometryDirty = true;
             rangeDirty = true;
             SetVerticesDirty();
-        }
-
-        public void SetMarkers(List<BarGraphMarkerData> newData)
-        {
-            markerDataList = newData;
-            RefreshMarkers();
-        }
-
-        public void AddMarker(string label, float value)
-        {
-            markerDataList.Add(new BarGraphMarkerData(label, value));
-            RefreshMarkers();
-        }
-
-        public void RemoveMarker(int index)
-        {
-            markerDataList.RemoveAt(index);
-            RefreshMarkers();
-        }
-        
-        private void ClearMarkers()
-        {
-            foreach (var marker in markers)
-            {
-                if (marker == null)
-                    continue;
-                if (Application.isPlaying)
-                    Destroy(marker.gameObject);
-                else
-                    DestroyImmediate(marker.gameObject);
-            }
-
-            markers.Clear();
-        }
-        
-        private void UpdateMarkers()
-        {
-            foreach (var marker in markers)
-            {
-                if (marker == null || marker.Data == null)
-                    continue;
-                var position = marker.transform.localPosition;
-                position.y = ValueToHeight(marker.Data.Value, out var inRange);
-                marker.transform.localPosition = position;
-                marker.gameObject.SetActive(inRange);
-            }
-        }
-
-        private void RefreshMarkers()
-        {
-            ClearMarkers();
-            if (markerPrefab == null)
-                return;
-
-            foreach (var data in markerDataList)
-            {
-                var marker = Instantiate(markerPrefab, transform);
-                marker.Data = data;
-                var position = marker.transform.localPosition;
-                position.y = ValueToHeight(data.Value, out var inRange);
-                marker.transform.localPosition = position;
-                marker.gameObject.SetActive(inRange);
-                markers.Add(marker);
-
-            }
         }
 
         protected override void OnPopulateMesh(VertexHelper vh)
@@ -265,21 +199,9 @@ namespace Xeon.XGraph.View
             base.OnValidate();
             if (Application.isPlaying)
                 return;
+            markerManager.Initialize(ValueToHeight);
             colorManager.SetBuffer(buffer);
             rangeDirty = true;
-        }
-
-        [UnityEditor.CustomEditor(typeof(BarChart))]
-        private class BarChartEditor : UnityEditor.Editor
-        {
-            public override void OnInspectorGUI()
-            {
-                base.OnInspectorGUI();
-                if (GUILayout.Button("ApplyMarkers"))
-                    (target as BarChart)?.RefreshMarkers();
-                if (GUILayout.Button("ClearMarkers"))
-                    (target as BarChart)?.ClearMarkers();
-            }
         }
 #endif
     }

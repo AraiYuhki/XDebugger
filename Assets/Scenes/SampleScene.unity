@@ -2033,9 +2033,11 @@ MonoBehaviour:
   spacing: 0
   min: 0
   max: 100
-  markerPrefab: {fileID: 0}
-  markers: []
-  markerDataList: []
+  markerManager:
+    parent: {fileID: 0}
+    markerPrefab: {fileID: 0}
+    markers: []
+    markerDataList: []
   buffer:
     series:
     - name: Legend 1
@@ -2301,9 +2303,15 @@ MonoBehaviour:
   spacing: 0
   min: 0
   max: 100
-  markerPrefab: {fileID: 0}
-  markers: []
-  markerDataList: []
+  markerManager:
+    parent: {fileID: 1919718032}
+    markerPrefab: {fileID: 8173145562050819933, guid: 4e9213331915ea04eace10917d056520, type: 3}
+    markers: []
+    markerDataList:
+    - label: 50
+      value: 50
+    - label: 100
+      value: 100
   buffer:
     series:
     - name: Legend 1
