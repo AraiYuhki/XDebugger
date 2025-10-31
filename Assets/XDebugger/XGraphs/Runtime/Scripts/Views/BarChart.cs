@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -24,8 +23,7 @@ namespace Xeon.XGraph.View
         
         private bool rangeDirty = false;
 
-        private ColorManager colorManager;
-        private Color[] premultipliedColors = Array.Empty<Color>();
+        private readonly ColorManager colorManager = new();
 
         private float scale = 1f;
         private float baseY = 0f;
@@ -59,8 +57,8 @@ namespace Xeon.XGraph.View
             FinalizeSeries(buffer);
             buffer = newData;
             InitializeSeries(buffer);
-            colorManager = new ColorManager(buffer, color);
-            
+            colorManager.SetBuffer(buffer);
+
             geometryDirty = true;
             SetVerticesDirty();
         }
@@ -217,21 +215,26 @@ namespace Xeon.XGraph.View
         protected override void OnEnable()
         {
             rangeDirty = true;
-            colorManager ??= new ColorManager(buffer, color);
-            colorManager.IsDirty = true;
+            colorManager.SetBuffer(buffer);
             base.OnEnable();
+        }
+
+        protected override void OnDisable()
+        {
+            colorManager.SetBuffer(null);
+            base.OnDisable();
+        }
+
+        protected override void OnChangedColor()
+        {
+            geometryDirty = true;
+            base.OnChangedColor();
         }
 
         protected override void OnRectTransformDimensionsChange()
         {
             rangeDirty = true;
             base.OnRectTransformDimensionsChange();
-        }
-
-        protected override void OnChangedColor()
-        {
-            base.OnChangedColor();
-            colorManager.IsDirty = true;
         }
 
         private static void AddQuad(VertexHelper vh, float left, float right, float bottom, float top, Color color)
@@ -257,8 +260,7 @@ namespace Xeon.XGraph.View
             base.OnValidate();
             if (Application.isPlaying)
                 return;
-            colorManager ??= new ColorManager(buffer, color);
-            colorManager.IsDirty = true;
+            colorManager.SetBuffer(buffer);
             rangeDirty = true;
         }
 
