@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Xeon.XGraph.Model;
@@ -26,123 +25,232 @@ namespace Xeon.XGraph.View
 
         private float[,] normalizedValues = new float[0, 0];
 
-        private List<UIVertex> vertices = null;
-        private List<int> indices = null;
+        private List<UIVertex> vertices;
+        private List<int> indices;
 
-        private int legendCount => buffer == null ? 0 : buffer.Count;
-        private int dataCount => buffer == null || buffer.Count <= 0 ? 0 : buffer.Series.First().Count;
-        private int bufferSize => legendCount * dataCount;
-
-
-        public void Initialize(MultiValueSeries buffer)
-        {
-            vertices = new List<UIVertex>(bufferSize * 4);
-            indices = new List<int>(bufferSize * 6);
-            normalizedValues = new float[legendCount, dataCount];
-        }
+        public void Initialize(MultiValueSeries series) => SetSeries(series);
 
         public void SetMax(float max)
         {
             this.max = max;
+            geometryDirty = true;
             SetVerticesDirty();
         }
 
         public void SetMin(float min)
         {
             this.min = min;
+            geometryDirty = true;
             SetVerticesDirty();
         }
 
-        /// <summary>
-        /// 値を直接設定する
-        /// </summary>
-        /// <param name="newValues"></param>
-        public void SetValues(MultiValueSeries newValues)
+        public void SetValues(MultiValueSeries newValues) => SetSeries(newValues);
+
+        public void SetSeries(MultiValueSeries newSeries)
         {
-            buffer = newValues;
+            FinalizeSeries(buffer);
+            buffer = newSeries;
+            InitializeSeries(buffer);
+            buffer?.SetColor(color);
+            geometryDirty = true;
             SetVerticesDirty();
         }
 
-        private void UpdateNormalizedValues()
+        protected override void OnEnable()
         {
-            if (normalizedValues == null || normalizedValues.GetLength(0) * normalizedValues.GetLength(1) != bufferSize)
-                normalizedValues = new float[legendCount, dataCount];
-            var height = max - min;
-            var rect = rectTransform.rect;
-            var yMin = rect.yMin + halfWidth;
-            var yMax = rect.yMax - halfWidth;
-            for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
-            {
-                for (var dataIndex = 0; dataIndex < dataCount; dataIndex++)
-                {
-                    var percent = (float)(buffer.Series[legendIndex][dataIndex] - min) / height;
-                    normalizedValues[legendIndex, dataIndex] = Mathf.Lerp(yMin, yMax, percent);
-                }
-            }
+            buffer?.SetColor(color);
+            base.OnEnable();
         }
 
-        /// <summary>
-        /// 頂点の作成
-        /// </summary>
-        /// <param name="vh"></param>
+        protected override void OnDisable()
+        {
+            buffer?.SetColor(color);
+            base.OnDisable();
+        }
+
         protected override void OnPopulateMesh(VertexHelper vh)
         {
             vh.Clear();
 
-            if (buffer == null || buffer.Count <= 0 || buffer.Series.First().Count <= 1)
+            if (buffer == null || buffer.Count <= 0 || buffer.Series == null)
                 return;
 
-            UpdateNormalizedValues();
+            var legendCount = buffer.Count;
+            if (legendCount <= 0)
+                return;
+
+            var dataCount = GetDataCount();
+            if (dataCount <= 1)
+                return;
+
+            EnsureCapacity(legendCount, dataCount);
+
+            if (geometryDirty || vertices == null || indices == null || vertices.Count == 0)
+            {
+                UpdateNormalizedValues(legendCount, dataCount);
+                BuildGeometry(legendCount, dataCount);
+                geometryDirty = false;
+            }
+
+            if (vertices != null && indices != null && vertices.Count > 0 && indices.Count > 0)
+                vh.AddUIVertexStream(vertices, indices);
+        }
+
+        private int GetDataCount()
+        {
+            if (buffer?.Series == null)
+                return 0;
+
+            var count = int.MaxValue;
+            var hasSeries = false;
+            foreach (var series in buffer.Series)
+            {
+                if (series == null)
+                    return 0;
+
+                hasSeries = true;
+                var seriesCount = series.Count;
+                count = seriesCount < count ? seriesCount : count;
+            }
+
+            if (!hasSeries || count == int.MaxValue)
+                return 0;
+
+            return count;
+        }
+
+        private void EnsureCapacity(int legendCount, int dataCount)
+        {
+            var bufferSize = Mathf.Max(0, legendCount * dataCount);
+            var vertexCapacity = Mathf.Max(0, bufferSize * 4);
+            var indexCapacity = Mathf.Max(0, bufferSize * 6);
+
+            vertices ??= new List<UIVertex>(vertexCapacity);
+            if (vertices.Capacity < vertexCapacity)
+                vertices.Capacity = vertexCapacity;
+
+            indices ??= new List<int>(indexCapacity);
+            if (indices.Capacity < indexCapacity)
+                indices.Capacity = indexCapacity;
+        }
+
+        private void UpdateNormalizedValues(int legendCount, int dataCount)
+        {
+            if (legendCount <= 0 || dataCount <= 0)
+            {
+                normalizedValues = new float[0, 0];
+                return;
+            }
+
+            if (normalizedValues == null ||
+                normalizedValues.GetLength(0) != legendCount ||
+                normalizedValues.GetLength(1) != dataCount)
+            {
+                normalizedValues = new float[legendCount, dataCount];
+            }
+
+            var height = max - min;
+            var rect = rectTransform.rect;
+            var yMin = rect.yMin + padding.bottom + halfWidth;
+            var yMax = rect.yMax - padding.top - halfWidth;
+
+            if (yMax < yMin)
+            {
+                var center = (yMin + yMax) * 0.5f;
+                yMin = yMax = center;
+            }
+
+            var hasRange = !Mathf.Approximately(height, 0f);
+            var mid = (yMin + yMax) * 0.5f;
+
+            for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
+            {
+                var series = buffer.Series[legendIndex];
+                for (var dataIndex = 0; dataIndex < dataCount; dataIndex++)
+                {
+                    var value = series[dataIndex];
+                    float yPosition;
+                    if (hasRange)
+                    {
+                        var percent = (value - min) / height;
+                        yPosition = Mathf.Lerp(yMin, yMax, percent);
+                    }
+                    else
+                    {
+                        yPosition = mid;
+                    }
+
+                    normalizedValues[legendIndex, dataIndex] = yPosition;
+                }
+            }
+        }
+
+        private void BuildGeometry(int legendCount, int dataCount)
+        {
             vertices.Clear();
             indices.Clear();
 
-            var stepX = rectTransform.rect.width / (normalizedValues.Length - 1f);
-            var offsetX = rectTransform.rect.xMin;
+            var rect = rectTransform.rect;
+            var offsetX = rect.xMin + padding.left;
+            var contentWidth = Mathf.Max(0f, width);
+            var stepX = dataCount <= 1 ? 0f : contentWidth / (dataCount - 1f);
 
-            var prev = Vector2.zero;
-            var prevBebel = false;
-
-            var vert = UIVertex.simpleVert;
-            vert.color = color;
-
-            var vertexIndex = 0;
-            for (var index = 0; index < normalizedValues.Length; index++)
+            for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
             {
-                var current = new Vector2(stepX * index + offsetX, normalizedValues[index]);
-                var isBebel = false;
-                if (index == 0)
+                var seriesColor = buffer.GetSegmentColor(legendIndex, color);
+                var vert = UIVertex.simpleVert;
+                vert.color = seriesColor;
+
+                var vertexIndex = vertices.Count;
+                var prev = Vector2.zero;
+                var prevBebel = false;
+
+                for (var dataIndex = 0; dataIndex < dataCount; dataIndex++)
                 {
-                    ProcessStart(stepX, current, normalizedValues[1], ref vert);
+                    var current = new Vector2(stepX * dataIndex + offsetX, normalizedValues[legendIndex, dataIndex]);
+                    var isBebel = false;
+
+                    if (dataIndex == 0)
+                    {
+                        var nextHeight = normalizedValues[legendIndex, dataIndex + 1];
+                        ProcessStart(stepX, current, nextHeight, ref vert);
+                        prev = current;
+                        continue;
+                    }
+
+                    if (dataIndex == dataCount - 1)
+                    {
+                        ProcessEnd(current, prev, ref vert);
+                        AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                        AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
+                        continue;
+                    }
+
+                    var next = new Vector2(stepX * (dataIndex + 1) + offsetX, normalizedValues[legendIndex, dataIndex + 1]);
+                    var (top, bottom, tmp) = GetJoinVertices(prev, current, next);
+                    AddVertices(ref vert, top, bottom);
+
+                    if (tmp.HasValue)
+                    {
+                        AddVertex(tmp.Value, ref vert);
+                        isBebel = true;
+                    }
+
+                    var diffY = current.y - prev.y;
+
+                    AddTriangles(vertexIndex, diffY, isBebel, prevBebel);
+                    vertexIndex += isBebel ? 3 : 2;
+
                     prev = current;
-                    continue;
+                    prevBebel = isBebel;
                 }
-                if (index == normalizedValues.Length - 1)
-                {
-                    ProcessEnd(current, prev, ref vert);
-                    AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    AddTriangle(vertexIndex + 2, vertexIndex + 1, vertexIndex + 3);
-                    continue;
-                }
-
-                var next = new Vector2(stepX * (index + 1) + offsetX, normalizedValues[index + 1]);
-                var (top, bottom, tmp) = GetJoinVertices(prev, current, next);
-                AddVertices(ref vert, top, bottom);
-
-                if (tmp.HasValue)
-                {
-                    AddVertex(tmp.Value, ref vert);
-                    isBebel = true;
-                }
-
-                var diffY = current.y - prev.y;
-
-                AddTriangles(vertexIndex, diffY, isBebel, prevBebel);
-                vertexIndex += isBebel ? 3 : 2;
-
-                prev = current;
-                prevBebel = isBebel;
             }
-            vh.AddUIVertexStream(vertices, indices);
+        }
+
+        protected override void OnChangedColor()
+        {
+            buffer?.SetColor(color);
+            base.OnChangedColor();
         }
 
         /// <summary>
@@ -153,7 +261,7 @@ namespace Xeon.XGraph.View
         /// <param name="current"></param>
         private void ProcessStart(float stepX, Vector2 current, float nextHeight, ref UIVertex vert)
         {
-            var next = new Vector2(stepX, nextHeight);
+            var next = new Vector2(current.x + stepX, nextHeight);
             var (top, bottom) = GetEndCap(current, next - current);
             AddVertices(ref vert, top, bottom);
         }
