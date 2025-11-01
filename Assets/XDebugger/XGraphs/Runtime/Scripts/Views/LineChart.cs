@@ -399,5 +399,13 @@ namespace Xeon.XGraph.View
             indices.Add(b);
             indices.Add(c);
         }
+
+#if UNITY_EDITOR
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            buffer?.SetColor(color);
+        }
+#endif
     }
 }
