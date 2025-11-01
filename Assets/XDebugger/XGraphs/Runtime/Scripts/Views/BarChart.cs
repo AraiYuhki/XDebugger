@@ -1,7 +1,6 @@
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using Xeon.XGraph.Controller;
 using Xeon.XGraph.Manager;
 using Xeon.XGraph.Model;
 
@@ -20,8 +19,6 @@ namespace Xeon.XGraph.View
         
         private bool rangeDirty = false;
 
-        private ColorManager colorManager = new();
-
         private float scale = 1f;
         private float baseY = 0f;
 
@@ -29,7 +26,7 @@ namespace Xeon.XGraph.View
         {
             set
             {
-                colorManager.SetDirty();
+                buffer?.SetColor(value);
                 base.Color = value;
             }
         }
@@ -66,7 +63,7 @@ namespace Xeon.XGraph.View
             FinalizeSeries(buffer);
             buffer = newData;
             InitializeSeries(buffer);
-            colorManager.SetBuffer(buffer);
+            buffer.SetColor(color);
             
             geometryDirty = true;
             rangeDirty = true;
@@ -84,7 +81,6 @@ namespace Xeon.XGraph.View
 
             if (!geometryDirty)
                 return;
-            colorManager.RecalculateColors(color);
 
             if (buffer.Count <= 0 || buffer.Series.Count <= 0)
                 return;
@@ -112,7 +108,7 @@ namespace Xeon.XGraph.View
                     var bottom = FastValueToHeight(0f);
                     var top = FastValueToHeight(series[groupIndex]);
 
-                    AddQuad(vh, left, right, bottom, top, colorManager.GetSegmentColor(legendIndex, color));
+                    AddQuad(vh, left, right, bottom, top, buffer.GetSegmentColor(legendIndex, color));
                 }
             }
 
@@ -160,13 +156,13 @@ namespace Xeon.XGraph.View
         protected override void OnEnable()
         {
             rangeDirty = true;
-            colorManager.SetBuffer(buffer);
+            buffer?.SetColor(color);
             base.OnEnable();
         }
 
         protected override void OnDisable()
         {
-            colorManager.SetBuffer(null);
+            buffer?.SetColor(color);
             base.OnDisable();
         }
 
@@ -200,7 +196,7 @@ namespace Xeon.XGraph.View
             if (Application.isPlaying)
                 return;
             markerManager.Initialize(ValueToHeight);
-            colorManager.SetBuffer(buffer);
+            buffer?.SetColor(color);
             rangeDirty = true;
         }
 #endif

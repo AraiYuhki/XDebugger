@@ -12,21 +12,27 @@ namespace Xeon.XGraph.Model
     public class MultiValueSeries
     {
         [SerializeField]
-        private Series[] series;
+        protected Series[] series;
+
+        protected Color[] preMultipliedColors = Array.Empty<Color>();
 
         public IReadOnlyList<Series> Series => series;
         public int Count => series == null ? 0 : series.Length;
 
         public MultiValueSeries() { }
 
-        public MultiValueSeries(List<Series> source)
+        public MultiValueSeries(List<Series> source, Color color)
         {
             series = source.ToArray();
+            preMultipliedColors = new Color[series.Length];
+            SetColor(color);
         }
 
-        public MultiValueSeries(int legendCount)
+        public MultiValueSeries(int legendCount, Color color)
         {
             series = new Series[legendCount];
+            preMultipliedColors = new Color[legendCount];
+            SetColor(color);
         }
 
         public void AddValue(params float[] values)
@@ -44,19 +50,39 @@ namespace Xeon.XGraph.Model
             foreach (var series in series)
                 series.Clear();
         }
+
+        public void SetColor(Color color)
+        {
+            if (preMultipliedColors == null || preMultipliedColors.Length != Count)
+                preMultipliedColors = new Color[Count];
+            for (var index = 0; index < Count; index++)
+                preMultipliedColors[index] = series[index].Color * color;
+        }
+
+        public Color GetSegmentColor(int index, Color defaultColor)
+        {
+            if(preMultipliedColors.Length == 0)
+                return defaultColor;
+            if (index < preMultipliedColors.Length)
+                return preMultipliedColors[index];
+
+            // 不足している場合は最後の要素を使用する
+            return preMultipliedColors[preMultipliedColors.Length - 1];
+        }
+
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(MultiValueSeries))]
-        private class MultiValueSeriesEditor : PropertyDrawer
+        protected class MultiValueSeriesEditor : PropertyDrawer
         {
-            private const string SeriesPropertyName = "series";
-            private const string SeriesNamePropertyName = "name";
-            private const string SeriesColorPropertyName = "color";
-            private const string SeriesTestDataPropertyName = "testData";
+            protected const string SeriesPropertyName = "series";
+            protected const string SeriesNamePropertyName = "name";
+            protected const string SeriesColorPropertyName = "color";
+            protected const string SeriesTestDataPropertyName = "testData";
 
-            private static readonly GUIContent LegendCountContent = new("凡例数", "凡例の数を指定します。凡例数と列数は同じになります。");
-            private static readonly GUIContent LegendNameRowContent = new("凡例名");
-            private static readonly GUIContent LegendColorRowContent = new("凡例カラー");
-            private static readonly GUIContent TestDataHeaderContent = new("テストデータ", "各凡例の値を行ごとに編集できます。ドラッグで順序を入れ替えられます。");
+            protected static readonly GUIContent LegendCountContent = new("凡例数", "凡例の数を指定します。凡例数と列数は同じになります。");
+            protected static readonly GUIContent LegendNameRowContent = new("凡例名");
+            protected static readonly GUIContent LegendColorRowContent = new("凡例カラー");
+            protected static readonly GUIContent TestDataHeaderContent = new("テストデータ", "各凡例の値を行ごとに編集できます。ドラッグで順序を入れ替えられます。");
 
             public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
@@ -145,7 +171,7 @@ namespace Xeon.XGraph.Model
                 EditorGUI.EndProperty();
             }
 
-            private static void DrawSeriesRow(Rect rect, SerializedProperty seriesProperty, string childPropertyName, GUIContent label)
+            protected static void DrawSeriesRow(Rect rect, SerializedProperty seriesProperty, string childPropertyName, GUIContent label)
             {
                 var fieldRect = EditorGUI.PrefixLabel(rect, label);
                 var count = seriesProperty.arraySize;
@@ -164,7 +190,7 @@ namespace Xeon.XGraph.Model
                 }
             }
 
-            private static ReorderableList CreateValueList(SerializedProperty containerProperty, SerializedProperty seriesProperty)
+            protected static ReorderableList CreateValueList(SerializedProperty containerProperty, SerializedProperty seriesProperty)
             {
                 var firstSeries = seriesProperty.GetArrayElementAtIndex(0);
                 var primaryValues = firstSeries.FindPropertyRelative(SeriesTestDataPropertyName);
@@ -234,7 +260,7 @@ namespace Xeon.XGraph.Model
                 return list;
             }
 
-            private static void ResizeSeries(SerializedProperty seriesProperty, int newCount)
+            protected static void ResizeSeries(SerializedProperty seriesProperty, int newCount)
             {
                 if (seriesProperty.arraySize == newCount)
                     return;
@@ -273,7 +299,7 @@ namespace Xeon.XGraph.Model
                 }
             }
 
-            private static void EnsureConsistentSeries(SerializedProperty seriesProperty)
+            protected static void EnsureConsistentSeries(SerializedProperty seriesProperty)
             {
                 if (seriesProperty.arraySize <= 0)
                     return;

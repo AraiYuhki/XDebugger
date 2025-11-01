@@ -60,7 +60,7 @@ namespace Xeon.XDebugger.Profiler
                 new Series("UpdateTime", Color.darkSeaGreen, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
                 new Series("RenderTime", Color.cadetBlue, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
                 new Series("OtherTime", Color.burlywood, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray()))
-            });
+            }, Color.white);
             
             RenderPipelineManager.beginContextRendering += RenderPipelineOnBeginFrameRendering;
             endOfFrameCoroutineHandler = StartCoroutine(EndOfFrameCoroutine());
