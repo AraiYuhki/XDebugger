@@ -103,7 +103,6 @@ namespace Xeon.Common.FlyweightScrollView
             UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             controller?.Dispose();
             controller = null;
-            UnityEngine.Debug.Log("Clear");
         }
 
         private void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange stateChange)

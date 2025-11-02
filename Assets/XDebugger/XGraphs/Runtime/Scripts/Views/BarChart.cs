@@ -12,9 +12,8 @@ namespace Xeon.XGraph.View
     [RequireComponent(typeof(CanvasRenderer)), ExecuteInEditMode]
     public class BarChart : ChartBase
     {
-        [SerializeField] private float min = 0f;
-        [SerializeField] private float max = 100f;
-        [SerializeField] private MarkerManager markerManager; 
+        [SerializeField] private RangeValue range = new(0f, 100f);
+        [SerializeField] private MarkerManager markerManager = new();
         [SerializeField] private MultiValueSeries buffer = new ();
         
         private bool rangeDirty = false;
@@ -42,7 +41,7 @@ namespace Xeon.XGraph.View
 
         public void SetMax(float max)
         {
-            this.max = max;
+            range.Max = max;
             rangeDirty = true;
             geometryDirty = true;
             SetVerticesDirty();
@@ -51,7 +50,7 @@ namespace Xeon.XGraph.View
 
         public void SetMin(float min)
         {
-            this.min = min;
+            range.Min = min;
             rangeDirty = true;
             geometryDirty = true;
             SetVerticesDirty();
@@ -119,13 +118,7 @@ namespace Xeon.XGraph.View
         {
             if (rangeDirty)
                 RecalculateRange();
-            if (Mathf.Approximately(max, min))
-            {
-                isInRange = false;
-                return FastValueToHeight(value);
-            }
-
-            isInRange = value >= min && value <= max;
+            isInRange = range.InRange(value);
             return FastValueToHeight(value);
         }
 
@@ -138,7 +131,7 @@ namespace Xeon.XGraph.View
 
         private void RecalculateRange()
         {
-            if (Mathf.Approximately(max, min))
+            if (range.IsApproximately)
             {
                 scale = 0f;
                 baseY = rectTransform.rect.yMin + padding.bottom;
@@ -146,8 +139,8 @@ namespace Xeon.XGraph.View
             else
             {
                 var usableHeight = rectTransform.rect.height - padding.vertical;
-                scale = usableHeight / (max - min);
-                baseY = rectTransform.rect.yMin + padding.bottom - min * scale;
+                scale = usableHeight / range.Range;
+                baseY = rectTransform.rect.yMin + padding.bottom - range.Min * scale;
             }
 
             rangeDirty = false;

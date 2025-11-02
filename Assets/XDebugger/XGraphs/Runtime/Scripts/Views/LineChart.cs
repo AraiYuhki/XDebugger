@@ -14,9 +14,7 @@ namespace Xeon.XGraph.View
         private float miterLimit = 4f;
 
         [SerializeField]
-        private float min = 0f;
-        [SerializeField]
-        private float max = 100f;
+        private RangeValue range = new(0f, 100f);
 
         [SerializeField]
         private MultiValueSeries buffer = new();
@@ -32,14 +30,14 @@ namespace Xeon.XGraph.View
 
         public void SetMax(float max)
         {
-            this.max = max;
+            range.Max = max;
             geometryDirty = true;
             SetVerticesDirty();
         }
 
         public void SetMin(float min)
         {
-            this.min = min;
+            range.Min = min;
             geometryDirty = true;
             SetVerticesDirty();
         }
@@ -149,7 +147,7 @@ namespace Xeon.XGraph.View
                 normalizedValues = new float[legendCount, dataCount];
             }
 
-            var height = max - min;
+            var height = range.Range;
             var rect = rectTransform.rect;
             var yMin = rect.yMin + padding.bottom + halfWidth;
             var yMax = rect.yMax - padding.top - halfWidth;
@@ -172,8 +170,7 @@ namespace Xeon.XGraph.View
                     float yPosition;
                     if (hasRange)
                     {
-                        var percent = (value - min) / height;
-                        yPosition = Mathf.Lerp(yMin, yMax, percent);
+                        yPosition = Mathf.Lerp(yMin, yMax, range.Normalized(value));
                     }
                     else
                     {
