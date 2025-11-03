@@ -11,22 +11,11 @@ namespace Xeon.XGraph.View
     public abstract class ChartBase : MaskableGraphic
     {
         [SerializeField] protected RectOffset padding = new();
-        [SerializeField] protected float spacing = 0f;
 
         protected bool geometryDirty = false;
 
         protected float width => rectTransform.rect.width - padding.horizontal;
         protected float height => rectTransform.rect.height - padding.vertical;
-
-        public float Spacing
-        {
-            set
-            {
-                spacing = value;
-                geometryDirty = true;
-                SetVerticesDirty();
-            }
-        }
 
         public virtual Color Color
         {

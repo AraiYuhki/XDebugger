@@ -13,6 +13,7 @@ namespace Xeon.XGraph.View
     public class BarChart : ChartBase
     {
         [SerializeField] private RangeValue range = new(0f, 100f);
+        [SerializeField] private float spacing = 0f;
         [SerializeField] private MarkerManager markerManager = new();
         [SerializeField] private MultiValueSeries buffer = new ();
         
@@ -20,6 +21,17 @@ namespace Xeon.XGraph.View
 
         private float scale = 1f;
         private float baseY = 0f;
+
+        public float Spacing
+        {
+            get => spacing;
+            set
+            {
+                spacing = value;
+                geometryDirty = true;
+                SetVerticesDirty();
+            }
+        }
 
         public override Color Color
         {

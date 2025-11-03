@@ -13,6 +13,7 @@ namespace Xeon.XGraph.View
     public class StackedBarChart : ChartBase
     {
         [SerializeField] private RangeValue range = new(0f, 100f);
+        [SerializeField] private float spacing = 0f;
         [SerializeField] private MarkerManager markerManager = new();
         [SerializeField] private MultiValueSeries buffer = new();
 
@@ -20,6 +21,17 @@ namespace Xeon.XGraph.View
 
         private float scale = 1f;
         private float baseY = 0f;
+
+        public float Spacing
+        {
+            get => spacing;
+            set
+            {
+                spacing = value;
+                geometryDirty = true;
+                SetVerticesDirty();
+            }
+        }
 
         public override Color Color
         {
@@ -187,6 +199,8 @@ namespace Xeon.XGraph.View
         protected override void OnValidate()
         {
             base.OnValidate();
+            var size = Mathf.Min(rectTransform.sizeDelta.x, rectTransform.sizeDelta.y);
+            rectTransform.sizeDelta = Vector2.one * size;
             if (Application.isPlaying)
                 return;
             markerManager.Initialize(ValueToHeight);
