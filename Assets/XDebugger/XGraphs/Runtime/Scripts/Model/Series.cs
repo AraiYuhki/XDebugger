@@ -11,7 +11,7 @@ namespace Xeon.XGraph.Model
     /// グラフで使用するデータ系列
     /// </summary>
     [Serializable]
-    public class Series : IEnumerable<float>
+    public class Series : ISeries, IEnumerable<float>
     {
         [SerializeField] private string name;
         [SerializeField] private Color color = Color.white;
@@ -24,7 +24,12 @@ namespace Xeon.XGraph.Model
 
         public event Action OnChangedCollection
         {
-            add => onChangedCollection += value;
+            add 
+            {
+                onChangedCollection -= value;
+                onChangedCollection += value;
+                value?.Invoke();
+            }
             remove => onChangedCollection -= value;
         }
         

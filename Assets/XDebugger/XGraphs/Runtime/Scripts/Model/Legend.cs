@@ -21,7 +21,7 @@ namespace Xeon.XGraph.Model
             this.color = color;
         }
 
-        public Legend(Series series)
+        public Legend(ISeries series)
         {
             name = series.Name;
             color = series.Color;

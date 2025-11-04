@@ -70,6 +70,9 @@ namespace Xeon.XGraph.View
         protected override void OnValidate()
         {
             base.OnValidate();
+            var size = rectTransform.sizeDelta;
+            var minSize = Mathf.Min(size.x, size.y);
+            rectTransform.sizeDelta = new Vector2(minSize, minSize);
             if (Application.isPlaying)
                 return;
             buffer?.SetColor(color);

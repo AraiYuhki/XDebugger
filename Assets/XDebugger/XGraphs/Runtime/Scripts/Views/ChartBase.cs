@@ -62,6 +62,19 @@ namespace Xeon.XGraph.View
                 InitializeSeries(s);
         }
 
+        protected void InitializeSeries(SingleValueSeries[] series)
+        {
+            if (series == null)
+                return;
+            
+            FinalizeSeries(series);
+            foreach (var s in series)
+            {
+                s.OnChangedValue += OnChangedCollection;
+                s.OnChangedColor += OnChangedColor;
+            }
+        }
+
         protected void FinalizeSeries(Series series)
         {
             if (series == null)
@@ -69,6 +82,17 @@ namespace Xeon.XGraph.View
             
             series.OnChangedCollection -= OnChangedCollection;
             series.OnChangedColor -= OnChangedColor;
+        }
+
+        protected void FinalizeSeries(SingleValueSeries[] series)
+        {
+            if (series == null)
+                return;
+            foreach (var s in series)
+            {
+                s.OnChangedValue -= OnChangedCollection;
+                s.OnChangedColor -= OnChangedColor;
+            }
         }
 
         protected void FinalizeSeries(MultiValueSeries series)
