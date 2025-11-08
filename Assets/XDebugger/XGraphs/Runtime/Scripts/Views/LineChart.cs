@@ -70,7 +70,7 @@ namespace Xeon.XGraph.View
         {
             vh.Clear();
 
-            if (buffer == null || buffer.Count <= 0 || buffer.Series == null)
+            if (buffer == null || buffer.Count <= 0 || !buffer.HasSeries)
                 return;
 
             var legendCount = buffer.Count;
@@ -96,12 +96,12 @@ namespace Xeon.XGraph.View
 
         private int GetDataCount()
         {
-            if (buffer?.Series == null)
+            if (buffer == null || !buffer.HasSeries)
                 return 0;
 
             var count = int.MaxValue;
             var hasSeries = false;
-            foreach (var series in buffer.Series)
+            foreach (var series in buffer)
             {
                 if (series == null)
                     return 0;
@@ -163,7 +163,7 @@ namespace Xeon.XGraph.View
 
             for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
             {
-                var series = buffer.Series[legendIndex];
+                var series = buffer[legendIndex];
                 for (var dataIndex = 0; dataIndex < dataCount; dataIndex++)
                 {
                     var value = series[dataIndex];

@@ -132,7 +132,7 @@ namespace Xeon.XGraph.View
                 return;
 
             var legendCount = buffer.Count;
-            var dataCount = buffer.Series.First().Count;
+            var dataCount = buffer.First().Count;
             if (dataCount == 0)
                 return;
 
@@ -148,7 +148,7 @@ namespace Xeon.XGraph.View
                 var right = left + stepX;
                 for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
                 {
-                    var value = buffer.Series[legendIndex][dataIndex];
+                    var value = buffer[legendIndex][dataIndex];
                     if (value == 0f)
                     {
                         cumulative += value;

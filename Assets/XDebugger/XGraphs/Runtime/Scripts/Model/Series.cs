@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
 using Xeon.Common;
@@ -100,18 +101,28 @@ namespace Xeon.XGraph.Model
 
         public Series(string name, Color color, float[] values) : this(name, color)
         {
-            data = SeriesDataAdapterFactory.Create(values, OnChangedCollectionInternal);
+            data = new ArraySeriesDataAdapter(values, OnChangedCollectionInternal);
         }
 
         public Series(string name, Color color, List<float> values) : this(name, color)
         {
-            data = SeriesDataAdapterFactory.Create(values, OnChangedCollectionInternal);
+            data = new ListSeriesDataAdapter(values, OnChangedCollectionInternal);
         }
 
         public Series(string name, Color color, CircularBuffer<float> values) : this(name, color)
         {
-            data = SeriesDataAdapterFactory.Create(values, OnChangedCollectionInternal);
+            data = new CircularBufferSeriesDataAdapter(values, OnChangedCollectionInternal);
         }
+
+        public Series(string name, Color color, ObservableCollection<float> values) : this(name, color)
+        {
+            data = new ObservableCollectionDataAdapter(values, OnChangedCollectionInternal);
+        }
+
+        public Series(string name, Color color, ISeriesDataAdapter data) : this(name, color)
+        {
+            this.data = data;
+        } 
 
         public Series() { }
 
@@ -130,7 +141,17 @@ namespace Xeon.XGraph.Model
 
         public void Clear() => data.Clear();
 
-        public IEnumerator<float> GetEnumerator() => data.GetEnumerator();
+        public IEnumerator<float> GetEnumerator()
+        {
+#if UNITY_EDITOR
+            if (Application.isPlaying)
+                return data.GetEnumerator();
+            else
+                return testData.GetEnumerator();
+#else
+            return data.GetEnumerator();
+#endif
+        }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

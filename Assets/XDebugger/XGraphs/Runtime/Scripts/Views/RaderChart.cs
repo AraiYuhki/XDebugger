@@ -28,7 +28,7 @@ namespace Xeon.XGraph.View
                 return;
 
             var legendCount = buffer.Count;
-            var dataCount = buffer.Series.First().Count;
+            var dataCount = buffer.First().Count;
 
             if (dataCount <= 0)
                 return;
@@ -39,7 +39,7 @@ namespace Xeon.XGraph.View
             var startIndex = 0;
             for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
             {
-                var series = buffer.Series[legendIndex];
+                var series = buffer[legendIndex];
                 uiVertex.color = buffer.GetSegmentColor(legendIndex, color);
                 uiVertex.position = Vector3.zero;
                 vertices.Add(uiVertex);

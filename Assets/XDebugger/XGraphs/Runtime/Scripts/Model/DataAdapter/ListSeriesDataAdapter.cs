@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Xeon.XGraph.Model
@@ -19,7 +18,7 @@ namespace Xeon.XGraph.Model
             {
                 onChangedCollection -= value;
                 onChangedCollection += value;
-                onChangedCollection?.Invoke();
+                value?.Invoke();
             }
             remove => onChangedCollection -= value;
         }

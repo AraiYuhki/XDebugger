@@ -55,10 +55,10 @@ namespace Xeon.XGraph.View
 
         protected void InitializeSeries(MultiValueSeries series)
         {
-            if (series == null || series.Series == null)
+            if (series == null || !series.HasSeries)
                 return;
             
-            foreach (var s in series.Series)
+            foreach (var s in series)
                 InitializeSeries(s);
         }
 
@@ -97,10 +97,10 @@ namespace Xeon.XGraph.View
 
         protected void FinalizeSeries(MultiValueSeries series)
         {
-            if (series == null || series.Series == null)
+            if (series == null || !series.HasSeries)
                 return;
             
-            foreach (var s in series.Series)
+            foreach (var s in series)
                 FinalizeSeries(s);
         }
 

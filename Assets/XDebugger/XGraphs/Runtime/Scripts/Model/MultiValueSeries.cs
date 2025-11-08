@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
+
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
@@ -9,15 +11,20 @@ using UnityEditorInternal;
 namespace Xeon.XGraph.Model
 {
     [Serializable]
-    public class MultiValueSeries
+    public class MultiValueSeries : IEnumerable<Series>
     {
         [SerializeField]
         protected Series[] series;
 
         protected Color[] preMultipliedColors = Array.Empty<Color>();
 
-        public IReadOnlyList<Series> Series => series;
+        public bool HasSeries => series != null;
         public int Count => series == null ? 0 : series.Length;
+
+        public Series this[int index]
+        {
+            get => series[index];
+        }
 
         public MultiValueSeries() { }
 
@@ -69,6 +76,14 @@ namespace Xeon.XGraph.Model
             // 不足している場合は最後の要素を使用する
             return preMultipliedColors[preMultipliedColors.Length - 1];
         }
+
+        public IEnumerator<Series> GetEnumerator()
+        {
+            foreach (var s in series)
+                yield return s;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(MultiValueSeries))]

@@ -93,11 +93,11 @@ namespace Xeon.XGraph.View
             if (!geometryDirty)
                 return;
 
-            if (buffer.Count <= 0 || buffer.Series.Count <= 0)
+            if (buffer.Count <= 0 || buffer.First().Count <= 0)
                 return;
 
             var legendCount = buffer.Count;
-            var groupCount = buffer.Series.First().Count;
+            var groupCount = buffer.First().Count;
 
             var contentLeft = rectTransform.rect.xMin + padding.left;
             var contentWidth = width;
@@ -113,7 +113,7 @@ namespace Xeon.XGraph.View
                 var groupLeft = contentLeft + groupIndex * (groupWidth + spacing);
                 for (var legendIndex = 0; legendIndex < legendCount; legendIndex++)
                 {
-                    var series = buffer.Series[legendIndex];
+                    var series = buffer[legendIndex];
                     var left = groupLeft + legendIndex * barWidth;
                     var right = left + barWidth;
                     var bottom = FastValueToHeight(0f);
