@@ -1,0 +1,3 @@
+[submodule "Assets/XDebugger/XGraphs"]
+	path = Assets/XDebugger/XGraphs
+	url = git@github.com:AraiYuhki/XGraphs.git
