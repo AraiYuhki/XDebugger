@@ -80,6 +80,12 @@ namespace Xeon.XGraph.Model
         private void ValueChanged() => onChangedValue?.Invoke();
         private void ColorChanged() => onChangedColor?.Invoke();
 
+        public void RecalculateColors(Color color)
+        {
+            foreach (var series in buffer)
+                series.RecalculateColors(color);
+        }
+
         public IEnumerator<MultiLegendSeries> GetEnumerator()
         {
             foreach (var data in buffer)

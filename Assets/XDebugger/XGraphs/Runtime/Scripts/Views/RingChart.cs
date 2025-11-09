@@ -42,19 +42,25 @@ namespace Xeon.XGraph.View
             vh.AddUIVertexStream(vertices, indices);
         }
 
+        protected override void OnChangedColor()
+        {
+            base.OnChangedColor();
+            data.RecalculateColors(color);
+        }
+
         private void CalculateLayer(MultiLegendSeries layer, float innerRadius, float startAngleDegree, float ringWidth)
         {
             var startIndex = 0;
             var total = layer.Sum(series => series.Value);
-            foreach (var series in layer)
+            for (var index = 0; index < layer.Count; index++)
             {
-                var value = series.Value;
+                var value = layer[index].Value;
                 var arcAngleDegree = 360f * value / total;
                 var segments = SegmentsForArc(innerRadius + ringWidth, arcAngleDegree);
                 var stepAngleDegree = arcAngleDegree / segments;
 
                 var vertex = UIVertex.simpleVert;
-                vertex.color = series.Color;
+                vertex.color = layer.GetSegementColor(index);
 
                 for (var segment = 0; segment <= segments; segment++)
                 {
@@ -105,6 +111,7 @@ namespace Xeon.XGraph.View
             base.OnValidate();
             if (Application.isPlaying)
                 return;
+            data.RecalculateColors(color);
         }
 #endif
     }

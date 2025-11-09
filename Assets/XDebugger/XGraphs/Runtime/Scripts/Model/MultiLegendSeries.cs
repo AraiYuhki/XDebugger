@@ -17,6 +17,11 @@ namespace Xeon.XGraph.Model
         private event Action onChangedValue;
         private event Action onChangedColor;
 
+        public SingleValueSeries this[int index]
+        {
+            get => series[index];
+        }
+
         public event Action OnChangedValue
         {
             add
@@ -60,6 +65,21 @@ namespace Xeon.XGraph.Model
             this.series = series.ToArray();
             foreach (var s in this.series)
                 RegisterEvent(s);
+        }
+
+        public void RecalculateColors(Color color)
+        {
+            if (preMultipliedColors == null || preMultipliedColors.Length != series.Length)
+                preMultipliedColors = new Color[series.Length];
+            for (var index = 0; index <  preMultipliedColors.Length; index++)
+                preMultipliedColors[index] = series[index].Color * color;
+        }
+
+        public Color GetSegementColor(int index)
+        {
+            if (preMultipliedColors == null || preMultipliedColors.Length <= index)
+                return Color.white;
+            return preMultipliedColors[index];
         }
 
         private void RegisterEvent(SingleValueSeries series)

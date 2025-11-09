@@ -5,7 +5,6 @@ namespace Xeon.Common
 {
     public class DoubleCircularBuffer : CircularBuffer<double>
     {
-        private double max = 0;
         private SortedSet<double> heap = new();
 
         public DoubleCircularBuffer(int capacity) : base(capacity)
