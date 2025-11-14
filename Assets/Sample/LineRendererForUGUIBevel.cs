@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,112 +12,42 @@ public class LineRendererForUGUIBevel : MaskableGraphic
 
     public override Texture mainTexture => sprite == null ? null : sprite.texture;
 
+    private List<UIVertex> vertices = new();
+    private List<int> indices = new();
+
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
+        vertices.Clear();
+        indices.Clear();
         if (points == null || points.Length < 2)
             return;
 
         var vertexIndex = 0;
         var halfThickness = thicness * 0.5f;
         var prevIsLeftTurn = false;
-        var vertex = UIVertex.simpleVert;
-        vertex.color = color;
         for (var index = 0; index < points.Length; index++)
         {
             if (index == 0)
             {
-                ProcessStartPoint(vh, index, halfThickness);
+                ProcessStartPoint(index, halfThickness);
                 continue;
             }
 
             if (index == points.Length - 1)
             {
-                ProcessEndPoint(vh, index, vertexIndex, halfThickness, prevIsLeftTurn);
+                ProcessEndPoint(index, vertexIndex, halfThickness, prevIsLeftTurn);
                 continue;
             }
 
-            var currentPoint = points[index];
-            var prevPoint = points[index - 1];
-            var nextPoint = points[index + 1];
-
-            // 方向ベクトル
-            var directionPrev = (currentPoint - prevPoint).normalized;
-            var directionNext = (nextPoint - currentPoint).normalized;
-            // 各方向の法線
-            var normalPrev = new Vector2(directionPrev.y, -directionPrev.x);
-            var normalNext = new Vector2(directionNext.y, -directionNext.x);
-            // 左折判定
-            var isLeftTurn = Cross(directionPrev, directionNext) > 0; // 左折か？
-
-            // 外側法線（前方向/次方向）
-            var outerPrevNormal = isLeftTurn ? normalPrev : -normalPrev;
-            var outerNextNormal = isLeftTurn ? normalNext : -normalNext;
-            // 外側頂点
-            var outerPrev = currentPoint + outerPrevNormal * halfThickness;
-            var outerNext = currentPoint + outerNextNormal * halfThickness;
-
-            // 内側法線
-            var innerPrevNormal = -outerPrevNormal;
-            var innerNextNormal = -outerNextNormal;
-            // 内側線のオフセット基点
-            var innerPrevOffsetPoint = currentPoint + innerPrevNormal * halfThickness;
-            var innerNextOffsetPoint = currentPoint + innerNextNormal * halfThickness;
-
-            // 交点（内側同士）
-            var innerIntersection = Intersection(innerPrevOffsetPoint, directionPrev, innerNextOffsetPoint,
-                directionNext, out var intersectionFound);
-            if (!intersectionFound)
-            {
-                innerIntersection = currentPoint;
-            }
-
-            vertex.position = outerPrev; // 前セグメント側外頂点
-            vh.AddVert(vertex);
-
-            vertex.position = innerIntersection; // 内側交点
-            vh.AddVert(vertex);
-
-            vertex.position = outerNext; // 次セグメント側外頂点
-            vh.AddVert(vertex);
-
-            if (!isLeftTurn)
-            {
-                if (!prevIsLeftTurn)
-                {
-                    vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    vh.AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 3);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
-                }
-                else
-                {
-                    vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    vh.AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
-                }
-            }
-            else
-            {
-                if (!prevIsLeftTurn)
-                {
-                    vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    vh.AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
-                }
-                else
-                {
-                    vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                    vh.AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 3);
-                    vh.AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
-                }
-            }
+            prevIsLeftTurn = ProcessBevel(index, vertexIndex, halfThickness, prevIsLeftTurn);
 
             vertexIndex += 3;
-            prevIsLeftTurn = isLeftTurn;
         }
+        vh.AddUIVertexStream(vertices, indices);
     }
 
-    private void ProcessStartPoint(VertexHelper vh, int index, float halfThickness)
+    private void ProcessStartPoint(int index, float halfThickness)
     {
         var currentPoint = points[index];
         var nextPoint = points[index + 1];
@@ -126,13 +57,13 @@ public class LineRendererForUGUIBevel : MaskableGraphic
         vertex.color = color;
 
         vertex.position = currentPoint + normal * halfThickness;
-        vh.AddVert(vertex);
+        vertices.Add(vertex);
 
         vertex.position = currentPoint - normal * halfThickness;
-        vh.AddVert(vertex);
+        vertices.Add(vertex);
     }
 
-    private void ProcessEndPoint(VertexHelper vh, int index, int vertexIndex, float halfThickness, bool prevIsCcw)
+    private void ProcessEndPoint(int index, int vertexIndex, float halfThickness, bool prevIsLeftTurn)
     {
         var currentPoint = points[index];
         var prevPoint = points[index - 1];
@@ -142,29 +73,111 @@ public class LineRendererForUGUIBevel : MaskableGraphic
         var vertex = UIVertex.simpleVert;
         vertex.color = color;
         vertex.position = currentPoint + normal * halfThickness;
-        vh.AddVert(vertex);
+        vertices.Add(vertex);
 
         vertex.position = currentPoint - normal * halfThickness;
-        vh.AddVert(vertex);
+        vertices.Add(vertex);
 
         if (points.Length == 2)
         {
-            vh.AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 1);
-            vh.AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
+            AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 1);
+            AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
         }
         else
         {
-            if (!prevIsCcw)
+            if (!prevIsLeftTurn)
             {
-                vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                vh.AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
+                AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
             }
             else
             {
-                vh.AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
-                vh.AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 3);
+                AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 3);
             }
         }
+    }
+
+    private bool ProcessBevel(int index, int vertexIndex, float halfThickness, bool prevIsLeftTurn)
+    {
+        var currentPoint = points[index];
+        var prevPoint = points[index - 1];
+        var nextPoint = points[index + 1];
+
+        // 方向ベクトル
+        var directionPrev = (currentPoint - prevPoint).normalized;
+        var directionNext = (nextPoint - currentPoint).normalized;
+        // 各方向の法線
+        var normalPrev = new Vector2(directionPrev.y, -directionPrev.x);
+        var normalNext = new Vector2(directionNext.y, -directionNext.x);
+        // 左折判定
+        var isLeftTurn = Cross(directionPrev, directionNext) > 0; // 左折か？
+
+        // 外側法線（前方向/次方向）
+        var outerPrevNormal = isLeftTurn ? normalPrev : -normalPrev;
+        var outerNextNormal = isLeftTurn ? normalNext : -normalNext;
+        // 外側頂点
+        var outerPrev = currentPoint + outerPrevNormal * halfThickness;
+        var outerNext = currentPoint + outerNextNormal * halfThickness;
+
+        // 内側法線
+        var innerPrevNormal = -outerPrevNormal;
+        var innerNextNormal = -outerNextNormal;
+        // 内側線のオフセット基点
+        var innerPrevOffsetPoint = currentPoint + innerPrevNormal * halfThickness;
+        var innerNextOffsetPoint = currentPoint + innerNextNormal * halfThickness;
+
+        // 交点（内側同士）
+        var innerIntersection = Intersection(innerPrevOffsetPoint, directionPrev, innerNextOffsetPoint,
+            directionNext, out var intersectionFound);
+        if (!intersectionFound)
+        {
+            innerIntersection = currentPoint;
+        }
+
+        var vertex = UIVertex.simpleVert;
+        vertex.color = color;
+        vertex.position = outerPrev; // 前セグメント側外頂点
+        vertices.Add(vertex);
+
+        vertex.position = innerIntersection; // 内側交点
+        vertices.Add(vertex);
+
+        vertex.position = outerNext; // 次セグメント側外頂点
+        vertices.Add(vertex);
+
+        if (!isLeftTurn)
+        {
+            if (!prevIsLeftTurn)
+            {
+                AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 3);
+                AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
+            }
+            else
+            {
+                AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
+                AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
+            }
+        }
+        else
+        {
+            if (!prevIsLeftTurn)
+            {
+                AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                AddTriangle(vertexIndex + 1, vertexIndex + 2, vertexIndex + 3);
+                AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
+            }
+            else
+            {
+                AddTriangle(vertexIndex, vertexIndex + 1, vertexIndex + 2);
+                AddTriangle(vertexIndex, vertexIndex + 2, vertexIndex + 3);
+                AddTriangle(vertexIndex + 2, vertexIndex + 3, vertexIndex + 4);
+            }
+        }
+
+        return isLeftTurn;
     }
 
     private Vector2 Intersection(Vector2 prevPoint, Vector2 directionPrev, Vector2 nextPoint, Vector2 directionNext,
@@ -192,6 +205,14 @@ public class LineRendererForUGUIBevel : MaskableGraphic
     /// <param name="b"></param>
     /// <returns></returns>
     private float Cross(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;
+    
+    private void AddTriangle(int a, int b, int c)
+    {
+        indices.Add(a);
+        indices.Add(b);
+        indices.Add(c);
+    }
+    
 #if UNITY_EDITOR
     [CustomEditor(typeof(LineRendererForUGUIBevel))]
     private class LineRendererForUGUIBevelEditor : Editor
