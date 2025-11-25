@@ -18,7 +18,7 @@ namespace Xeon.Common.FlyweightScrollView.Model
         public int Capacity => buffer.Length;
         public bool IsFull => Count == Capacity;
         public bool IsEmpty => Count == 0;
-        public int Count { get; protected set; }
+        public virtual int Count { get; protected set; }
 
         public bool IsReadOnly => false;
 
@@ -251,7 +251,7 @@ namespace Xeon.Common.FlyweightScrollView.Model
             index--;
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public virtual IEnumerator<T> GetEnumerator()
         {
             for (var index = 0; index < Count; index++)
             {

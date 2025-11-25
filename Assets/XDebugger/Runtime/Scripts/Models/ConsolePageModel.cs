@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Xeon.XDebugger.Console;
 using Xeon.XDebugger.UI;
-using Xeon.XGraph.Model;
+using Random = UnityEngine.Random;
 
 namespace Xeon.XDebugger.Model
 {
@@ -44,7 +44,7 @@ namespace Xeon.XDebugger.Model
         {
             elapsed -= Time.deltaTime;
             if (elapsed > 0f) return;
-            switch (UnityEngine.Random.Range(0, 3))
+            switch (Random.Range(0, 3))
             {
                 case 0:
                     Debug.Log($"Test log {infoCount}");
