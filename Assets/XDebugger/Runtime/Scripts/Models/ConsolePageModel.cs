@@ -1,15 +1,15 @@
 using System;
 using UnityEngine;
-using Xeon.Common;
 using Xeon.XDebugger.Console;
 using Xeon.XDebugger.UI;
+using Xeon.XGraph.Model;
 
 namespace Xeon.XDebugger.Model
 {
     public class ConsolePageModel : PageModel
     {
         private const int LogBufferCapacity = 1000;
-        private static CircularBuffer<LogItemData> logDataList = new(LogBufferCapacity);
+        private static LogItemBuffer logDataList = new(LogBufferCapacity, true);
         private static int logIndex = 0;
         private static int infoCount = 0;
         private static int warningCount = 0;

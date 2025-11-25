@@ -71,7 +71,7 @@ namespace Xeon.XDebugger.Profiler
             memoryGauge.minValue = 0f;
             monoGauge.minValue = 0f;
             
-            graph.MarkerManager.SetMarkers(new List<BarGraphMarkerData>() { new ("15FPS", 0.0667f), new ("30FPS", 0.0333f), new ("60FPS", 0.0167f), new ("90FPS", 0.0111f), new ("120FPS", 0.0083f) });
+            graph.MarkerManager.SetMarkers(new List<ScaleMarkerData>() { new ("15FPS", 0.0667f), new ("30FPS", 0.0333f), new ("60FPS", 0.0167f), new ("90FPS", 0.0111f), new ("120FPS", 0.0083f) });
         }
 
         private void Update()
