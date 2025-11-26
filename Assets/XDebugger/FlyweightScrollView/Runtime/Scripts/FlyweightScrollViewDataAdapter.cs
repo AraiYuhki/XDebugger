@@ -28,7 +28,14 @@ namespace Xeon.Common.FlyweightScrollView
         private void OnChangedCollection(object sender, NotifyCollectionChangedEventArgs e)
             => CollectionChanged?.Invoke(this, e);
 
-        public void Clear() => source.Clear();
+        public void Clear(bool isNotify = true)
+        {
+            if (!isNotify)
+                source.CollectionChanged -= OnChangedCollection;
+            source.Clear();
+            if (!isNotify)
+                source.CollectionChanged += OnChangedCollection;
+        }
 
         public IEnumerator<T> GetEnumerator()
         {

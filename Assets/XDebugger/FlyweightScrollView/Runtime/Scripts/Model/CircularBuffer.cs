@@ -89,7 +89,7 @@ namespace Xeon.Common.FlyweightScrollView.Model
             end = 0;
         }
 
-        public virtual void Clear()
+        public virtual void Clear(bool isNotify = true)
         {
             // バッファ全体をクリア
             for (var i = 0; i < Capacity; i++)
@@ -98,8 +98,11 @@ namespace Xeon.Common.FlyweightScrollView.Model
             Count = start = end = 0;
 
             // コレクション全体がリセットされたことを通知
-            CollectionChanged?.Invoke(this,
-                new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            if (isNotify)
+            {
+                CollectionChanged?.Invoke(this,
+                    new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            }
         }
 
         public T Front()
@@ -115,15 +118,15 @@ namespace Xeon.Common.FlyweightScrollView.Model
             return buffer[lastIndex];
         }
 
-        public virtual void Add(T item)
+        public virtual void Add(T item, bool isNotify = true)
         {
-            PushBack(item);
+            PushBack(item, isNotify);
         }
 
         /// <summary>
         /// 末尾に要素を追加（満杯の場合は先頭を上書き）
         /// </summary>
-        public virtual void PushBack(T item)
+        public virtual void PushBack(T item, bool isNotify = true)
         {
             if (IsFull)
             {
@@ -136,9 +139,12 @@ namespace Xeon.Common.FlyweightScrollView.Model
                 start = end;
 
                 // 古い要素が置き換わったことを通知（論理インデックス0が上書きされた扱い）
-                CollectionChanged?.Invoke(this,
-                    new NotifyCollectionChangedEventArgs(
-                        NotifyCollectionChangedAction.Replace, item, oldItem, 0));
+                if (isNotify)
+                {
+                    CollectionChanged?.Invoke(this,
+                        new NotifyCollectionChangedEventArgs(
+                            NotifyCollectionChangedAction.Replace, item, oldItem, 0));
+                }
                 return;
             }
 
@@ -149,15 +155,18 @@ namespace Xeon.Common.FlyweightScrollView.Model
             Count++;
 
             // 要素が追加されたことを通知
-            CollectionChanged?.Invoke(this,
-                new NotifyCollectionChangedEventArgs(
-                    NotifyCollectionChangedAction.Add, item, logicalIndex));
+            if (isNotify)
+            {
+                CollectionChanged?.Invoke(this,
+                    new NotifyCollectionChangedEventArgs(
+                        NotifyCollectionChangedAction.Add, item, logicalIndex));
+            }
         }
 
         /// <summary>
         /// 先頭に要素を追加（満杯の場合は末尾を上書き）
         /// </summary>
-        public virtual void PushFront(T item)
+        public virtual void PushFront(T item, bool isNotify = true)
         {
             Decrement(ref start);
 
@@ -169,9 +178,12 @@ namespace Xeon.Common.FlyweightScrollView.Model
                 end = start;
 
                 // 最後の要素が置き換わったことを通知
-                CollectionChanged?.Invoke(this,
-                    new NotifyCollectionChangedEventArgs(
-                        NotifyCollectionChangedAction.Replace, item, oldItem, Count - 1));
+                if (isNotify)
+                {
+                    CollectionChanged?.Invoke(this,
+                        new NotifyCollectionChangedEventArgs(
+                            NotifyCollectionChangedAction.Replace, item, oldItem, Count - 1));
+                }
                 return;
             }
 
@@ -179,15 +191,18 @@ namespace Xeon.Common.FlyweightScrollView.Model
             Count++;
 
             // 要素が先頭に追加されたことを通知
-            CollectionChanged?.Invoke(this,
-                new NotifyCollectionChangedEventArgs(
-                    NotifyCollectionChangedAction.Add, item, 0));
+            if (isNotify)
+            {
+                CollectionChanged?.Invoke(this,
+                    new NotifyCollectionChangedEventArgs(
+                        NotifyCollectionChangedAction.Add, item, 0));
+            }
         }
 
         /// <summary>
         /// 末尾の要素を削除
         /// </summary>
-        public virtual void PopBack()
+        public virtual void PopBack(bool isNotify = true)
         {
             ThrowIfEmpty("バッファが空のため、要素を削除できません。");
 
@@ -199,15 +214,18 @@ namespace Xeon.Common.FlyweightScrollView.Model
             Count--;
 
             // 要素削除を通知（論理インデックス Count は削除前の最後の要素位置）
-            CollectionChanged?.Invoke(this,
-                new NotifyCollectionChangedEventArgs(
-                    NotifyCollectionChangedAction.Remove, removedItem, Count));
+            if (isNotify)
+            {
+                CollectionChanged?.Invoke(this,
+                    new NotifyCollectionChangedEventArgs(
+                        NotifyCollectionChangedAction.Remove, removedItem, Count));
+            }
         }
 
         /// <summary>
         /// 先頭の要素を削除
         /// </summary>
-        public virtual void PopFront()
+        public virtual void PopFront(bool isNotify = true)
         {
             ThrowIfEmpty("バッファが空のため、要素を削除できません。");
 
@@ -217,9 +235,12 @@ namespace Xeon.Common.FlyweightScrollView.Model
             Count--;
 
             // 先頭要素削除を通知
-            CollectionChanged?.Invoke(this,
-                new NotifyCollectionChangedEventArgs(
-                    NotifyCollectionChangedAction.Remove, removedItem, 0));
+            if (isNotify)
+            {
+                CollectionChanged?.Invoke(this,
+                    new NotifyCollectionChangedEventArgs(
+                        NotifyCollectionChangedAction.Remove, removedItem, 0));
+            }
         }
 
         /// <summary>

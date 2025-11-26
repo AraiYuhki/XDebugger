@@ -55,6 +55,8 @@ namespace Xeon.Common.FlyweightScrollView
 
         private void Update()
         {
+            if (controller == null)
+                return;
             if (controller.IsDirty)
             {
                 controller.UpdateView();

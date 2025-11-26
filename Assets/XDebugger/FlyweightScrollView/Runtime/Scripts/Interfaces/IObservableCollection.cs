@@ -6,7 +6,7 @@ namespace Xeon.Common.FlyweightScrollView
     public interface IObservableCollection<T> : IEnumerable<T>, INotifyCollectionChanged
     {
         T this[int index] { get; }
-        void Clear();
+        void Clear(bool isNotify = true);
         int Count { get; }
     }
 }
