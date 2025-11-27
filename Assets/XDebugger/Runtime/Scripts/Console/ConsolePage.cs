@@ -1,5 +1,4 @@
 using UnityEngine;
-using Xeon.Common.FlyweightScrollView;
 using Xeon.XDebugger.Control;
 
 namespace Xeon.XDebugger.Console
@@ -11,7 +10,7 @@ namespace Xeon.XDebugger.Console
 
         public ConsoleController Controller => controller;
 
-        public void Initialize(IObservableCollection<LogItemData> logDataList)
+        public void Initialize(ILogDataBuffer logDataList)
         {
             controller.Initialize(logDataList);
         }

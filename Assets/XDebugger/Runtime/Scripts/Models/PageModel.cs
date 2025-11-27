@@ -122,7 +122,8 @@ namespace Xeon.XDebugger.Model
 
         protected virtual void CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control ??= uiFactory.CreatePage<PageControl>(parent);
+            if (control == null)
+                control = uiFactory.CreatePage<PageControl>(parent);
         }
 
         protected virtual void OpenedPage()

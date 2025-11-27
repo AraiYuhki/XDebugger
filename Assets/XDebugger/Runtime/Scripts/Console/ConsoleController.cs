@@ -24,6 +24,8 @@ namespace Xeon.XDebugger.Console
         private ToggleGroup toggleGroup;
         [SerializeField]
         private TMP_Text detailLabel;
+        [SerializeField]
+        private Button clearButton;
 
         [Header("FilterToggles")]
         [SerializeField]
@@ -33,6 +35,7 @@ namespace Xeon.XDebugger.Console
         [SerializeField]
         private Toggle errorToggle;
 
+        ILogDataBuffer logDataBuffer;
         private FlyweightScrollViewController<LogItemData, LogItem> controller;
 
         private void Awake()
@@ -44,15 +47,30 @@ namespace Xeon.XDebugger.Console
 
         private void OnDestroy()
         {
+            logDataBuffer.CollectionChanged -= OnCollectionChanged;
             controller.Dispose();
         }
 
-        public void Initialize(IObservableCollection<LogItemData> logDataList)
+        public void Initialize(ILogDataBuffer logDataList)
         {
-            logDataList.CollectionChanged += OnCollectionChanged;
-            controller = new (logItemPrefab, logDataList, OnCreatedItem);
+            logDataBuffer = logDataList;
+            logDataBuffer.CollectionChanged += OnCollectionChanged;
+            controller = new (logItemPrefab, logDataBuffer, OnCreatedItem);
             scrollView.Setup(controller);
             scrollView.normalizedPosition = Vector3.zero;
+
+            infoToggle.isOn = logDataList.VisibleInfo;
+            warningToggle.isOn = logDataList.VisibleWarn;
+            errorToggle.isOn = logDataList.VisibleError;
+
+            infoToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleInfo = isOn);
+            warningToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleWarn = isOn);
+            errorToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleError = isOn);
+            clearButton.onClick.AddListener(ClearLog);
+
+            OnAddInfoLog(logDataBuffer.InfoCount);
+            OnAddWarningLog(logDataBuffer.WarnCount);
+            OnAddErrorLog(logDataBuffer.ErrorCount);
         }
 
         public void OnAddInfoLog(int count)
@@ -88,6 +106,14 @@ namespace Xeon.XDebugger.Console
                 scrollView.normalizedPosition = Vector2.zero;
                 controller.FixToLast();
             }
+        }
+
+        private void ClearLog()
+        {
+            logDataBuffer.Clear();
+            OnAddInfoLog(0);
+            OnAddWarningLog(0);
+            OnAddErrorLog(0);
         }
 
     }

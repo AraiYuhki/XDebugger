@@ -2,18 +2,14 @@ using System;
 using UnityEngine;
 using Xeon.XDebugger.Console;
 using Xeon.XDebugger.UI;
-using Xeon.XGraph.Model;
 
 namespace Xeon.XDebugger.Model
 {
     public class ConsolePageModel : PageModel
     {
         private const int LogBufferCapacity = 1000;
-        private static LogItemBuffer logDataList = new(LogBufferCapacity, true);
+        private static LogItemBuffer logDataList = new(LogBufferCapacity);
         private static int logIndex = 0;
-        private static int infoCount = 0;
-        private static int warningCount = 0;
-        private static int errorCount = 0;
         private static event Action<int> onAddInfoLog;
         private static event Action<int> onAddWarningLog;
         private static event Action<int> onAddErrorLog;
@@ -47,13 +43,13 @@ namespace Xeon.XDebugger.Model
             switch (UnityEngine.Random.Range(0, 3))
             {
                 case 0:
-                    Debug.Log($"Test log {infoCount}");
+                    Debug.Log($"Test log {logDataList.InfoCount}");
                     break;
                 case 1:
-                    Debug.LogWarning($"Test warning {warningCount}");
+                    Debug.LogWarning($"Test warning {logDataList.WarnCount}");
                     break;
                 default:
-                    Debug.LogError($"Test error {errorCount}");
+                    Debug.LogError($"Test error {logDataList.ErrorCount}");
                     break;
             }
             ;
@@ -85,20 +81,17 @@ namespace Xeon.XDebugger.Model
         {
             var data = new LogItemData(type, condition, stackTrace, logIndex, true);
             logIndex++;
-            logDataList.PushBack(data);
+            logDataList.Add(data);
             switch (type)
             {
                 case LogType.Log:
-                    infoCount++;
-                    onAddInfoLog?.Invoke(infoCount);
+                    onAddInfoLog?.Invoke(logDataList.InfoCount);
                     break;
                 case LogType.Warning:
-                    warningCount++;
-                    onAddWarningLog?.Invoke(warningCount);
+                    onAddWarningLog?.Invoke(logDataList.WarnCount);
                     break;
                 default:
-                    errorCount++;
-                    onAddErrorLog?.Invoke(errorCount);
+                    onAddErrorLog?.Invoke(logDataList.ErrorCount);
                     break;
             }
         }

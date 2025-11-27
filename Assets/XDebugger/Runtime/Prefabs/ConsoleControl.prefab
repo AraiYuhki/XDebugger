@@ -1649,6 +1649,7 @@ MonoBehaviour:
   errorCountLabel: {fileID: 2506021473113079227}
   toggleGroup: {fileID: 8974704469398559282}
   detailLabel: {fileID: 3021460653102288385}
+  clearButton: {fileID: 8990290373837105833}
   infoToggle: {fileID: 157968650490801810}
   warningToggle: {fileID: 5862964615987568787}
   errorToggle: {fileID: 1645200056112352305}
