@@ -59,6 +59,10 @@ namespace Xeon.XDebugger.Console
             scrollView.Setup(controller);
             scrollView.normalizedPosition = Vector3.zero;
 
+            infoToggle.isOn = logDataList.VisibleInfo;
+            warningToggle.isOn = logDataList.VisibleWarn;
+            errorToggle.isOn = logDataList.VisibleError;
+
             infoToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleInfo = isOn);
             warningToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleWarn = isOn);
             errorToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleError = isOn);

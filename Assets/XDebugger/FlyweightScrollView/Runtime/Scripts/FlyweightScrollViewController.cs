@@ -75,8 +75,12 @@ namespace Xeon.Common.FlyweightScrollView
         public override void Dispose()
         {
             UpdateContainerSize();
-            dataList.CollectionChanged -= OnChangedItemCount;
-            dataList = null;
+            if (dataList != null)
+            {
+                dataList.CollectionChanged -= OnChangedItemCount;
+                dataList = null;
+            }
+
             base.Dispose();
         }
 
