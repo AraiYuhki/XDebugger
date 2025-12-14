@@ -9,11 +9,11 @@ namespace Xeon.XDebugger
     public class ContentGroup : ControlBase
     {
         [SerializeField]
-        private Transform content;
+        protected Transform content;
 
-        private IGroupModel model;
-        private ContentGroup parent;
-        private List<ControlBase> children;
+        protected IGroupModel model;
+        protected ContentGroup parent;
+        protected List<ControlBase> children;
 
         public Transform GetContent() => content;
 

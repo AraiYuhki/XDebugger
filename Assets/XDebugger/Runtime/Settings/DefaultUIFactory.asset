@@ -22,6 +22,7 @@ MonoBehaviour:
   dropdownControlPrefab: {fileID: 5863926240485736798, guid: 271cba2cb91d7b249b51503bbd139bd5, type: 3}
   verticalGroupPrefab: {fileID: 417582248479364757, guid: 9f1208d0f6b8a964ebee0184bc9b6e29, type: 3}
   horizontalGroupPrefab: {fileID: 7617049828836738744, guid: 732743597765e0b49b13f66a3f12eea6, type: 3}
+  disableGroupPrefab: {fileID: 6948186384205625338, guid: 069f2cfdce8329e42b5497eb2f72cf74, type: 3}
   pageControlPrefab: {fileID: 6721828990841424671, guid: ac54dac7dd8695a4696952c0b324fdb3, type: 3}
   profilePagePrefab: {fileID: 4322040795176736406, guid: 310e8a44ce61fef46986673a0d3baaa2, type: 3}
   consolePagePrefab: {fileID: 1677975000700567709, guid: 69eea5a57262ba74782a3d43ce843bef, type: 3}

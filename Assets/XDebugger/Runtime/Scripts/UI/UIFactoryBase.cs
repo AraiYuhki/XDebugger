@@ -31,6 +31,8 @@ namespace Xeon.XDebugger.UI
         protected ContentGroup verticalGroupPrefab;
         [SerializeField]
         protected ContentGroup horizontalGroupPrefab;
+        [SerializeField]
+        protected DisableGroup disableGroupPrefab;
 
         [Header("Pages")]
         [SerializeField]
@@ -78,6 +80,7 @@ namespace Xeon.XDebugger.UI
 
         public virtual ContentGroup CreateVerticalGroup(Transform parent = null) => Instantiate(verticalGroupPrefab, parent);
         public virtual ContentGroup CreateHorizontalGroup(Transform parent = null) => Instantiate(horizontalGroupPrefab, parent);
+        public virtual DisableGroup CreateDisableGroup(Transform parent = null) => Instantiate(disableGroupPrefab, parent);
 
         protected virtual T Create<T>(ControlBase prefab, Transform parent = null) where T : ControlBase, new()
         {

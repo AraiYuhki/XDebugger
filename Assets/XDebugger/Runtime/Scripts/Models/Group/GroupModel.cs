@@ -28,14 +28,19 @@ namespace Xeon.XDebugger.Model
             var control = Instantiate<ContentGroup>(parent);
             control.Setup(this, parent.GetComponent<ContentGroup>());
 
+            ResetChildren(control, uiFactory);
+
+            return control;
+        }
+
+        protected void ResetChildren(ContentGroup control, IUIFactory uiFactory)
+        {
             childrenControlls.Clear();
 
             foreach (var child in children)
             {
                 childrenControlls.Add(child.CreateControl(control.GetContent(), uiFactory));
             }
-
-            return control;
         }
     }
 }

@@ -5,7 +5,6 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
-using Xeon.XDebugger.Profiler;
 using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
@@ -94,6 +93,22 @@ namespace Xeon.XDebugger.Model
             {
                 AddLabel("Vertical Label");
                 AddToggle("Vertical Toggle", true, v => Debug.Log($"垂直トグル: {v}"), 7);
+            }
+
+
+            DisableGroupModel disableGroupModel = null;
+
+            AddButton("Toggle Disable group", () => 
+            {
+                if (disableGroupModel == null)
+                    return;
+                disableGroupModel.IsDisabled = !disableGroupModel.IsDisabled;
+            });
+
+            using (DisableScope(out disableGroupModel, "Disable Group"))
+            {
+                AddLabel("Disable label");
+                AddButton("Disable Test Log", () => Debug.LogError("On Click!"));
             }
 
             AddButton("Refresh", () => Refresh(true), 99);
@@ -203,6 +218,15 @@ namespace Xeon.XDebugger.Model
         public GroupLayoutScope VerticalScope(string title = "", int priority = 0)
         {
             var scope = new VerticalLayoutScope(title, this, priority);
+            AddChild(scope.Model);
+            SetGroup(scope.Model as IGroupModel);
+            return scope;
+        }
+
+        public DisableGroupScope　DisableScope(out DisableGroupModel model, string title = "", bool isDisabled = false, int priority = 0)
+        {
+            var scope = new DisableGroupScope(title, this, priority);
+            model = scope.Model as DisableGroupModel;
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;
