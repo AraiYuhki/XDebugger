@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.UI;
 
@@ -11,8 +10,6 @@ namespace Xeon.XDebugger.Model
 {
     public class PageModel
     {
-        protected virtual string prefabAddress => "XDebugger/Page";
-
         protected IUIFactory uiFactory;
 
         protected Transform content;
@@ -53,86 +50,6 @@ namespace Xeon.XDebugger.Model
         public virtual void Initialize(IUIFactory uiFactory)
         {
             this.uiFactory = uiFactory;
-            AddLabel("===== Debug Menu =====");
-
-            AddPageLinkButton<SystemPageModel>("System Info");
-            AddPageLinkButton<ProfilerPageModel>("Profiler");
-            AddPageLinkButton<ConsolePageModel>("Console");
-
-            AddButton("Start", () => Debug.Log("開始が選択されました"));
-            AddButton("Exit", () => Debug.Log("終了が選択されました"));
-
-            AddToggle("Enabled", false, v => Debug.Log($"有効化: {v}"), 1);
-
-            AddIntSlider("Volume", 50, 0, 100, v => Debug.Log($"ボリューム: {v}"), 2);
-
-            AddSlider("Brightness", 0.5f, 0f, 1f, 2, v => Debug.Log($"明るさ: {v:F2}"), 3);
-
-            AddText("Username", "Player", v => Debug.Log($"ユーザー名: {v}"), 4);
-
-            AddDropdown(
-                "Mode Select",
-                0,
-                new[] { "Easy", "Normal", "Hard" },
-                new[] { 0, 1, 2 },
-                v => Debug.Log($"モード選択: {v}"),
-                5
-            );
-
-            AddEnumDropdown("Color Select", TestColor.Red, v => Debug.Log($"色選択: {v}"), 6);
-
-            AddPageLinkButton<TestPageModel>("Go to Detail Page", 10);
-
-            using (HorizontalScope("Horizontal Group"))
-            {
-                AddLabel("Horizontal Label");
-                AddButton("Horizontal Button", () => Debug.Log("水平ボタン押下"));
-            }
-
-            using (VerticalScope("Vertical Group"))
-            {
-                AddLabel("Vertical Label");
-                AddToggle("Vertical Toggle", true, v => Debug.Log($"垂直トグル: {v}"), 7);
-            }
-
-
-            DisableGroupModel disableGroupModel = null;
-
-            AddButton("Toggle Disable group", () => 
-            {
-                if (disableGroupModel == null)
-                    return;
-                disableGroupModel.IsDisabled = !disableGroupModel.IsDisabled;
-            });
-
-            using (DisableScope(out disableGroupModel, "Disable Group"))
-            {
-                AddLabel("Disable label");
-                AddButton("Disable Test Log", () => Debug.LogError("On Click!"));
-            }
-
-            FoldingGroupModel foldingGroupModel = null;
-            AddButton("Toggle Folding group", () =>
-            {
-                if (foldingGroupModel == null)
-                    return;
-                foldingGroupModel.IsFolding = !foldingGroupModel.IsFolding;
-            });
-
-            using (FoldingScope(out foldingGroupModel, "Folding Group"))
-            {
-                AddButton("Folding Test Log", () => Debug.LogError("On Click!"));
-                AddLabel("Folding opened label");
-            }
-
-            var foldingLabel = AddLabel("Folding state label false");
-
-            foldingGroupModel.OnChangedFolding += isFolding =>
-            {
-                foldingLabel.SetText($"Folding state label {isFolding}");
-            };
-
-            AddButton("Refresh", () => Refresh(true), 99);
         }
 
         public virtual void Update()
@@ -219,13 +136,6 @@ namespace Xeon.XDebugger.Model
                 GameObject.Destroy(control.gameObject);
             controlList.Clear();
             modelList.Clear();
-        }
-
-        public PageControl Instantiate(Transform parent)
-        {
-            var prefab = Addressables.LoadAssetAsync<GameObject>(prefabAddress).WaitForCompletion();
-            var instance = GameObject.Instantiate(prefab, parent);
-            return instance.GetComponent<PageControl>();
         }
 
         public GroupLayoutScope HorizontalScope(string title = "", int priority = 0)

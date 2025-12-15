@@ -11,6 +11,10 @@ namespace Xeon.XDebugger.Model
         private LabelModel levelPlaytime;
         private LabelModel currentLevel;
         private LabelModel qualityLabel;
+        
+        public SystemPageModel() : base("System Info")
+        {
+        }
 
         public override void Initialize(IUIFactory uiFactory)
         {

@@ -6,8 +6,10 @@ namespace Xeon.XDebugger.Model
 {
     public class ProfilerPageModel : PageModel
     {
-        protected override string prefabAddress => $"XDebugger/{nameof(ProfilerPage)}";
-
+        public ProfilerPageModel() : base("Profiler")
+        {
+        }
+        
         public override void Initialize(IUIFactory uiFactory)
         {
             this.uiFactory = uiFactory;

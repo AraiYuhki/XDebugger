@@ -77,12 +77,14 @@ namespace Xeon.XDebugger
             DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
         }
 
+        public static void SetInitialPage(PageModel model) => initialPage = model;
+
         /// <summary>
         /// 初期ページを取得または生成
         /// </summary>
         public static PageModel GetOrCreateInitialPage()
         {
-            initialPage ??= new PageModel("Initial Page");
+            initialPage ??= new DefaultInitializePageModel();
             return initialPage;
         }
 
@@ -94,7 +96,7 @@ namespace Xeon.XDebugger
             if (isShow)
                 return;
             
-            backButton.gameObject.SetActive(false);
+            backButton.gameObject.SetActive(pageStack.Count > 1);
             isShow = true;
             mainMenu.SetActive(true);
             animator.Play(OpenId);
@@ -129,7 +131,7 @@ namespace Xeon.XDebugger
         /// <summary>
         /// メニュー非表示時の処理
         /// </summary>
-        public void OnHiden()
+        public void OnHidden()
         {
             isShow = false;
             mainMenu.SetActive(false);

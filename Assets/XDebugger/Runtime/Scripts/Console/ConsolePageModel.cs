@@ -13,10 +13,12 @@ namespace Xeon.XDebugger.Model
         private static event Action<int> onAddInfoLog;
         private static event Action<int> onAddWarningLog;
         private static event Action<int> onAddErrorLog;
-
-        protected override string prefabAddress => $"XDebugger/{nameof(ConsolePage)}";
+        
         private ConsolePage page;
 
+        public ConsolePageModel() : base("Console")
+        {
+        }
 
         public static void PreInitialize()
         {

@@ -23,6 +23,12 @@ namespace Xeon.XDebugger.Control
 
         public Transform Content => content;
 
+        public float Alpha
+        {
+            get => canvasGroup.alpha;
+            set => canvasGroup.alpha = value;
+        }
+
         public virtual void Open(PageModel model = null, Action onOpened = null)
         {
             this.model = model;
