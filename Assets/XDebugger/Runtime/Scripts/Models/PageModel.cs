@@ -111,6 +111,27 @@ namespace Xeon.XDebugger.Model
                 AddButton("Disable Test Log", () => Debug.LogError("On Click!"));
             }
 
+            FoldingGroupModel foldingGroupModel = null;
+            AddButton("Toggle Folding group", () =>
+            {
+                if (foldingGroupModel == null)
+                    return;
+                foldingGroupModel.IsFolding = !foldingGroupModel.IsFolding;
+            });
+
+            using (FoldingScope(out foldingGroupModel, "Folding Group"))
+            {
+                AddButton("Folding Test Log", () => Debug.LogError("On Click!"));
+                AddLabel("Folding opened label");
+            }
+
+            var foldingLabel = AddLabel("Folding state label false");
+
+            foldingGroupModel.OnChangedFolding += isFolding =>
+            {
+                foldingLabel.SetText($"Folding state label {isFolding}");
+            };
+
             AddButton("Refresh", () => Refresh(true), 99);
         }
 
@@ -227,6 +248,16 @@ namespace Xeon.XDebugger.Model
         {
             var scope = new DisableGroupScope(title, this, priority);
             model = scope.Model as DisableGroupModel;
+            AddChild(scope.Model);
+            SetGroup(scope.Model as IGroupModel);
+            return scope;
+        }
+
+        public FoldingGroupScope FoldingScope(out FoldingGroupModel model, string title = "", bool isFolding = false,
+            int priority = 0)
+        {
+            var scope = new FoldingGroupScope(title, this, priority);
+            model = scope.Model as FoldingGroupModel;
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;

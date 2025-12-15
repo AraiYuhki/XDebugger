@@ -146,12 +146,12 @@ namespace Xeon.XDebugger.Model
 
         public override void Update()
         {
-            playTime.SetTitle($"Play Time : {Time.unscaledTime}");
-            levelPlaytime.SetTitle($"Level Play time : {Time.timeSinceLevelLoad}");
+            playTime.SetText($"Play Time : {Time.unscaledTime}");
+            levelPlaytime.SetText($"Level Play time : {Time.timeSinceLevelLoad}");
             var activeScene = SceneManager.GetActiveScene();
             var label = $"Current Level {activeScene.name} (Index: {activeScene.buildIndex})";
-            currentLevel.SetTitle(label);
-            qualityLabel.SetTitle($"Quality Level : {QualitySettings.names[QualitySettings.GetQualityLevel()]} ({QualitySettings.GetQualityLevel()})");
+            currentLevel.SetText(label);
+            qualityLabel.SetText($"Quality Level : {QualitySettings.names[QualitySettings.GetQualityLevel()]} ({QualitySettings.GetQualityLevel()})");
         }
 
         private string GetSystemMemoryLabel()

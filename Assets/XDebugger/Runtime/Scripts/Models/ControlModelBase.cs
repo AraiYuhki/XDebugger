@@ -10,7 +10,7 @@ namespace Xeon.XDebugger.Model
         protected abstract string prefabAddress { get; }
 
         protected bool isActive = true;
-        public string Title { get; protected set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
         public int Priority { get; protected set; } = 0;
 
         public IGroupModel Parent { get; private set; }

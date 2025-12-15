@@ -10,6 +10,7 @@ namespace Xeon.XDebugger.UI
         ContentGroup CreateVerticalGroup(Transform parent = null);
         ContentGroup CreateHorizontalGroup(Transform parent = null);
         DisableGroup CreateDisableGroup(Transform parent = null);
+        FoldingGroup CreateFoldingGroup(Transform parent = null);
         T CreatePage<T>(Transform parent = null) where T : PageControl, new();
     }
 }

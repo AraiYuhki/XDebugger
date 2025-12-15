@@ -22,8 +22,9 @@ namespace Xeon.XDebugger.Model
             return control;
         }
 
-        public void SetTitle(string title)
+        public void SetText(string title)
         {
+            Title = title;
             control?.Setup(title);
         }
     }
