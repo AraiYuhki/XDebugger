@@ -19,7 +19,7 @@ namespace Xeon.XDebugger.Model
         protected List<ControlModelBase> modelList = new List<ControlModelBase>();
         protected List<ControlBase> controlList = new();
         protected string title;
-        protected PageControl control;
+        protected MonoBehaviour control;
 
         public string Title => title;
 
@@ -67,9 +67,14 @@ namespace Xeon.XDebugger.Model
             Initialize(uiFactory);
             content = parent;
             CreateControl(parent, uiFactory);
-            foreach (var model in modelList)
-                controlList.Add(model.CreateControl(control.Content, uiFactory));
-            control.Open(pageModel);
+            
+            // controlが見つかった場合のみ処理を続行
+            if (control != null && control is PageControl pageControl)
+            {
+                foreach (var model in modelList)
+                    controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
+                pageControl.Open(pageModel);
+            }
             OpenedPage();
         }
 
@@ -85,16 +90,37 @@ namespace Xeon.XDebugger.Model
 
         public virtual void Close(Action onClose = null)
         {
-            control.Close(() =>
+            if (control is PageControl pageControl)
+            {
+                pageControl.Close(() =>
+                {
+                    ClosedPage();
+                    Clear();
+                    XDebugger.Instance.ClosePage(this);
+                    onClose?.Invoke();
+                    GameObject.Destroy(pageControl.gameObject);
+                    content = null;
+                    control = null;
+                });
+            }
+            else if (control is StaticPageControl staticPageControl)
+            {
+                staticPageControl.Close(() =>
+                {
+                    ClosedPage();
+                    staticPageControl.gameObject.SetActive(false);
+                    XDebugger.Instance.ClosePage(this);
+                    onClose?.Invoke();
+                    content = null;
+                    control = null;
+                });
+            }
+            else
             {
                 ClosedPage();
-                Clear();
                 XDebugger.Instance.ClosePage(this);
                 onClose?.Invoke();
-                GameObject.Destroy(control.gameObject);
-                content = null;
-                control = null;
-            });
+            }
         }
 
         protected virtual void ClosedPage()
@@ -105,17 +131,45 @@ namespace Xeon.XDebugger.Model
         {
             if (isRefresh)
                 Refresh();
-            control.gameObject.SetActive(true);
-            control.Open();
+            if (control != null)
+            {
+                control.gameObject.SetActive(true);
+                if (control is PageControl pageControl)
+                {
+                    pageControl.Open();
+                }
+                else if (control is StaticPageControl staticPageControl)
+                {
+                    staticPageControl.Open();
+                }
+            }
         }
 
         public void Hide(Action onHidden = null)
         {
-            control.Close(() =>
+            if (control != null)
             {
-                control.gameObject.SetActive(false);
+                if (control is PageControl pageControl)
+                {
+                    pageControl.Close(() =>
+                    {
+                        control.gameObject.SetActive(false);
+                        onHidden?.Invoke();
+                    });
+                }
+                else if (control is StaticPageControl staticPageControl)
+                {
+                    staticPageControl.Close(() =>
+                    {
+                        control.gameObject.SetActive(false);
+                        onHidden?.Invoke();
+                    });
+                }
+            }
+            else
+            {
                 onHidden?.Invoke();
-            });   
+            }
         }
 
         public virtual void Refresh(bool doRecreate = false)

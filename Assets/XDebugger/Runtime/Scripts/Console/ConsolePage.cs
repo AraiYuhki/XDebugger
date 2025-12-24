@@ -3,7 +3,7 @@ using Xeon.XDebugger.Control;
 
 namespace Xeon.XDebugger.Console
 {
-    public class ConsolePage : PageControl
+    public class ConsolePage : StaticPageControl
     {
         [SerializeField]
         private ConsoleController controller;

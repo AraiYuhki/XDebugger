@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 
@@ -26,7 +27,8 @@ namespace Xeon.XDebugger
         private static PageModel initialPage;
 
         [SerializeField]
-        private GameObject mainMenu; // デバッグメニューのルートオブジェクト
+        private GameObject mainObject;
+
         [SerializeField]
         private TMP_Text titleLabel; // タイトル表示用
         [SerializeField]
@@ -69,10 +71,10 @@ namespace Xeon.XDebugger
                 return;
             }
             instance = this;
-
-            mainMenu.SetActive(false);
+            mainObject.SetActive(false);
             isShow = false;
-            ConsolePageModel.PreInitialize();
+            
+            TabController.PreInitialize();
 
             DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
         }
@@ -95,10 +97,10 @@ namespace Xeon.XDebugger
         {
             if (isShow)
                 return;
-            
+
             backButton.gameObject.SetActive(pageStack.Count > 1);
             isShow = true;
-            mainMenu.SetActive(true);
+            mainObject.SetActive(true);
             animator.Play(OpenId);
             if (currentPage == null)
                 OpenPage(GetOrCreateInitialPage());
@@ -134,7 +136,6 @@ namespace Xeon.XDebugger
         public void OnHidden()
         {
             isShow = false;
-            mainMenu.SetActive(false);
         }
 
         /// <summary>
@@ -169,6 +170,7 @@ namespace Xeon.XDebugger
                 currentPage.Hide(() => CreatePage(model));
                 return;
             }
+            Debug.LogError($"Open page {model.Title}");
             CreatePage(model);
         }
 

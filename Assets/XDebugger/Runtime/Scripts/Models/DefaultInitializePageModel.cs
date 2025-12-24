@@ -12,8 +12,6 @@ namespace Xeon.XDebugger.Model
         {
             base.Initialize(uiFactory);
             AddPageLinkButton<SystemPageModel>("System Info");
-            AddPageLinkButton<ProfilerPageModel>("Profiler");
-            AddPageLinkButton<ConsolePageModel>("Console");
         }
     }
 }

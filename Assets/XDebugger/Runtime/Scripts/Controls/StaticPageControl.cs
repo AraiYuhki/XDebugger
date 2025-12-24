@@ -1,16 +1,13 @@
 using System;
 using UnityEngine;
-using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
-    public class PageControl : MonoBehaviour
+    public class StaticPageControl : MonoBehaviour
     {
         private static readonly int OpenId = Animator.StringToHash("Open");
         private static readonly int CloseId = Animator.StringToHash("Close");
 
-        [SerializeField]
-        private Transform content;
         [SerializeField]
         private CanvasGroup canvasGroup;
         [SerializeField]
@@ -19,28 +16,24 @@ namespace Xeon.XDebugger.Control
         private Action onOpened;
         private Action onClosed;
 
-        private PageModel model;
-
-        public Transform Content => content;
-
         public float Alpha
         {
             get => canvasGroup.alpha;
             set => canvasGroup.alpha = value;
         }
 
-        public virtual void Open(PageModel model = null, Action onOpened = null)
+        public virtual void Open(Action onOpened = null)
         {
-            this.model = model;
             this.onOpened = onOpened;
-            animator.Play(OpenId);
-            Debug.LogError($"Open animation {model.Title}");
+            if (animator != null)
+                animator.Play(OpenId);
         }
 
         public virtual void Close(Action onClosed = null)
         {
             this.onClosed = onClosed;
-            animator.Play(CloseId);
+            if (animator != null)
+                animator.Play(CloseId);
         }
 
         public void OnOpened()
@@ -51,11 +44,6 @@ namespace Xeon.XDebugger.Control
         public void OnClosed()
         {
             onClosed?.Invoke();
-        }
-
-        private void Update()
-        {
-            model?.Update();
         }
     }
 }
