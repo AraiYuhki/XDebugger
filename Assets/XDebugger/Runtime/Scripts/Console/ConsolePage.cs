@@ -8,6 +8,8 @@ namespace Xeon.XDebugger.Console
         [SerializeField]
         private ConsoleController controller;
 
+        public override string Title => "Console";
+
         public ConsoleController Controller => controller;
 
         public void Initialize(ILogDataBuffer logDataList)

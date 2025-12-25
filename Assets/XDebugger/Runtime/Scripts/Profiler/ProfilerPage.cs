@@ -37,6 +37,8 @@ namespace Xeon.XDebugger.Profiler
 
         private static readonly string[] suffixList = { "B", "KB", "MB", "GB", "TB" };
 
+        public override string Title => "Profiler";
+
         public bool IsMonoSupported { get; private set; } = false;
 
         private float fps = 0f;

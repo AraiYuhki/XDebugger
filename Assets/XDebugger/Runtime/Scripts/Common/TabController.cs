@@ -1,32 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
-using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Console;
 using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Common
 {
-    [Serializable]
-    public struct TabData
-    {
-        [SerializeField]
-        private TabButton tabButton;
-        [SerializeField]
-        private StaticPageControl tabContent;
-
-        public TabButton TabButton => tabButton;
-        public StaticPageControl Content => tabContent;
-    }
-
     public class TabController : MonoBehaviour
     {
         [SerializeField]
         private TabData mainMenuTabData;
-
+        [SerializeField]
+        private TabData systemInfoTabData;
         [SerializeField]
         private TabData profilerTabData;
         [SerializeField]
         private TabData consoleTabData;
+
+        [SerializeField]
+        private List<TabData> tabList;
+
 
         private const int LogBufferCapacity = 1000;
         private static LogItemBuffer logDataList = new(LogBufferCapacity);
@@ -51,9 +44,13 @@ namespace Xeon.XDebugger.Common
 
         public void Awake()
         {
-            mainMenuTabData.TabButton.Toggle.onValueChanged.AddListener(mainMenuTabData.Content.gameObject.SetActive);
-            profilerTabData.TabButton.Toggle.onValueChanged.AddListener(profilerTabData.Content.gameObject.SetActive);
-            consoleTabData.TabButton.Toggle.onValueChanged.AddListener(consoleTabData.Content.gameObject.SetActive);
+            mainMenuTabData.Initialize();
+            systemInfoTabData.Initialize();
+            profilerTabData.Initialize();
+            consoleTabData.Initialize();
+
+            foreach (var tabData in tabList)
+                tabData.Initialize();
             
             consolePage = consoleTabData.Content as ConsolePage;
             if (consolePage != null)

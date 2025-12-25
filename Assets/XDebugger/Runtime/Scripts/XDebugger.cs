@@ -30,6 +30,9 @@ namespace Xeon.XDebugger
         private GameObject mainObject;
 
         [SerializeField]
+        private TabController tabController;
+
+        [SerializeField]
         private TMP_Text titleLabel; // タイトル表示用
         [SerializeField]
         private Animator animator;   // メニュー表示アニメーション

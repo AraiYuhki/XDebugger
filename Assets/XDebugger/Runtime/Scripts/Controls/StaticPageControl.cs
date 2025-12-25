@@ -8,6 +8,8 @@ namespace Xeon.XDebugger.Control
         private static readonly int OpenId = Animator.StringToHash("Open");
         private static readonly int CloseId = Animator.StringToHash("Close");
 
+        public virtual string Title => string.Empty;
+
         [SerializeField]
         private CanvasGroup canvasGroup;
         [SerializeField]
@@ -35,6 +37,8 @@ namespace Xeon.XDebugger.Control
             if (animator != null)
                 animator.Play(CloseId);
         }
+
+        public virtual void SetActive(bool isActive) => gameObject.SetActive(isActive);
 
         public void OnOpened()
         {

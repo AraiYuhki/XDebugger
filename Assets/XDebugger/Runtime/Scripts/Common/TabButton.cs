@@ -1,5 +1,7 @@
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Xeon.XDebugger.Common
@@ -15,6 +17,16 @@ namespace Xeon.XDebugger.Common
         private TMP_Text label;
 
         public Toggle Toggle => toggle;
+
+        public event UnityAction<bool> OnValueChanged
+        {
+            add
+            {
+                toggle.onValueChanged.RemoveListener(value);
+                toggle.onValueChanged.AddListener(value);
+            }
+            remove => toggle.onValueChanged.RemoveListener(value);
+        }
 
         public void Setup(string tabName, Sprite sprite = null)
         {
