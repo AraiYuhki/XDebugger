@@ -11,6 +11,8 @@ namespace Xeon.XDebugger.Common
         [SerializeField]
         private TabData mainMenuTabData;
         [SerializeField]
+        private TabData globalMenuTabData;
+        [SerializeField]
         private TabData systemInfoTabData;
         [SerializeField]
         private TabData profilerTabData;
@@ -20,6 +22,10 @@ namespace Xeon.XDebugger.Common
         [SerializeField]
         private List<TabData> tabList;
 
+        // タブ切り替え時のイベント
+        public event Action<TabData> OnTabChanged;
+
+        private TabData activeTabData;
 
         private const int LogBufferCapacity = 1000;
         private static LogItemBuffer logDataList = new(LogBufferCapacity);
@@ -44,13 +50,14 @@ namespace Xeon.XDebugger.Common
 
         public void Awake()
         {
-            mainMenuTabData.Initialize();
-            systemInfoTabData.Initialize();
-            profilerTabData.Initialize();
-            consoleTabData.Initialize();
+            mainMenuTabData.Initialize(OnTabButtonChanged);
+            globalMenuTabData.Initialize(OnTabButtonChanged);
+            systemInfoTabData.Initialize(OnTabButtonChanged);
+            profilerTabData.Initialize(OnTabButtonChanged);
+            consoleTabData.Initialize(OnTabButtonChanged);
 
             foreach (var tabData in tabList)
-                tabData.Initialize();
+                tabData.Initialize(OnTabButtonChanged);
             
             consolePage = consoleTabData.Content as ConsolePage;
             if (consolePage != null)
@@ -65,6 +72,9 @@ namespace Xeon.XDebugger.Common
                 consolePage.Controller.OnAddWarningLog(logDataList.WarnCount);
                 consolePage.Controller.OnAddErrorLog(logDataList.ErrorCount);
             }
+
+            // 初期タブをメインメニューに設定
+            activeTabData = mainMenuTabData;
         }
 
         private void OnDestroy()
@@ -76,6 +86,20 @@ namespace Xeon.XDebugger.Common
                 onAddErrorLog -= consolePage.Controller.OnAddErrorLog;
             }
         }
+
+        /// <summary>
+        /// タブボタンが押された時のコールバック
+        /// </summary>
+        private void OnTabButtonChanged(TabData tabData)
+        {
+            activeTabData = tabData;
+            OnTabChanged?.Invoke(tabData);
+        }
+
+        /// <summary>
+        /// 現在アクティブなタブを取得
+        /// </summary>
+        public TabData GetActiveTabData() => activeTabData;
 
         private static void InternalUpdate()
         {

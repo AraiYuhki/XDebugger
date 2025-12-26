@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -8,20 +8,22 @@ using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
-    public class PageModel : IPageModel
+    /// <summary>
+    /// ScriptableObject版のページモデル。IPageModelインターフェイスを実装します。
+    /// </summary>
+    public class ScriptablePageModel : ScriptableObject, IPageModel
     {
-        protected IUIFactory uiFactory;
+        [SerializeField]
+        private string pageTitle = "Scriptable Page";
 
-        protected Transform content;
+        private IUIFactory uiFactory;
+        private Transform content;
+        private IGroupModel group;
+        private List<ControlModelBase> modelList = new List<ControlModelBase>();
+        private List<ControlBase> controlList = new();
+        private MonoBehaviour control;
 
-        protected IGroupModel group;
-
-        protected List<ControlModelBase> modelList = new List<ControlModelBase>();
-        protected List<ControlBase> controlList = new();
-        protected string title;
-        protected MonoBehaviour control;
-
-        public string Title => title;
+        public string Title => pageTitle;
 
         public Transform Content
         {
@@ -36,26 +38,24 @@ namespace Xeon.XDebugger.Model
         public ControlModelBase this[int index] => modelList[index];
         public int Count => modelList.Count;
 
-        public PageModel() { }
-        public PageModel(string title) => this.title = title;
-
-        public PageModel(string title, PageModel other)
-        {
-            this.title = title;
-            var copyItemModels = new ControlModelBase[other.Count];
-            other.modelList.CopyTo(copyItemModels);
-            modelList = copyItemModels.ToList();
-        }
-
+        /// <summary>
+        /// ページを初期化
+        /// </summary>
         public virtual void Initialize(IUIFactory uiFactory)
         {
             this.uiFactory = uiFactory;
         }
 
+        /// <summary>
+        /// ページを更新
+        /// </summary>
         public virtual void Update()
         {
         }
 
+        /// <summary>
+        /// グループモデルを設定
+        /// </summary>
         public void SetGroup(IGroupModel model)
         {
             group = model;
@@ -66,41 +66,46 @@ namespace Xeon.XDebugger.Model
         /// </summary>
         public MonoBehaviour GetControl() => control;
 
+        /// <summary>
+        /// ページを開く
+        /// </summary>
         public void OpenPage(Transform parent, IPageModel pageModel, IUIFactory uiFactory)
         {
             Clear();
             Initialize(uiFactory);
             content = parent;
             CreateControl(parent, uiFactory);
-            
-            // controlが見つかった場合のみ処理を続行
+
             if (control != null && control is PageControl pageControl)
             {
                 foreach (var model in modelList)
                     controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
-                pageControl.Open(pageModel as PageModel);
+                // ScriptablePageModel は PageModel ではないため、null を渡す
+                // または abstract class を使用する必要がある場合は要検討
+                pageControl.Open(null);
             }
             OpenedPage();
         }
 
         /// <summary>
-        /// ページを開く（PageModel版）
+        /// 制御コンポーネントを作成
         /// </summary>
-        public void OpenPage(Transform parent, PageModel pageModel, IUIFactory uiFactory)
-        {
-            OpenPage(parent, pageModel as IPageModel, uiFactory);
-        }
-
         protected virtual void CreateControl(Transform parent, IUIFactory uiFactory)
         {
             if (control == null)
                 control = uiFactory.CreatePage<PageControl>(parent);
         }
 
+        /// <summary>
+        /// ページが開かれた時のコールバック
+        /// </summary>
         protected virtual void OpenedPage()
         {
         }
 
+        /// <summary>
+        /// ページを閉じる
+        /// </summary>
         public virtual void Close(Action onClose = null)
         {
             if (control is PageControl pageControl)
@@ -109,7 +114,6 @@ namespace Xeon.XDebugger.Model
                 {
                     ClosedPage();
                     Clear();
-                    XDebugger.Instance.ClosePage(this);
                     onClose?.Invoke();
                     GameObject.Destroy(pageControl.gameObject);
                     content = null;
@@ -122,7 +126,6 @@ namespace Xeon.XDebugger.Model
                 {
                     ClosedPage();
                     staticPageControl.gameObject.SetActive(false);
-                    XDebugger.Instance.ClosePage(this);
                     onClose?.Invoke();
                     content = null;
                     control = null;
@@ -131,15 +134,20 @@ namespace Xeon.XDebugger.Model
             else
             {
                 ClosedPage();
-                XDebugger.Instance.ClosePage(this);
                 onClose?.Invoke();
             }
         }
 
+        /// <summary>
+        /// ページが閉じられた時のコールバック
+        /// </summary>
         protected virtual void ClosedPage()
         {
         }
 
+        /// <summary>
+        /// ページを表示
+        /// </summary>
         public void Show(bool isRefresh = false)
         {
             if (isRefresh)
@@ -158,6 +166,9 @@ namespace Xeon.XDebugger.Model
             }
         }
 
+        /// <summary>
+        /// ページを非表示
+        /// </summary>
         public void Hide(Action onHidden = null)
         {
             if (control != null)
@@ -185,9 +196,11 @@ namespace Xeon.XDebugger.Model
             }
         }
 
+        /// <summary>
+        /// ページをリフレッシュ
+        /// </summary>
         public virtual void Refresh(bool doRecreate = false)
         {
-
             if (doRecreate)
             {
                 Clear();
@@ -197,56 +210,21 @@ namespace Xeon.XDebugger.Model
                 control.Refresh();
         }
 
+        /// <summary>
+        /// 内容をクリア
+        /// </summary>
         protected virtual void Clear()
         {
             foreach (var control in controlList)
-                GameObject.Destroy(control.gameObject);
+             {
+                if (control != null)
+                    GameObject.Destroy(control.gameObject);
+            }
             controlList.Clear();
             modelList.Clear();
         }
 
-        public GroupLayoutScope HorizontalScope(string title = "", int priority = 0)
-        {
-            var scope = new HorizontalLayoutScope(title, this, priority);
-            AddChild(scope.Model);
-            SetGroup(scope.Model as IGroupModel);
-            return scope;
-        }
-
-        public GroupLayoutScope VerticalScope(string title = "", int priority = 0)
-        {
-            var scope = new VerticalLayoutScope(title, this, priority);
-            AddChild(scope.Model);
-            SetGroup(scope.Model as IGroupModel);
-            return scope;
-        }
-
-        public DisableGroupScope　DisableScope(out DisableGroupModel model, string title = "", bool isDisabled = false, int priority = 0)
-        {
-            var scope = new DisableGroupScope(title, this, priority);
-            model = scope.Model as DisableGroupModel;
-            AddChild(scope.Model);
-            SetGroup(scope.Model as IGroupModel);
-            return scope;
-        }
-
-        public FoldingGroupScope FoldingScope(out FoldingGroupModel model, string title = "", bool isFolding = false,
-            int priority = 0)
-        {
-            var scope = new FoldingGroupScope(title, this, priority);
-            model = scope.Model as FoldingGroupModel;
-            AddChild(scope.Model);
-            SetGroup(scope.Model as IGroupModel);
-            return scope;
-        }
-
-        private void AddChild(ControlModelBase model)
-        {
-            if (group is null)
-                modelList.Add(model);
-            else
-                group.AddChild(model);
-        }
+        #region Add Control Methods
 
         public void AddLabel(LabelModel model) => AddChild(model);
         public LabelModel AddLabel(string text, int priority = 0)
@@ -264,14 +242,6 @@ namespace Xeon.XDebugger.Model
             return model;
         }
 
-
-        public ActionModel AddPageLinkButton<T>(string text, int priority = 0) where T : PageModel, new()
-        {
-            var model = new ActionModel(text, () => XDebugger.Instance.OpenPage<T>(), priority);
-            modelList.Add(model);
-            return model;
-        }
-
         public void AddText(StringModel model) => AddChild(model);
         public StringModel AddText(string title, string text, Action<string> onChangedValue = null, int priority = 0)
         {
@@ -279,7 +249,7 @@ namespace Xeon.XDebugger.Model
             AddText(model);
             return model;
         }
-        
+
         public void AddNumber(NumberModel model) => AddChild(model);
         public NumberModel AddNumber(string title, float value, float step, Action<float> onChangedValue = null, int priority = 0)
         {
@@ -330,5 +300,17 @@ namespace Xeon.XDebugger.Model
             return model;
         }
 
+        #endregion
+
+        /// <summary>
+        /// 子モデルを追加
+        /// </summary>
+        private void AddChild(ControlModelBase model)
+        {
+            if (group is null)
+                modelList.Add(model);
+            else
+                group.AddChild(model);
+        }
     }
 }

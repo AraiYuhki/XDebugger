@@ -14,10 +14,18 @@ namespace Xeon.XDebugger.Common
 
         public TabButton TabButton => tabButton;
         public StaticPageControl Content => tabContent;
+        public string Title => tabContent?.Title ?? string.Empty;
 
-        public void Initialize()
+        public void Initialize(Action<TabData> onTabChanged = null)
         {
-            tabButton.OnValueChanged += tabContent.SetActive;
+            tabButton.OnValueChanged += (isActive) =>
+            {
+                tabContent.SetActive(isActive);
+                if (isActive)
+                {
+                    onTabChanged?.Invoke(this);
+                }
+            };
         }
     }
 }

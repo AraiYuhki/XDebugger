@@ -34,7 +34,6 @@ namespace Xeon.XDebugger.Control
             this.model = model;
             this.onOpened = onOpened;
             animator.Play(OpenId);
-            Debug.LogError($"Open animation {model.Title}");
         }
 
         public virtual void Close(Action onClosed = null)

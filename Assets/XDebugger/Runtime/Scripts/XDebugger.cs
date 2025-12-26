@@ -1,9 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using Xeon.XDebugger.Common;
+using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 
@@ -33,36 +32,26 @@ namespace Xeon.XDebugger
         private TabController tabController;
 
         [SerializeField]
-        private TMP_Text titleLabel; // タイトル表示用
-        [SerializeField]
-        private Animator animator;   // メニュー表示アニメーション
-        [SerializeField]
-        private Button backButton;   // 戻るボタン
+        private MainMenuTabPage mainMenuTab;
 
-        [Header("UI")]
         [SerializeField]
-        private UIFactoryBase uiFactory;
+        private TMP_Text titleLabel;
+
+        [SerializeField]
+        private Animator animator;
 
         [Header("Trigger")]
         [SerializeField]
         private int clickCount = 3; // メニュー表示のためのクリック回数
-        [SerializeField]
-        private Transform content;  // ページ内容表示用
         [SerializeField]
         private float inputGraceTime = 0.2f; // 入力受付猶予時間
 
         private bool isShow = false; // メニュー表示状態
         private float elapsedTime = 0f; // 経過時間
         private int clickedCount = 0;   // クリック回数カウント
-        private PageModel currentPage;  // 現在表示中のページ
 
-        private List<PageModel> pageStack = new (); // ページ履歴スタック
-
-        public void SetUIFactory(UIFactoryBase uiFactory)
-        {
-            this.uiFactory = uiFactory;
-        }
-
+        public void SetUIFactory(UIFactoryBase uiFactory) => mainMenuTab?.SetUIFactory(uiFactory);
+        
         /// <summary>
         /// インスタンス初期化。シングルトン化と初期状態設定。
         /// </summary>
@@ -80,6 +69,95 @@ namespace Xeon.XDebugger
             TabController.PreInitialize();
 
             DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
+        }
+
+        private void Start()
+        {
+            // メインメニュータブを初期化
+            if (mainMenuTab != null)
+            {
+                mainMenuTab.Initialize();
+                // MainMenuTabPage のページ変更イベントを購読
+                mainMenuTab.OnPageChanged += OnMainMenuPageChanged;
+            }
+
+            // タブコントローラーのイベントを購読
+            if (tabController != null)
+            {
+                tabController.OnTabChanged += OnActiveTabChanged;
+            }
+
+            // SceneManager のシーン読み込みイベントを購読
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDestroy()
+        {
+            if (mainMenuTab != null)
+            {
+                mainMenuTab.OnPageChanged -= OnMainMenuPageChanged;
+            }
+
+            if (tabController != null)
+            {
+                tabController.OnTabChanged -= OnActiveTabChanged;
+            }
+
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        /// <summary>
+        /// シーンが読み込まれた時のコールバック
+        /// </summary>
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // Additiveモードの場合は処理をスキップ
+            if (mode == LoadSceneMode.Additive)
+            {
+                return;
+            }
+
+            // Singleモード（シーン切り替わり）の場合のみリフレッシュ
+            OnSceneChanged();
+        }
+
+        /// <summary>
+        /// メインメニュータブ内のページが変更された時のコールバック
+        /// </summary>
+        private void OnMainMenuPageChanged(PageModel page)
+        {
+            if (titleLabel != null && page != null)
+            {
+                titleLabel.text = page.Title;
+            }
+        }
+
+        /// <summary>
+        /// アクティブなタブが変更された時のコールバック
+        /// </summary>
+        private void OnActiveTabChanged(TabData tabData)
+        {
+            // MainMenuTabPage の場合は何もしない（OnPageChanged で管理）
+            // それ以外のタブの場合はそのタブのタイトルを表示
+            if (!(tabData.Content is MainMenuTabPage))
+            {
+                if (titleLabel != null)
+                {
+                    titleLabel.text = tabData.Title;
+                }
+            }
+        }
+
+        /// <summary>
+        /// シーンが切り替わった時のコールバック
+        /// </summary>
+        private void OnSceneChanged()
+        {
+            // MainMenuTabPageの内容をリフレッシュ
+            if (mainMenuTab != null && mainMenuTab.GetCurrentPage() != null)
+            {
+                mainMenuTab.GetCurrentPage().Refresh(true);
+            }
         }
 
         public static void SetInitialPage(PageModel model) => initialPage = model;
@@ -101,14 +179,14 @@ namespace Xeon.XDebugger
             if (isShow)
                 return;
 
-            backButton.gameObject.SetActive(pageStack.Count > 1);
             isShow = true;
             mainObject.SetActive(true);
             animator.Play(OpenId);
-            if (currentPage == null)
+            
+            if (mainMenuTab.GetCurrentPage() == null)
                 OpenPage(GetOrCreateInitialPage());
             else
-                currentPage.Refresh();
+                mainMenuTab.GetCurrentPage().Refresh();
         }
 
         /// <summary>
@@ -121,16 +199,6 @@ namespace Xeon.XDebugger
 
             isShow = false;
             animator.Play(CloseId);
-        }
-
-        /// <summary>
-        /// ページ履歴を戻る
-        /// </summary>
-        public void Back()
-        {
-            if (pageStack.Count > 1)
-                ClosePage(currentPage);
-            backButton.gameObject.SetActive(pageStack.Count > 1);
         }
 
         /// <summary>
@@ -168,27 +236,13 @@ namespace Xeon.XDebugger
         /// </summary>
         public void OpenPage<T>(T model = null) where T : PageModel, new()
         {
-            if (currentPage != null)
+            if (mainMenuTab == null)
             {
-                currentPage.Hide(() => CreatePage(model));
+                Debug.LogError("MainMenuTab is not assigned to XDebugger");
                 return;
             }
-            Debug.LogError($"Open page {model.Title}");
-            CreatePage(model);
-        }
 
-        /// <summary>
-        /// ページを生成して表示
-        /// </summary>
-        private void CreatePage<T>(T model) where T : PageModel, new()
-        {
-            model ??= new T();
-            model.Initialize(uiFactory);
-            model.OpenPage(content, model, uiFactory);
-            pageStack.Add(model);
-            currentPage = model;
-            titleLabel.text = currentPage.Title;
-            backButton.gameObject.SetActive(pageStack.Count > 1);
+            mainMenuTab.OpenPage(model);
         }
 
         /// <summary>
@@ -196,17 +250,10 @@ namespace Xeon.XDebugger
         /// </summary>
         public void ClosePage(PageModel target)
         {
-            pageStack.Remove(target);
-            if (currentPage != target)
+            if (mainMenuTab == null)
                 return;
-            currentPage = null;
-            target.Close(() =>
-            {
-                currentPage = pageStack.LastOrDefault();
-                currentPage.Show(true);
-                titleLabel.text = currentPage.Title;
-            });
-            backButton.gameObject.SetActive(pageStack.Count > 1);
+
+            mainMenuTab.ClosePage(target);
         }
     }
 }
