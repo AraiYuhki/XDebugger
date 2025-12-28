@@ -758,6 +758,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c36c2e84c04431f45b855d8b68f67e00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.XDebugger.Control.MainMenuTabPage
+  title: Main Menu
+  tabIcon: {fileID: 21300000, guid: 455d7f46410d9644ca80cf384b30fed6, type: 3}
   canvasGroup: {fileID: 3279084961223376713}
   animator: {fileID: 6895205954458060519}
   content: {fileID: 3230648552774867019}

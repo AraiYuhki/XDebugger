@@ -1899,7 +1899,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec46913fa741d4fe09f64dcfaf507fd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.XDebugger.Profiler.ProfilerController
-  content: {fileID: 6059918775105216823}
+  title: Profiler
+  tabIcon: {fileID: 21300000, guid: bbdebb589e92c2a4aa0c9968f127a7fa, type: 3}
   canvasGroup: {fileID: 9012542069595579541}
   animator: {fileID: 6968105988939417973}
   graph: {fileID: 3064732508671797723}

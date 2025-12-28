@@ -26,6 +26,9 @@ namespace Xeon.XDebugger
         private static PageModel initialPage;
 
         [SerializeField]
+        private XDebuggerSetting setting;
+
+        [SerializeField]
         private GameObject mainObject;
 
         [SerializeField]
@@ -73,6 +76,8 @@ namespace Xeon.XDebugger
 
         private void Start()
         {
+            tabController.Setup(setting.TabButtonPrefab, setting.TopPageTabList);
+            mainMenuTab = tabController.MainMenuPage;
             // メインメニュータブを初期化
             if (mainMenuTab != null)
             {
@@ -156,7 +161,7 @@ namespace Xeon.XDebugger
             // MainMenuTabPageの内容をリフレッシュ
             if (mainMenuTab != null && mainMenuTab.GetCurrentPage() != null)
             {
-                mainMenuTab.GetCurrentPage().Refresh(true);
+                mainMenuTab.RefreshCurrentPage(true);
             }
         }
 
@@ -182,11 +187,11 @@ namespace Xeon.XDebugger
             isShow = true;
             mainObject.SetActive(true);
             animator.Play(OpenId);
-            
+
             if (mainMenuTab.GetCurrentPage() == null)
                 OpenPage(GetOrCreateInitialPage());
             else
-                mainMenuTab.GetCurrentPage().Refresh();
+                mainMenuTab.RefreshCurrentPage(false);
         }
 
         /// <summary>
@@ -200,6 +205,8 @@ namespace Xeon.XDebugger
             isShow = false;
             animator.Play(CloseId);
         }
+
+        public void Refresh(bool doRecreate) => mainMenuTab.RefreshCurrentPage(doRecreate);
 
         /// <summary>
         /// メニュー非表示時の処理

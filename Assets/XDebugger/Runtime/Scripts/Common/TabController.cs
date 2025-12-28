@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using Xeon.XDebugger.Console;
+using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Common
@@ -20,7 +23,16 @@ namespace Xeon.XDebugger.Common
         private TabData consoleTabData;
 
         [SerializeField]
+        private Transform tabContainer;
+        [SerializeField]
+        private Transform pageContainer;
+        [SerializeField]
+        private ToggleGroup toggleGroup;
+
+        [SerializeField]
         private List<TabData> tabList;
+
+        public MainMenuTabPage MainMenuPage => mainMenuTabData == null ? null : mainMenuTabData.Content as MainMenuTabPage;
 
         // タブ切り替え時のイベント
         public event Action<TabData> OnTabChanged;
@@ -46,6 +58,54 @@ namespace Xeon.XDebugger.Common
                 Application.logMessageReceived -= OnReceivedLogMessage;
                 Application.onBeforeRender -= InternalUpdate;
             };
+        }
+
+        public void Setup(TabButton tabButtonPrefab, StaticPageControl[] pageList)
+        {
+            foreach (var tab in tabList)
+            {
+                Destroy(tab.TabButton);
+                Destroy(tab.Content);
+            }
+            tabList.Clear();
+            consolePage = null;
+            foreach (var tab in pageList)
+            {
+                var tabButton = Instantiate(tabButtonPrefab, tabContainer);
+                var page = Instantiate(tab, pageContainer);
+                var data = new TabData(tabButton, page);
+                data.Initialize(OnTabButtonChanged);
+                tabButton.Toggle.group = toggleGroup;
+                if (page is ConsolePage consolePage)
+                    InitializeConsolePage(consolePage);
+                else if (page is MainMenuTabPage mainMenuPage)
+                    mainMenuTabData = data;
+
+                tabList.Add(data);
+            }
+            activeTabData = tabList.FirstOrDefault();
+            activeTabData.TabButton.Toggle.isOn = true;
+        }
+
+        private void InitializeConsolePage(ConsolePage page)
+        {
+            if (consolePage != null)
+            {
+                throw new Exception("ConsolePage is already initialized.");
+            }
+            consolePage = consoleTabData.Content as ConsolePage;
+            if (consolePage != null)
+            {
+                consolePage.Initialize(logDataList);
+                onAddInfoLog += consolePage.Controller.OnAddInfoLog;
+                onAddWarningLog += consolePage.Controller.OnAddWarningLog;
+                onAddErrorLog += consolePage.Controller.OnAddErrorLog;
+
+                // 既存のログカウントを初期表示
+                consolePage.Controller.OnAddInfoLog(logDataList.InfoCount);
+                consolePage.Controller.OnAddWarningLog(logDataList.WarnCount);
+                consolePage.Controller.OnAddErrorLog(logDataList.ErrorCount);
+            }
         }
 
         public void Awake()

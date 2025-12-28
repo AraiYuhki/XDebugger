@@ -199,15 +199,18 @@ namespace Xeon.XDebugger.Model
         /// <summary>
         /// ページをリフレッシュ
         /// </summary>
-        public virtual void Refresh(bool doRecreate = false)
+        public virtual void Refresh()
         {
-            if (doRecreate)
-            {
-                Clear();
-                Initialize(uiFactory);
-            }
             foreach (var control in controlList)
                 control.Refresh();
+        }
+
+        public virtual void Refresh(Transform parent)
+        {
+            Clear();
+            Initialize(uiFactory);
+            CreateControl(parent, uiFactory);
+            Refresh();
         }
 
         /// <summary>

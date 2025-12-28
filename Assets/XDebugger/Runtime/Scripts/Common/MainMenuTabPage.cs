@@ -57,6 +57,20 @@ namespace Xeon.XDebugger.Control
             CreateAndShowPage(model);
         }
 
+        public void RefreshCurrentPage(bool doRecreate)
+        {
+            if (currentPage == null)
+            {
+                return;
+            }
+            if (doRecreate)
+            {
+                currentPage.Refresh(content);
+                return;
+            }
+            currentPage.Refresh();
+        }
+
         /// <summary>
         /// ページを生成して表示
         /// </summary>
@@ -64,7 +78,7 @@ namespace Xeon.XDebugger.Control
         {
             model ??= new T();
             model.Initialize(uiFactory);
-            model.OpenPage(content, model as PageModel, uiFactory);
+            model.OpenPage(content, model, uiFactory);
             pageStack.Add(model);
             currentPage = model;
 

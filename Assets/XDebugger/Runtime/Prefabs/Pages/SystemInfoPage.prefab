@@ -4377,6 +4377,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5dd08dbcff7e4684188df9db2b109969, type: 3}
   m_Name: 
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.XDebugger.Control.SystemInfoPage
+  title: System Info
+  tabIcon: {fileID: 21300000, guid: bc428cd2ea6c1469ea9c19959a723b83, type: 3}
   canvasGroup: {fileID: 6210035638731850184}
   animator: {fileID: 6401201344043634400}
   osLabel: {fileID: 3085302878272332990}

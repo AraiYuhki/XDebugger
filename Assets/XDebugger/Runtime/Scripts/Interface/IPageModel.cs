@@ -25,6 +25,8 @@ namespace Xeon.XDebugger.Model
         void Close(Action onClose = null);
         void Show(bool isRefresh = false);
         void Hide(Action onHidden = null);
-        void Refresh(bool doRecreate = false);
+
+        void Refresh(Transform parent);
+        void Refresh();
     }
 }

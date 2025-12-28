@@ -2173,7 +2173,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac1427f48660e1840ba2c121ecca0b12, type: 3}
   m_Name: 
   m_EditorClassIdentifier: xeon.jp.x_debugger::Xeon.XDebugger.Console.ConsolePage
-  content: {fileID: 3164432697125782925}
+  title: Console
+  tabIcon: {fileID: 21300000, guid: adeb4e784f877432db00024b87687725, type: 3}
   canvasGroup: {fileID: 1442696994638067960}
   animator: {fileID: 2859527073661719436}
   controller: {fileID: 8287728166176462399}

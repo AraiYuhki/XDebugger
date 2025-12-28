@@ -185,14 +185,16 @@ namespace Xeon.XDebugger.Model
             }
         }
 
-        public virtual void Refresh(bool doRecreate = false)
+        public virtual void Refresh(Transform parent)
         {
+            Clear();
+            Initialize(uiFactory);
+            CreateControl(parent, uiFactory);
+            Refresh();
+        }
 
-            if (doRecreate)
-            {
-                Clear();
-                Initialize(uiFactory);
-            }
+        public virtual void Refresh()
+        {
             foreach (var control in controlList)
                 control.Refresh();
         }

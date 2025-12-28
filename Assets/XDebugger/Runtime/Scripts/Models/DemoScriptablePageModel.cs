@@ -102,7 +102,7 @@ namespace Xeon.XDebugger.Model
 
             // アクション
             AddButton("Log All Values", LogAllValues, 27);
-            AddButton("Refresh", () => Refresh(true), 28);
+            AddButton("Refresh", () => Refresh(Content), 28);
         }
 
         /// <summary>

@@ -47,7 +47,7 @@ namespace Xeon.XDebugger.Control
         {
             if (displayedPage != null)
             {
-                displayedPage.Refresh(false);
+                displayedPage.Refresh();
             }
         }
 

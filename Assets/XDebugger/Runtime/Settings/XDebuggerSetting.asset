@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2046eee4c243c84088a266b0090ccb3, type: 3}
+  m_Name: XDebuggerSetting
+  m_EditorClassIdentifier: xeon.jp.x_debugger::XDebuggerSetting
+  tabButtonPrefab: {fileID: 5508318827648547751, guid: 924c76142330dcd48aaa4d7dcf37ef21, type: 3}
+  topPageTabList:
+  - {fileID: 3013405155665228120, guid: 000c227422b0d674ca2b33c09f9408a3, type: 3}
+  - {fileID: 7219213887651710239, guid: 2b96f5a8be8283c4fb035ea3a1e19d5b, type: 3}
+  - {fileID: 2900261561125590774, guid: 4cd69b5bea2c90a4cb797e8a54b96314, type: 3}
+  - {fileID: 4322040795176736406, guid: 310e8a44ce61fef46986673a0d3baaa2, type: 3}
+  - {fileID: 1677975000700567709, guid: 69eea5a57262ba74782a3d43ce843bef, type: 3}
