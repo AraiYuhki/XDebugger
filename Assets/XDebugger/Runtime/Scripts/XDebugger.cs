@@ -35,9 +35,6 @@ namespace Xeon.XDebugger
         private TabController tabController;
 
         [SerializeField]
-        private MainMenuTabPage mainMenuTab;
-
-        [SerializeField]
         private TMP_Text titleLabel;
 
         [SerializeField]
@@ -53,7 +50,7 @@ namespace Xeon.XDebugger
         private float elapsedTime = 0f; // 経過時間
         private int clickedCount = 0;   // クリック回数カウント
 
-        public void SetUIFactory(UIFactoryBase uiFactory) => mainMenuTab?.SetUIFactory(uiFactory);
+        public void SetUIFactory(UIFactoryBase uiFactory) => tabController.MainMenuPage?.SetUIFactory(uiFactory);
         
         /// <summary>
         /// インスタンス初期化。シングルトン化と初期状態設定。
@@ -76,8 +73,13 @@ namespace Xeon.XDebugger
 
         private void Start()
         {
+            if (tabController == null)
+            {
+                Debug.LogError("TabController is not assigned to XDebugger");
+                return;
+            }
             tabController.Setup(setting.TabButtonPrefab, setting.TopPageTabList);
-            mainMenuTab = tabController.MainMenuPage;
+            var mainMenuTab = tabController.MainMenuPage;
             // メインメニュータブを初期化
             if (mainMenuTab != null)
             {
@@ -87,43 +89,20 @@ namespace Xeon.XDebugger
             }
 
             // タブコントローラーのイベントを購読
-            if (tabController != null)
-            {
-                tabController.OnTabChanged += OnActiveTabChanged;
-            }
-
-            // SceneManager のシーン読み込みイベントを購読
-            SceneManager.sceneLoaded += OnSceneLoaded;
+            tabController.OnTabChanged += OnActiveTabChanged;
         }
 
         private void OnDestroy()
         {
-            if (mainMenuTab != null)
-            {
-                mainMenuTab.OnPageChanged -= OnMainMenuPageChanged;
-            }
-
             if (tabController != null)
             {
+                var mainMenuPage = tabController.MainMenuPage;
+                if (mainMenuPage != null)
+                {
+                    mainMenuPage.OnPageChanged -= OnMainMenuPageChanged;
+                }
                 tabController.OnTabChanged -= OnActiveTabChanged;
             }
-
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
-
-        /// <summary>
-        /// シーンが読み込まれた時のコールバック
-        /// </summary>
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            // Additiveモードの場合は処理をスキップ
-            if (mode == LoadSceneMode.Additive)
-            {
-                return;
-            }
-
-            // Singleモード（シーン切り替わり）の場合のみリフレッシュ
-            OnSceneChanged();
         }
 
         /// <summary>
@@ -159,6 +138,7 @@ namespace Xeon.XDebugger
         private void OnSceneChanged()
         {
             // MainMenuTabPageの内容をリフレッシュ
+            var mainMenuTab = tabController.MainMenuPage;
             if (mainMenuTab != null && mainMenuTab.GetCurrentPage() != null)
             {
                 mainMenuTab.RefreshCurrentPage(true);
@@ -188,6 +168,8 @@ namespace Xeon.XDebugger
             mainObject.SetActive(true);
             animator.Play(OpenId);
 
+            var mainMenuTab = tabController.MainMenuPage;
+
             if (mainMenuTab.GetCurrentPage() == null)
                 OpenPage(GetOrCreateInitialPage());
             else
@@ -206,7 +188,7 @@ namespace Xeon.XDebugger
             animator.Play(CloseId);
         }
 
-        public void Refresh(bool doRecreate) => mainMenuTab.RefreshCurrentPage(doRecreate);
+        public void Refresh(bool doRecreate) => tabController.MainMenuPage.RefreshCurrentPage(doRecreate);
 
         /// <summary>
         /// メニュー非表示時の処理
@@ -243,13 +225,13 @@ namespace Xeon.XDebugger
         /// </summary>
         public void OpenPage<T>(T model = null) where T : PageModel, new()
         {
-            if (mainMenuTab == null)
+            if (tabController == null || tabController.MainMenuPage == null)
             {
                 Debug.LogError("MainMenuTab is not assigned to XDebugger");
                 return;
             }
 
-            mainMenuTab.OpenPage(model);
+            tabController.MainMenuPage.OpenPage(model);
         }
 
         /// <summary>
@@ -257,10 +239,10 @@ namespace Xeon.XDebugger
         /// </summary>
         public void ClosePage(PageModel target)
         {
-            if (mainMenuTab == null)
+            if (tabController == null || tabController.MainMenuPage == null)
                 return;
 
-            mainMenuTab.ClosePage(target);
+            tabController.MainMenuPage.ClosePage(target);
         }
     }
 }

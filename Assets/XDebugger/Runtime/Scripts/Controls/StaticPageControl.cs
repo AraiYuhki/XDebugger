@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Xeon.XDebugger.Common;
 
 namespace Xeon.XDebugger.Control
 {
@@ -52,6 +53,10 @@ namespace Xeon.XDebugger.Control
         public void OnClosed()
         {
             onClosed?.Invoke();
+        }
+
+        public virtual void Setup(TabController tabController)
+        {
         }
     }
 }

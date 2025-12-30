@@ -11,7 +11,7 @@ namespace Xeon.XDebugger.Control
     /// <summary>
     /// メインメニュータブ。ページスタック管理と動的ページ表示を担当します。
     /// </summary>
-    public class MainMenuTabPage : StaticPageControl
+    public class MainMenuTabPage : StaticPageControl, IMainMenuTabPage
     {
         [SerializeField]
         private Transform content;
