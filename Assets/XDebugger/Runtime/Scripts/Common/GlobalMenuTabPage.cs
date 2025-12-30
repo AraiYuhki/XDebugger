@@ -20,8 +20,6 @@ namespace Xeon.XDebugger.Control
 
         private ScriptablePageModel displayedPage;
 
-        public override string Title => pageModel == null ? "Global Menu" : pageModel.Title;
-
         private void Awake()
         {
             if (pageModel != null && content != null && uiFactory != null)

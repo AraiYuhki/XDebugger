@@ -9,7 +9,8 @@ namespace Xeon.XDebugger.Control
         private static readonly int OpenId = Animator.StringToHash("Open");
         private static readonly int CloseId = Animator.StringToHash("Close");
 
-        public virtual string Title => title;
+        public string Title => title;
+        public Sprite TabIcon => tabIcon;
 
         [SerializeField]
         private string title = string.Empty;

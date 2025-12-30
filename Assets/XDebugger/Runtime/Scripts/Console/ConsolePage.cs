@@ -4,12 +4,10 @@ using Xeon.XDebugger.Common;
 
 namespace Xeon.XDebugger.Console
 {
-    public class ConsolePage : StaticPageControl
+    public class ConsolePage : StaticPageControl, IConsolePage
     {
         [SerializeField]
         private ConsoleController controller;
-
-        public override string Title => "Console";
 
         public ConsoleController Controller => controller;
 

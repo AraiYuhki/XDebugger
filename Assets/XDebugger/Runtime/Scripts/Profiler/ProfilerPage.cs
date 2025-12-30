@@ -15,7 +15,7 @@ using Xeon.XGraph.View;
 
 namespace Xeon.XDebugger.Profiler
 {
-    public class ProfilerPage : StaticPageControl
+    public class ProfilerPage : StaticPageControl, IProfilerPage
     {
         private const int FrameBufferSize = 400;
         [FormerlySerializedAs("newGraph")] [SerializeField]
@@ -36,8 +36,6 @@ namespace Xeon.XDebugger.Profiler
         private TMP_Text fpsLabel;
 
         private static readonly string[] suffixList = { "B", "KB", "MB", "GB", "TB" };
-
-        public override string Title => "Profiler";
 
         public bool IsMonoSupported { get; private set; } = false;
 

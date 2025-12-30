@@ -22,7 +22,7 @@ namespace Xeon.XDebugger.Common
         [SerializeField]
         private List<TabData> tabList;
 
-        public MainMenuTabPage MainMenuPage { get; private set; }
+        public IMainMenuTabPage MainMenuPage { get; private set; }
 
         // タブ切り替え時のイベント
         public event Action<TabData> OnTabChanged;
@@ -35,6 +35,8 @@ namespace Xeon.XDebugger.Common
         private static event Action<int> onAddInfoLog;
         private static event Action<int> onAddWarningLog;
         private static event Action<int> onAddErrorLog;
+
+        private Action<string> onChangedTitle;
 
         private static float elapsed = 1f;
 
@@ -67,7 +69,7 @@ namespace Xeon.XDebugger.Common
             onAddErrorLog -= onError;
         }
 
-        public void Setup(TabButton tabButtonPrefab, StaticPageControl[] pageList)
+        public void Setup(TabButton tabButtonPrefab, StaticPageControl[] pageList, Action<string> onChangedTitle)
         {
             foreach (var tab in tabList)
             {
@@ -78,34 +80,50 @@ namespace Xeon.XDebugger.Common
             foreach (var tab in pageList)
             {
                 var tabButton = Instantiate(tabButtonPrefab, tabContainer);
+                tabButton.Setup(tab.Title, tab.TabIcon);
                 var page = Instantiate(tab, pageContainer);
+                page.gameObject.SetActive(false);
 
                 // Ensure the instantiated page's RectTransform stretches to fill its parent
-                var rectTransform = page.GetComponent<RectTransform>();
-                rectTransform.anchorMin = Vector2.zero;
-                rectTransform.anchorMax = Vector2.one;
-                rectTransform.anchoredPosition = Vector2.zero;
-                rectTransform.sizeDelta = Vector2.zero;
-                rectTransform.offsetMin = Vector2.zero;
-                rectTransform.offsetMax = Vector2.zero;
+                InitializeRectTransform(page);
 
                 var data = new TabData(tabButton, page);
                 data.Initialize(OnTabButtonChanged);
                 tabButton.Toggle.group = toggleGroup;
                 page.Setup(this);
-                if (page is MainMenuTabPage mainMenuPage)
+                if (page is IMainMenuTabPage mainMenuPage)
                     MainMenuPage = mainMenuPage;
 
                 tabList.Add(data);
             }
             activeTabData = tabList.FirstOrDefault();
             activeTabData.TabButton.Toggle.isOn = true;
+            if (MainMenuPage != null)
+            {
+                MainMenuPage.Initialize();
+                MainMenuPage.OnPageChanged += OnMainMenuPageChanged;
+            }
+            this.onChangedTitle = onChangedTitle;
+            onChangedTitle?.Invoke(activeTabData.Content.Title);
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
+        private void InitializeRectTransform(StaticPageControl page)
+        {
+            var rectTransform = page.GetComponent<RectTransform>();
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.anchoredPosition = Vector2.zero;
+            rectTransform.sizeDelta = Vector2.zero;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+        }
+
         private void OnDestroy()
         {
+            if (MainMenuPage != null)
+                MainMenuPage.OnPageChanged -= OnMainMenuPageChanged;
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
@@ -133,7 +151,21 @@ namespace Xeon.XDebugger.Common
         private void OnTabButtonChanged(TabData tabData)
         {
             activeTabData = tabData;
+            if (activeTabData.Content is IMainMenuTabPage mainMenuTabPage)
+            {
+                onChangedTitle?.Invoke(mainMenuTabPage.GetCurrentPage().Title);
+            }
+            else
+            {
+                onChangedTitle?.Invoke(tabData.Content.Title);
+            }
             OnTabChanged?.Invoke(tabData);
+        }
+
+        private void OnMainMenuPageChanged(PageModel page)
+        {
+            if (activeTabData.Content is IMainMenuTabPage)
+                onChangedTitle?.Invoke(page?.Title);
         }
 
         /// <summary>

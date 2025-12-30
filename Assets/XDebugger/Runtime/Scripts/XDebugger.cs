@@ -1,8 +1,6 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Xeon.XDebugger.Common;
-using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 
@@ -78,71 +76,7 @@ namespace Xeon.XDebugger
                 Debug.LogError("TabController is not assigned to XDebugger");
                 return;
             }
-            tabController.Setup(setting.TabButtonPrefab, setting.TopPageTabList);
-            var mainMenuTab = tabController.MainMenuPage;
-            // メインメニュータブを初期化
-            if (mainMenuTab != null)
-            {
-                mainMenuTab.Initialize();
-                // MainMenuTabPage のページ変更イベントを購読
-                mainMenuTab.OnPageChanged += OnMainMenuPageChanged;
-            }
-
-            // タブコントローラーのイベントを購読
-            tabController.OnTabChanged += OnActiveTabChanged;
-        }
-
-        private void OnDestroy()
-        {
-            if (tabController != null)
-            {
-                var mainMenuPage = tabController.MainMenuPage;
-                if (mainMenuPage != null)
-                {
-                    mainMenuPage.OnPageChanged -= OnMainMenuPageChanged;
-                }
-                tabController.OnTabChanged -= OnActiveTabChanged;
-            }
-        }
-
-        /// <summary>
-        /// メインメニュータブ内のページが変更された時のコールバック
-        /// </summary>
-        private void OnMainMenuPageChanged(PageModel page)
-        {
-            if (titleLabel != null && page != null)
-            {
-                titleLabel.text = page.Title;
-            }
-        }
-
-        /// <summary>
-        /// アクティブなタブが変更された時のコールバック
-        /// </summary>
-        private void OnActiveTabChanged(TabData tabData)
-        {
-            // MainMenuTabPage の場合は何もしない（OnPageChanged で管理）
-            // それ以外のタブの場合はそのタブのタイトルを表示
-            if (!(tabData.Content is MainMenuTabPage))
-            {
-                if (titleLabel != null)
-                {
-                    titleLabel.text = tabData.Title;
-                }
-            }
-        }
-
-        /// <summary>
-        /// シーンが切り替わった時のコールバック
-        /// </summary>
-        private void OnSceneChanged()
-        {
-            // MainMenuTabPageの内容をリフレッシュ
-            var mainMenuTab = tabController.MainMenuPage;
-            if (mainMenuTab != null && mainMenuTab.GetCurrentPage() != null)
-            {
-                mainMenuTab.RefreshCurrentPage(true);
-            }
+            tabController.Setup(setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
         }
 
         public static void SetInitialPage(PageModel model) => initialPage = model;

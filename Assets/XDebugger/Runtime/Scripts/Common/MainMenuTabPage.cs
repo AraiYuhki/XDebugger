@@ -22,8 +22,6 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         private UIFactoryBase uiFactory;
 
-        public override string Title => currentPage == null ? "Main Menu" : currentPage.Title;
-
         // ページが変更された時のイベント
         public event Action<PageModel> OnPageChanged;
 

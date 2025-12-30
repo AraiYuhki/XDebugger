@@ -5,8 +5,6 @@ namespace Xeon.XDebugger.Control
 {
     public class SystemInfoPage : StaticPageControl
     {
-        public override string Title => "SystemInfo";
-
         [Header("System")]
         [SerializeField]
         private LabelControl osLabel;
