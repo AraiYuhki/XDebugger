@@ -1450,8 +1450,7 @@ MonoBehaviour:
   tabController: {fileID: 50400625158170022}
   titleLabel: {fileID: 1418348568135953031}
   animator: {fileID: 6953727405395280377}
-  clickCount: 3
-  inputGraceTime: 0.2
+  trigger: {fileID: 3369832297941643590}
 --- !u!95 &6953727405395280377
 Animator:
   serializedVersion: 7

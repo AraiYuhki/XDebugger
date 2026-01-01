@@ -1,8 +1,15 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
+using System.Linq;
+
+
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace Xeon.XDebugger
 {
@@ -38,15 +45,18 @@ namespace Xeon.XDebugger
         [SerializeField]
         private Animator animator;
 
-        [Header("Trigger")]
         [SerializeField]
-        private int clickCount = 3; // メニュー表示のためのクリック回数
-        [SerializeField]
-        private float inputGraceTime = 0.2f; // 入力受付猶予時間
+        private Button trigger;
 
         private bool isShow = false; // メニュー表示状態
-        private float elapsedTime = 0f; // 経過時間
+        
+        // タップ系の状態管理
+        private float tapElapsedTime = 0f; // タップ入力の経過時間
         private int clickedCount = 0;   // クリック回数カウント
+        
+        // ホールド系の状態管理
+        private float holdStartTime = 0f; // ホールド開始時間
+        private bool isHolding = false; // ホールド中かどうか
 
         /// <summary>
         /// UIFactoryを設定（依存注入用）
@@ -87,6 +97,8 @@ namespace Xeon.XDebugger
                 return;
             }
             tabController.Setup(setting.UIFactory, setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
+            var isTriggerButton = setting.TriggerMode is TriggerMode.DoubleTap or TriggerMode.TripleTap;
+            trigger.gameObject.SetActive(isTriggerButton);
         }
 
         public static void SetInitialPage(PageModel model) => initialPage = model;
@@ -143,13 +155,21 @@ namespace Xeon.XDebugger
         }
 
         /// <summary>
-        /// トリガーとなるクリック処理
+        /// トリガーとなるクリック処理（Triggerボタン用）
         /// </summary>
         public void OnClickTrigger()
         {
-            elapsedTime = 0f;
+            if (setting == null) return;
+            
+            var triggerMode = setting.TriggerMode;
+            if (triggerMode != TriggerMode.DoubleTap && triggerMode != TriggerMode.TripleTap)
+                return;
+
+            tapElapsedTime = 0f;
             clickedCount++;
-            if (clickedCount >= clickCount)
+            
+            int requiredClicks = triggerMode == TriggerMode.DoubleTap ? 2 : 3;
+            if (clickedCount >= requiredClicks)
             {
                 Show();
                 clickedCount = 0;
@@ -158,10 +178,180 @@ namespace Xeon.XDebugger
 
         private void Update()
         {
-            if (elapsedTime > inputGraceTime)
+            if (setting == null) return;
+
+            var triggerMode = setting.TriggerMode;
+            
+            // タップ系の処理
+            if (triggerMode == TriggerMode.DoubleTap || triggerMode == TriggerMode.TripleTap)
+            {
+                HandleTapMode(triggerMode);
+            }
+            // ホールド系の処理
+            else if (triggerMode == TriggerMode.DoubleFingerHold || triggerMode == TriggerMode.TripleFingerHold)
+            {
+                HandleHoldMode(triggerMode);
+            }
+        }
+
+        /// <summary>
+        /// タップ系モードの処理
+        /// </summary>
+        private void HandleTapMode(TriggerMode triggerMode)
+        {
+            if (tapElapsedTime > setting.InputGraceTime)
                 clickedCount = 0;
             else
-                elapsedTime += Time.deltaTime;
+                tapElapsedTime += Time.deltaTime;
+        }
+
+        /// <summary>
+        /// ホールド系モードの処理
+        /// </summary>
+        private void HandleHoldMode(TriggerMode triggerMode)
+        {
+            bool isHoldingInput = false;
+
+            if (IsMobilePlatform())
+            {
+                isHoldingInput = HandleMobileHoldMode(triggerMode);
+            }
+            else if (IsConsolePlatform())
+            {
+                isHoldingInput = HandleConsoleHoldMode(triggerMode);
+            }
+            else
+            {
+                isHoldingInput = HandlePCHoldMode(triggerMode);
+            }
+
+            ProcessHoldInput(isHoldingInput);
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        private bool HandleMobileHoldModeForInputSystem(int requiredFingers)
+        {
+            return Touchscreen.current.touches.Count(touch => touch.phase.value
+                is UnityEngine.InputSystem.TouchPhase.Stationary
+                or UnityEngine.InputSystem.TouchPhase.Moved
+                or UnityEngine.InputSystem.TouchPhase.Began) >= requiredFingers;
+        }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+        private bool HandleMobileHoldModeForLegacyInputManager(int requiredFingers)
+        {
+            return Input.touches.Count(touch => touch.phase
+                is UnityEngine.TouchPhase.Began
+                or UnityEngine.TouchPhase.Moved
+                or UnityEngine.TouchPhase.Stationary) >= requiredFingers;
+        }
+#endif
+
+        /// <summary>
+        /// モバイルプラットフォーム用のホールド処理
+        /// </summary>
+        private bool HandleMobileHoldMode(TriggerMode triggerMode)
+        {
+            int requiredFingers = triggerMode == TriggerMode.DoubleFingerHold ? 2 : 3;
+
+            var result = false;
+#if ENABLE_INPUT_SYSTEM
+            result = HandleMobileHoldModeForInputSystem(requiredFingers);
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            result |= HandleMobileHoldModeForLegacyInputManager(requiredFingers);
+#endif
+
+            return result;
+
+        }
+
+        /// <summary>
+        /// コンソールプラットフォーム用のホールド処理
+        /// </summary>
+        private bool HandleConsoleHoldMode(TriggerMode triggerMode)
+        {
+            // 設定されたボタンを一定時間押し続ける
+            // Unityの標準的なボタン名を使用（Fire2 = 右トリガー/右スティックボタンなど）
+            return Input.GetButton("Fire2");
+        }
+
+        /// <summary>
+        /// PCプラットフォーム用のホールド処理
+        /// </summary>
+        private bool HandlePCHoldMode(TriggerMode triggerMode)
+        {
+            var result = false;
+            // 右クリックを一定時間ホールド
+#if ENABLE_INPUT_SYSTEM
+            // InputSystemが有効な場合
+            var mouse = Mouse.current;
+            if (mouse != null)
+            {
+                result = mouse.rightButton.isPressed;
+            }
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            // Legacy Input Managerが有効な場合
+            result |= Input.GetMouseButton(1);
+#endif
+            return result;
+        }
+
+        /// <summary>
+        /// ホールド入力の処理（共通ロジック）
+        /// </summary>
+        private void ProcessHoldInput(bool isHoldingInput)
+        {
+            if (isHoldingInput)
+            {
+                if (!isHolding)
+                {
+                    // ホールド開始
+                    isHolding = true;
+                    holdStartTime = Time.time;
+                }
+                else
+                {
+                    // ホールド継続中
+                    float holdDuration = Time.time - holdStartTime;
+                    if (holdDuration >= setting.HoldTimeForShow)
+                    {
+                        Show();
+                        isHolding = false; // 表示後はリセット
+                    }
+                }
+            }
+            else
+            {
+                // ホールド解除
+                isHolding = false;
+                holdStartTime = 0f;
+            }
+        }
+
+        /// <summary>
+        /// モバイルプラットフォームかどうかを判定
+        /// </summary>
+        private bool IsMobilePlatform()
+        {
+            return Application.isMobilePlatform ||
+                   Application.platform == RuntimePlatform.Android ||
+                   Application.platform == RuntimePlatform.IPhonePlayer;
+        }
+
+        /// <summary>
+        /// コンソールプラットフォームかどうかを判定
+        /// </summary>
+        private bool IsConsolePlatform()
+        {
+            return Application.platform == RuntimePlatform.PS4 ||
+                   Application.platform == RuntimePlatform.PS5 ||
+                   Application.platform == RuntimePlatform.XboxOne ||
+                   Application.platform == RuntimePlatform.GameCoreXboxSeries ||
+                   Application.platform == RuntimePlatform.GameCoreXboxOne ||
+                   Application.platform == RuntimePlatform.Switch;
         }
 
         /// <summary>

@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2046eee4c243c84088a266b0090ccb3, type: 3}
   m_Name: XDebuggerSetting
   m_EditorClassIdentifier: xeon.jp.x_debugger::XDebuggerSetting
+  triggerPosition: 0
+  triggerMode: 0
+  inputGraceTime: 0.3
+  holdTimeForShow: 0.3
   uiFactory: {fileID: 11400000, guid: 92a9a93e0f8647240ac682d4f8dc694c, type: 2}
   tabButtonPrefab: {fileID: 5508318827648547751, guid: 924c76142330dcd48aaa4d7dcf37ef21, type: 3}
   topPageTabList:
