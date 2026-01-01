@@ -1,6 +1,7 @@
 using UnityEngine;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Common;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Console
 {
@@ -16,10 +17,12 @@ namespace Xeon.XDebugger.Console
             controller.Initialize(logDataList);
         }
 
-        public override void Setup(TabController tabController)
+        public override void Setup(TabController tabController, UIFactoryBase uiFactory)
         {
             if (controller == null)
                 return;
+
+            base.Setup(tabController, uiFactory);
 
             // Initialize controller with shared log buffer from TabController
             controller.Initialize(TabController.LogBuffer);

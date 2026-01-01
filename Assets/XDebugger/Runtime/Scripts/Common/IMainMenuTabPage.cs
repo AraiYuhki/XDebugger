@@ -12,8 +12,6 @@ namespace Xeon.XDebugger.Control
 
         void Initialize();
 
-        void SetUIFactory(UIFactoryBase uiFactory);
-
         void OpenPage<T>(T model = null) where T : PageModel, new();
 
         void RefreshCurrentPage(bool doRecreate);

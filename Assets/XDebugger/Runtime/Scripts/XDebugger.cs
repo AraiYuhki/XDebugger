@@ -48,7 +48,17 @@ namespace Xeon.XDebugger
         private float elapsedTime = 0f; // 経過時間
         private int clickedCount = 0;   // クリック回数カウント
 
-        public void SetUIFactory(UIFactoryBase uiFactory) => tabController.MainMenuPage?.SetUIFactory(uiFactory);
+        /// <summary>
+        /// UIFactoryを設定（依存注入用）
+        /// 設定が変更された場合に呼び出します。
+        /// </summary>
+        public void SetUIFactory(UIFactoryBase uiFactory)
+        {
+            if (tabController == null)
+                return;
+
+            tabController.SetUIFactory(uiFactory);
+        }
         
         /// <summary>
         /// インスタンス初期化。シングルトン化と初期状態設定。
@@ -76,7 +86,7 @@ namespace Xeon.XDebugger
                 Debug.LogError("TabController is not assigned to XDebugger");
                 return;
             }
-            tabController.Setup(setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
+            tabController.Setup(setting.UIFactory, setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
         }
 
         public static void SetInitialPage(PageModel model) => initialPage = model;

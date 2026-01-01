@@ -1,6 +1,6 @@
 using UnityEngine;
-using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Common
 {
@@ -8,9 +8,15 @@ namespace Xeon.XDebugger.Common
     public class XDebuggerSetting : ScriptableObject
     {
         [SerializeField]
+        private UIFactoryBase uiFactory;
+
+        [Header("MainMenu Settings")]
+        [SerializeField]
         private TabButton tabButtonPrefab;
         [SerializeField]
         private StaticPageControl[] topPageTabList;
+
+        public UIFactoryBase UIFactory => uiFactory;
 
         public TabButton TabButtonPrefab => tabButtonPrefab;
 

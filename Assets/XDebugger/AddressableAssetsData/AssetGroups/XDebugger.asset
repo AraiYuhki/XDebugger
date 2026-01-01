@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e33426bbf8024f4429866947fcb35514
+    m_Address: XDebugger/DefaultSetting
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e7e93bdb856cd244cb27bd3229bca9fd
     m_Address: XDebugger/FloatSliderControl
     m_ReadOnly: 0

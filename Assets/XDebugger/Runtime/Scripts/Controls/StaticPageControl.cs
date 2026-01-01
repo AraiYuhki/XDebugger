@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Xeon.XDebugger.Common;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Control
 {
@@ -20,6 +21,8 @@ namespace Xeon.XDebugger.Control
         private CanvasGroup canvasGroup;
         [SerializeField]
         private Animator animator;
+
+        protected UIFactoryBase uiFactory;
 
         private Action onOpened;
         private Action onClosed;
@@ -56,8 +59,11 @@ namespace Xeon.XDebugger.Control
             onClosed?.Invoke();
         }
 
-        public virtual void Setup(TabController tabController)
+        public virtual void Setup(TabController tabController, UIFactoryBase uiFactory)
         {
+            SetUIFactory(uiFactory);
         }
+
+        public virtual void SetUIFactory(UIFactoryBase uiFactory) => this.uiFactory = uiFactory;
     }
 }

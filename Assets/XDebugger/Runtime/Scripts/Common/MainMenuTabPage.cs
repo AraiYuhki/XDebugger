@@ -19,9 +19,6 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         private Button backButton;
 
-        [SerializeField]
-        private UIFactoryBase uiFactory;
-
         // ページが変更された時のイベント
         public event Action<PageModel> OnPageChanged;
 
@@ -38,8 +35,6 @@ namespace Xeon.XDebugger.Control
 
             UpdateBackButtonState();
         }
-
-        public void SetUIFactory(UIFactoryBase uiFactory) => this.uiFactory = uiFactory;
 
         /// <summary>
         /// ページを開く
@@ -74,6 +69,12 @@ namespace Xeon.XDebugger.Control
         /// </summary>
         private void CreateAndShowPage<T>(T model) where T : PageModel, new()
         {
+            if (uiFactory == null)
+            {
+                Debug.LogError("UIFactory is not set. Please ensure XDebuggerSetting has a UIFactory assigned and it is injected via XDebugger.");
+                return;
+            }
+
             model ??= new T();
             model.Initialize(uiFactory);
             model.OpenPage(content, model, uiFactory);

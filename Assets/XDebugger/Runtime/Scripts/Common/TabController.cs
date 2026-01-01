@@ -7,6 +7,7 @@ using UnityEngine.SceneManagement;
 using Xeon.XDebugger.Console;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Model;
+using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Common
 {
@@ -69,7 +70,7 @@ namespace Xeon.XDebugger.Common
             onAddErrorLog -= onError;
         }
 
-        public void Setup(TabButton tabButtonPrefab, StaticPageControl[] pageList, Action<string> onChangedTitle)
+        public void Setup(UIFactoryBase uiFactory, TabButton tabButtonPrefab, StaticPageControl[] pageList, Action<string> onChangedTitle)
         {
             foreach (var tab in tabList)
             {
@@ -90,7 +91,7 @@ namespace Xeon.XDebugger.Common
                 var data = new TabData(tabButton, page);
                 data.Initialize(OnTabButtonChanged);
                 tabButton.Toggle.group = toggleGroup;
-                page.Setup(this);
+                page.Setup(this, uiFactory);
                 if (page is IMainMenuTabPage mainMenuPage)
                     MainMenuPage = mainMenuPage;
 
@@ -172,6 +173,22 @@ namespace Xeon.XDebugger.Common
         /// 現在アクティブなタブを取得
         /// </summary>
         public TabData GetActiveTabData() => activeTabData;
+
+        /// <summary>
+        /// UIFactoryをすべてのページに設定（依存注入用）
+        /// </summary>
+        public void SetUIFactory(UIFactoryBase uiFactory)
+        {
+            if (uiFactory == null)
+                return;
+
+
+            // すべてのタブページにUIFactoryを設定
+            foreach (var tab in tabList)
+            {
+                tab.Content.SetUIFactory(uiFactory);
+            }
+        }
 
         private static void InternalUpdate()
         {
