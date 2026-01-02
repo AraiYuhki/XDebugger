@@ -1,6 +1,9 @@
 using UnityEngine;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Xeon.XDebugger.Common
 {
@@ -27,7 +30,6 @@ namespace Xeon.XDebugger.Common
     [CreateAssetMenu(fileName = "XDebuggerSetting", menuName = "XDebugger/Setting")]
     public class XDebuggerSetting : ScriptableObject
     {
-        [Header("Trigger Settings")]
         [SerializeField]
         private TriggerPosition triggerPosition;
         [SerializeField]
@@ -42,7 +44,6 @@ namespace Xeon.XDebugger.Common
         [SerializeField]
         private UIFactoryBase uiFactory;
 
-        [Header("MainMenu Settings")]
         [SerializeField]
         private TabButton tabButtonPrefab;
         [SerializeField]
@@ -61,5 +62,36 @@ namespace Xeon.XDebugger.Common
         public TabButton TabButtonPrefab => tabButtonPrefab;
 
         public StaticPageControl[] TopPageTabList => topPageTabList;
+
+#if UNITY_EDITOR
+        [CustomEditor(typeof(XDebuggerSetting))]
+        private class  XDebuggerSettingEditor : Editor
+        {
+            public override void OnInspectorGUI()
+            {
+                var setting = target as XDebuggerSetting;
+                EditorGUILayout.LabelField("Trigger Settings", EditorStyles.boldLabel);
+                setting.triggerMode = (TriggerMode)EditorGUILayout.EnumPopup("Trigger Mode", setting.triggerMode);
+                if (setting.triggerMode is TriggerMode.DoubleFingerHold or TriggerMode.TripleFingerHold)
+                {
+                    setting.holdTimeForShow = EditorGUILayout.FloatField("Hold Time for show", setting.holdTimeForShow);
+                    setting.holdTimeForShow = Mathf.Max(0.01f, setting.holdTimeForShow);
+                }
+                else if (setting.triggerMode is TriggerMode.DoubleTap or TriggerMode.TripleTap)
+                {
+                    setting.triggerPosition = (TriggerPosition)EditorGUILayout.EnumPopup("Trigger position", setting.triggerPosition);
+                    setting.inputGraceTime = EditorGUILayout.FloatField("Input grace time", setting.inputGraceTime);
+                    setting.inputGraceTime = Mathf.Max(0.01f, setting.inputGraceTime);
+                }
+
+                EditorGUILayout.LabelField("UI Settings", EditorStyles.boldLabel);
+                setting.uiFactory = (UIFactoryBase)EditorGUILayout.ObjectField("UI Factory", setting.uiFactory, typeof(UIFactoryBase), false);
+                setting.tabButtonPrefab = (TabButton)EditorGUILayout.ObjectField("Tab Button Prefab", setting.tabButtonPrefab, typeof(TabButton), false);
+                var serializedObject = new SerializedObject(setting);
+                var topPageTabListProperty = serializedObject.FindProperty("topPageTabList");
+                EditorGUILayout.PropertyField(topPageTabListProperty, true);
+            }
+        }
+#endif
     }
 }

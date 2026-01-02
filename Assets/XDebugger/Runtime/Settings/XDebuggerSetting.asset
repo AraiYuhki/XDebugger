@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: XDebuggerSetting
   m_EditorClassIdentifier: xeon.jp.x_debugger::XDebuggerSetting
   triggerPosition: 0
-  triggerMode: 0
+  triggerMode: 1
   inputGraceTime: 0.3
   holdTimeForShow: 0.3
   uiFactory: {fileID: 11400000, guid: 92a9a93e0f8647240ac682d4f8dc694c, type: 2}
