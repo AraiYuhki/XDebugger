@@ -15,7 +15,7 @@ using Xeon.XGraph.View;
 
 namespace Xeon.XDebugger.Profiler
 {
-    public class ProfilerPage : PageControl
+    public class ProfilerPage : StaticPageControl, IProfilerPage
     {
         private const int FrameBufferSize = 400;
         [FormerlySerializedAs("newGraph")] [SerializeField]

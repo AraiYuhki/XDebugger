@@ -29,7 +29,7 @@ namespace Xeon.XDebugger.Model
                     AddLabel($"Device Model : {SystemInfo.deviceModel}");
                     AddLabel($"CPU Type : {SystemInfo.processorType}");
                     AddLabel($"CPU Count : {SystemInfo.processorCount}");
-                    AddLabel($"System Memoty : {GetSystemMemoryLabel()}");
+                    AddLabel($"System Memory : {GetSystemMemoryLabel()}");
                     using (VerticalScope("Battery"))
                     {
                         AddLabel($"Status : {SystemInfo.batteryStatus}");
@@ -41,10 +41,10 @@ namespace Xeon.XDebugger.Model
                     AddLabel($"Version : {Application.unityVersion}");
                     AddLabel($"Debug : {Debug.isDebugBuild}");
                     AddLabel($"Unity Pro : {Application.HasProLicense()}");
-                    var genuie = Application.genuine ? "Yes" : "No";
+                    var genuine = Application.genuine ? "Yes" : "No";
                     var genuineCheck = Application.genuineCheckAvailable ? "Trusted" : "Untrusted";
-                    AddLabel($"Genuine : {genuie}, {genuineCheck}");
-                    AddLabel($"Sytem Language : {Application.systemLanguage}");
+                    AddLabel($"Genuine : {genuine}, {genuineCheck}");
+                    AddLabel($"System Language : {Application.systemLanguage}");
                     AddLabel($"Platform : {Application.platform}");
                     AddLabel($"Install Mode : {Application.installMode}");
                     AddLabel($"Sandbox : {Application.sandboxType}");
@@ -90,7 +90,7 @@ namespace Xeon.XDebugger.Model
                     foreach (var (key, value) in manifestDict)
                     {
                         if (value == null) continue;
-                        AddLabel($"{GetCloundManifestPrettyName(key)}, {value}");
+                        AddLabel($"{GetCloudManifestPrettyName(key)}, {value}");
                     }
                 }
             }
@@ -137,11 +137,11 @@ namespace Xeon.XDebugger.Model
                     AddLabel($"Copy Texture Support : {SystemInfo.copyTextureSupport}");
                     AddLabel($"Compute Shaders : {SystemInfo.supportsComputeShaders}");
                     AddLabel($"Instancing : {SystemInfo.supportsInstancing}");
-                    AddLabel($"Hadware Quad Topology : {SystemInfo.supportsHardwareQuadTopology}");
-                    AddLabel($"32-bitt index buffer : {SystemInfo.supports32bitsIndexBuffer}");
+                    AddLabel($"Hardware Quad Topology : {SystemInfo.supportsHardwareQuadTopology}");
+                    AddLabel($"32-bit index buffer : {SystemInfo.supports32bitsIndexBuffer}");
                     AddLabel($"Sparse Textures : {SystemInfo.supportsSeparatedRenderTargetsBlend}");
                     AddLabel($"Multisampled Textures : {SystemInfo.supportsMultisampledTextures}");
-                    AddLabel($"Texture Wrap Mirror One : {SystemInfo.supportsTextureWrapMirrorOnce}");
+                    AddLabel($"Texture Wrap Mirror Once : {SystemInfo.supportsTextureWrapMirrorOnce}");
                     AddLabel($"Reversed Z Buffer : {SystemInfo.usesReversedZBuffer}");
                 }
             }
@@ -185,7 +185,7 @@ namespace Xeon.XDebugger.Model
             return $"{value:0.##}{suffix[index]}";
         }
 
-        private static string GetCloundManifestPrettyName(string name)
+        private static string GetCloudManifestPrettyName(string name)
         {
             return name switch
             {

@@ -67,15 +67,15 @@ namespace Xeon.XDebugger.UI
             throw new InvalidOperationException($"{type} is not supported");
         }
 
-        public virtual T CreatePage<T>(Transform parent = null) where T : PageControl, new()
+        public virtual T CreatePage<T>(Transform parent = null) where T : MonoBehaviour, new()
         {
             var type = typeof(T);
             if (type == typeof(PageControl))
-                return Create<T>(pageControlPrefab, parent);
+                return Create<T>(pageControlPrefab as T, parent);
             if (type == typeof(ProfilerPage))
-                return Create<T>(profilePagePrefab, parent);
+                return Create<T>(profilePagePrefab as T, parent);
             if (type == typeof(ConsolePage))
-                return Create<T>(consolePagePrefab, parent);
+                return Create<T>(consolePagePrefab as T, parent);
 
             throw new InvalidOperationException($"{type} is not supported");
         }
@@ -92,6 +92,11 @@ namespace Xeon.XDebugger.UI
         }
 
         protected virtual T Create<T>(PageControl prefab, Transform parent = null) where T : PageControl, new()
+        {
+            return Instantiate(prefab, parent) as T;
+        }
+
+        protected virtual T Create<T>(MonoBehaviour prefab, Transform parent = null) where T : MonoBehaviour, new()
         {
             return Instantiate(prefab, parent) as T;
         }

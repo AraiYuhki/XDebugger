@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Specialized;
 using TMPro;
 using UnityEngine;
@@ -101,11 +103,12 @@ namespace Xeon.XDebugger.Console
 
         protected void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Add && scrollView.normalizedPosition.y <= float.Epsilon)
+            if (e.Action != NotifyCollectionChangedAction.Add || scrollView.normalizedPosition.y >float.Epsilon)
             {
-                scrollView.normalizedPosition = Vector2.zero;
-                controller.FixToLast();
+                return;
             }
+            scrollView.normalizedPosition = Vector2.zero;
+            controller.FixToLast();
         }
 
         private void ClearLog()

@@ -8,7 +8,7 @@ using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
-    public class PageModel
+    public class PageModel : IPageModel
     {
         protected IUIFactory uiFactory;
 
@@ -19,7 +19,7 @@ namespace Xeon.XDebugger.Model
         protected List<ControlModelBase> modelList = new List<ControlModelBase>();
         protected List<ControlBase> controlList = new();
         protected string title;
-        protected PageControl control;
+        protected MonoBehaviour control;
 
         public string Title => title;
 
@@ -61,16 +61,34 @@ namespace Xeon.XDebugger.Model
             group = model;
         }
 
-        public void OpenPage(Transform parent, PageModel pageModel, IUIFactory uiFactory)
+        /// <summary>
+        /// 制御コンポーネントを取得
+        /// </summary>
+        public MonoBehaviour GetControl() => control;
+
+        public void OpenPage(Transform parent, IPageModel pageModel, IUIFactory uiFactory)
         {
             Clear();
             Initialize(uiFactory);
             content = parent;
             CreateControl(parent, uiFactory);
-            foreach (var model in modelList)
-                controlList.Add(model.CreateControl(control.Content, uiFactory));
-            control.Open(pageModel);
+            
+            // controlが見つかった場合のみ処理を続行
+            if (control != null && control is PageControl pageControl)
+            {
+                foreach (var model in modelList)
+                    controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
+                pageControl.Open(pageModel as PageModel);
+            }
             OpenedPage();
+        }
+
+        /// <summary>
+        /// ページを開く（PageModel版）
+        /// </summary>
+        public void OpenPage(Transform parent, PageModel pageModel, IUIFactory uiFactory)
+        {
+            OpenPage(parent, pageModel as IPageModel, uiFactory);
         }
 
         protected virtual void CreateControl(Transform parent, IUIFactory uiFactory)
@@ -85,16 +103,37 @@ namespace Xeon.XDebugger.Model
 
         public virtual void Close(Action onClose = null)
         {
-            control.Close(() =>
+            if (control is PageControl pageControl)
+            {
+                pageControl.Close(() =>
+                {
+                    ClosedPage();
+                    Clear();
+                    XDebugger.Instance.ClosePage(this);
+                    onClose?.Invoke();
+                    GameObject.Destroy(pageControl.gameObject);
+                    content = null;
+                    control = null;
+                });
+            }
+            else if (control is StaticPageControl staticPageControl)
+            {
+                staticPageControl.Close(() =>
+                {
+                    ClosedPage();
+                    staticPageControl.gameObject.SetActive(false);
+                    XDebugger.Instance.ClosePage(this);
+                    onClose?.Invoke();
+                    content = null;
+                    control = null;
+                });
+            }
+            else
             {
                 ClosedPage();
-                Clear();
                 XDebugger.Instance.ClosePage(this);
                 onClose?.Invoke();
-                GameObject.Destroy(control.gameObject);
-                content = null;
-                control = null;
-            });
+            }
         }
 
         protected virtual void ClosedPage()
@@ -105,27 +144,57 @@ namespace Xeon.XDebugger.Model
         {
             if (isRefresh)
                 Refresh();
-            control.gameObject.SetActive(true);
-            control.Open();
+            if (control != null)
+            {
+                control.gameObject.SetActive(true);
+                if (control is PageControl pageControl)
+                {
+                    pageControl.Open();
+                }
+                else if (control is StaticPageControl staticPageControl)
+                {
+                    staticPageControl.Open();
+                }
+            }
         }
 
         public void Hide(Action onHidden = null)
         {
-            control.Close(() =>
+            if (control != null)
             {
-                control.gameObject.SetActive(false);
+                if (control is PageControl pageControl)
+                {
+                    pageControl.Close(() =>
+                    {
+                        control.gameObject.SetActive(false);
+                        onHidden?.Invoke();
+                    });
+                }
+                else if (control is StaticPageControl staticPageControl)
+                {
+                    staticPageControl.Close(() =>
+                    {
+                        control.gameObject.SetActive(false);
+                        onHidden?.Invoke();
+                    });
+                }
+            }
+            else
+            {
                 onHidden?.Invoke();
-            });   
+            }
         }
 
-        public virtual void Refresh(bool doRecreate = false)
+        public virtual void Refresh(Transform parent)
         {
+            Clear();
+            Initialize(uiFactory);
+            CreateControl(parent, uiFactory);
+            Refresh();
+        }
 
-            if (doRecreate)
-            {
-                Clear();
-                Initialize(uiFactory);
-            }
+        public virtual void Refresh()
+        {
             foreach (var control in controlList)
                 control.Refresh();
         }
@@ -263,24 +332,5 @@ namespace Xeon.XDebugger.Model
             return model;
         }
 
-    }
-
-    // テスト用Enum
-    public enum TestColor
-    {
-        Red,
-        Green,
-        Blue
-    }
-
-    // テスト用ページ
-    public class TestPageModel : PageModel
-    {
-        public override void Initialize(IUIFactory uiFactory)
-        {
-            this.uiFactory = uiFactory;
-            AddLabel("Detail Page");
-            AddButton("Back", () => XDebugger.Instance.ClosePage(this));
-        }
     }
 }
