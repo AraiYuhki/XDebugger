@@ -97,8 +97,71 @@ namespace Xeon.XDebugger
                 return;
             }
             tabController.Setup(setting.UIFactory, setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
+            InitializeTrigger();
+        }
+
+        private void InitializeTrigger()
+        {
             var isTriggerButton = setting.TriggerMode is TriggerMode.DoubleTap or TriggerMode.TripleTap;
             trigger.gameObject.SetActive(isTriggerButton);
+            if (!isTriggerButton)
+            {
+                return;
+            }
+
+            var rectTransform = trigger.GetComponent<RectTransform>();
+
+            switch (setting.TriggerPosition)
+            {
+                case TriggerPosition.TopLeft:
+                    rectTransform.anchorMin = new Vector2(0, 1);
+                    rectTransform.anchorMax = new Vector2(0, 1);
+                    rectTransform.pivot = new Vector2(0, 1);
+                    break;
+
+                case TriggerPosition.TopCenter:
+                    rectTransform.anchorMin = new Vector2(0.5f, 1);
+                    rectTransform.anchorMax = new Vector2(0.5f, 1);
+                    rectTransform.pivot = new Vector2(0.5f, 1);
+                    break;
+
+                case TriggerPosition.TopRight:
+                    rectTransform.anchorMin = new Vector2(1, 1);
+                    rectTransform.anchorMax = new Vector2(1, 1);
+                    rectTransform.pivot = new Vector2(1, 1);
+                    break;
+
+                case TriggerPosition.MiddleLeft:
+                    rectTransform.anchorMin = new Vector2(0, 0.5f);
+                    rectTransform.anchorMax = new Vector2(0, 0.5f);
+                    rectTransform.pivot = new Vector2(0, 0.5f);
+                    break;
+
+                case TriggerPosition.MiddleRight:
+                    rectTransform.anchorMin = new Vector2(1, 0.5f);
+                    rectTransform.anchorMax = new Vector2(1, 0.5f);
+                    rectTransform.pivot = new Vector2(1, 0.5f);
+                    break;
+
+                case TriggerPosition.BottomLeft:
+                    rectTransform.anchorMin = new Vector2(0, 0);
+                    rectTransform.anchorMax = new Vector2(0, 0);
+                    rectTransform.pivot = new Vector2(0, 0);
+                    break;
+
+                case TriggerPosition.BottomCenter:
+                    rectTransform.anchorMin = new Vector2(0.5f, 0);
+                    rectTransform.anchorMax = new Vector2(0.5f, 0);
+                    rectTransform.pivot = new Vector2(0.5f, 0);
+                    break;
+
+                case TriggerPosition.BottomRight:
+                    rectTransform.anchorMin = new Vector2(1, 0);
+                    rectTransform.anchorMax = new Vector2(1, 0);
+                    rectTransform.pivot = new Vector2(1, 0);
+                    break;
+            }
+            rectTransform.anchoredPosition = Vector2.zero;
         }
 
         public static void SetInitialPage(PageModel model) => initialPage = model;
