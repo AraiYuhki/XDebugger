@@ -1,8 +1,6 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.UI;
@@ -20,16 +18,10 @@ namespace Xeon.XDebugger.Model
 
         private Action<T> onChangedValue;
 
-        private DropdownControl control;
-
         public int SelectedIndex
         {
             get => selectedIndex;
-            set
-            {
-                selectedIndex = Mathf.Clamp(value, 0, options.Length);
-                control?.Refresh();
-            }
+            set => SetSelectedIndex(value, false);
         }
 
         public List<string> Labels => labels;
@@ -74,15 +66,21 @@ namespace Xeon.XDebugger.Model
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<DropdownControl>(parent);
-            control.Setup(this, OnChangedValue);
+            var control = uiFactory.CreateControl<DropdownControl>(parent);
+            control.Setup(this);
             return control;
         }
 
-        private void OnChangedValue(int index)
+        public void NotifySelectedIndexChangedFromView(int index) => SetSelectedIndex(index, true);
+
+        private void SetSelectedIndex(int index, bool notifyCallback)
         {
-            selectedIndex = index;
-            onChangedValue?.Invoke(options[selectedIndex]);
+            selectedIndex = Mathf.Clamp(index, 0, GetMaxIndex());
+            NotifyChanged();
+            if (notifyCallback && options.Length > 0)
+                onChangedValue?.Invoke(options[selectedIndex]);
         }
+
+        private int GetMaxIndex() => Mathf.Max(0, options.Length - 1);
     }
 }

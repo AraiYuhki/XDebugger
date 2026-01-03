@@ -20,5 +20,11 @@ namespace Xeon.XDebugger.Control
             button.onClick.RemoveListener(model.ExecuteMethod);
             button.onClick.AddListener(model.ExecuteMethod);
         }
+
+        private void OnDestroy()
+        {
+            if (button != null && model != null)
+                button.onClick.RemoveListener(model.ExecuteMethod);
+        }
     }
 }

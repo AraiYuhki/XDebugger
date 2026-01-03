@@ -9,7 +9,6 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(NumberControl)}";
 
-        private NumberControl control;
         private float value = 0f;
         private float step = 1f;
 
@@ -18,11 +17,7 @@ namespace Xeon.XDebugger.Model
         public float Value
         {
             get => value;
-            set
-            {
-                this.value = value;
-                control?.Refresh();
-            }
+            set => SetValue(value, false);
         }
 
         public float Step => step;
@@ -47,15 +42,23 @@ namespace Xeon.XDebugger.Model
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<NumberControl>(parent);
-            control.Setup(this, OnValueChanged);
+            var control = uiFactory.CreateControl<NumberControl>(parent);
+            control.Setup(this);
             return control;
         }
 
-        private void OnValueChanged(float newValue)
+        public void NotifyValueChangedFromView(float newValue) => SetValue(newValue, true);
+
+        private void SetValue(float newValue, bool notifyCallback)
         {
+            if (Mathf.Approximately(value, newValue))
+                return;
+
             value = newValue;
-            onChangedValue?.Invoke(value);
+            NotifyChanged();
+
+            if (notifyCallback)
+                onChangedValue?.Invoke(value);
         }
     }
 }

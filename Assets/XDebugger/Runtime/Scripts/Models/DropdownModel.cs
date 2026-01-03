@@ -1,5 +1,3 @@
-using Codice.Client.BaseCommands;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,23 +12,16 @@ namespace Xeon.XDebugger.Model
         protected override string prefabAddress => $"XDebugger/{nameof(DropdownControl)}";
 
         private int selectedIndex = 0;
-        
+
         private List<string> labels;
         private T[] options;
 
         private Action<T> onChangedValue;
 
-        private DropdownControl control;
-
-
         public int SelectedIndex
         {
             get => selectedIndex;
-            set
-            {
-                selectedIndex = Mathf.Clamp(value, 0, options.Length);
-                control?.Refresh();
-            }
+            set => SetSelectedIndex(value, false);
         }
 
         public T SelectedItem
@@ -45,7 +36,7 @@ namespace Xeon.XDebugger.Model
             this.labels = labels.ToList();
             this.options = options.ToArray();
             if (isRefreshControl)
-                control?.Refresh();
+                NotifyChanged();
         }
 
         public void SetOptions(IEnumerable<T> options, bool isRefreshControl = true)
@@ -53,7 +44,7 @@ namespace Xeon.XDebugger.Model
             this.options = options.ToArray();
             this.labels = options.Select(option => option.ToString()).ToList();
             if (isRefreshControl)
-                control?.Refresh();
+                NotifyChanged();
         }
         
 
@@ -90,16 +81,21 @@ namespace Xeon.XDebugger.Model
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<DropdownControl>(parent);
-            control.Setup(this, OnChangedValue);
+            var control = uiFactory.CreateControl<DropdownControl>(parent);
+            control.Setup(this);
             return control;
         }
 
-        private void OnChangedValue(int index)
+        public void NotifySelectedIndexChangedFromView(int index) => SetSelectedIndex(index, true);
+
+        private void SetSelectedIndex(int index, bool notifyCallback)
         {
-            selectedIndex = index;
-            onChangedValue?.Invoke(options[selectedIndex]);
+            selectedIndex = Mathf.Clamp(index, 0, GetMaxIndex());
+            NotifyChanged();
+            if (notifyCallback && options.Length > 0)
+                onChangedValue?.Invoke(options[selectedIndex]);
         }
+
+        private int GetMaxIndex() => Mathf.Max(0, options.Length - 1);
     }
 }
-

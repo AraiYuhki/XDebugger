@@ -10,17 +10,12 @@ namespace Xeon.XDebugger.Model
         protected override string prefabAddress => $"XDebugger/{nameof(IntSliderControl)}";
 
         private int value, min, max;
-        private IntSliderControl control;
         private Action<int> onChangedValue;
 
         public int Value
         {
             get => value;
-            set
-            {
-                this.value = value;
-                control?.Refresh();
-            }
+            set => SetValue(value, false);
         }
 
         public int Min => min;
@@ -50,27 +45,35 @@ namespace Xeon.XDebugger.Model
         {
             this.min = min;
             if (isRefreshControl)
-                control?.Refresh();
+                NotifyChanged();
         }
 
         public void SetMax(int max, bool isRefreshControl = true)
         {
             this.max = max;
             if (isRefreshControl)
-                control?.Refresh();
+                NotifyChanged();
         }
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<IntSliderControl>(parent);
-            control.Setup(this, OnValueChanged);
+            var control = uiFactory.CreateControl<IntSliderControl>(parent);
+            control.Setup(this);
             return control;
         }
 
-        private void OnValueChanged(int newValue)
+        public void NotifyValueChangedFromView(int newValue) => SetValue(newValue, true);
+
+        private void SetValue(int newValue, bool notifyCallback)
         {
+            if (value == newValue)
+                return;
+
             value = newValue;
-            onChangedValue?.Invoke(value);
+            NotifyChanged();
+
+            if (notifyCallback)
+                onChangedValue?.Invoke(value);
         }
     }
 }

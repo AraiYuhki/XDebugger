@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using TMPro;
 using UnityEngine;
 using Xeon.XDebugger.Model;
@@ -14,13 +12,14 @@ namespace Xeon.XDebugger.Control
 
         protected IDropdownModel model;
 
-        protected Action<int> onChangedValue;
-
-        public void Setup(IDropdownModel model, Action<int> onChangedValue)
+        public void Setup(IDropdownModel model)
         {
             Setup(model.Title);
+            if (this.model != null)
+                this.model.Changed -= OnModelChanged;
+
             this.model = model;
-            this.onChangedValue = onChangedValue;
+            this.model.Changed += OnModelChanged;
 
             dropdown.onValueChanged.RemoveListener(OnChangedValue);
             dropdown.onValueChanged.AddListener(OnChangedValue);
@@ -34,6 +33,17 @@ namespace Xeon.XDebugger.Control
             dropdown.SetValueWithoutNotify(model.SelectedIndex);
         }
 
-        protected virtual void OnChangedValue(int index) => onChangedValue?.Invoke(index);
+        protected virtual void OnChangedValue(int index) => model.NotifySelectedIndexChangedFromView(index);
+
+        private void OnModelChanged() => Refresh();
+
+        private void OnDestroy()
+        {
+            if (dropdown != null)
+                dropdown.onValueChanged.RemoveListener(OnChangedValue);
+
+            if (model != null)
+                model.Changed -= OnModelChanged;
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
@@ -15,6 +16,8 @@ namespace Xeon.XDebugger.Model
 
         public IGroupModel Parent { get; private set; }
 
+        public event Action Changed;
+
         public ControlModelBase(string title, int priority = 0)
         {
             Title = title;
@@ -29,6 +32,8 @@ namespace Xeon.XDebugger.Model
         }
 
         public void SetParent(IGroupModel parent) => Parent = parent;
+
+        protected void NotifyChanged() => Changed?.Invoke();
 
         protected virtual T Instantiate<T>(Transform parent) where T : ControlBase, new()
         {

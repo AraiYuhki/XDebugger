@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,12 +14,14 @@ namespace Xeon.XDebugger.Control
 
         protected IntSliderModel model;
 
-        protected Action<int> onValueChanged;
-
-        public void Setup(IntSliderModel model, Action<int> onValueChanged)
+        public void Setup(IntSliderModel model)
         {
-            this.model = model;
             Setup(model.Title);
+            if (this.model != null)
+                this.model.Changed -= OnModelChanged;
+
+            this.model = model;
+            this.model.Changed += OnModelChanged;
 
             slider.wholeNumbers = true;
 
@@ -43,7 +44,7 @@ namespace Xeon.XDebugger.Control
         {
             var tmp = Mathf.FloorToInt(value);
             input.SetTextWithoutNotify(tmp.ToString());
-            onValueChanged?.Invoke(tmp);
+            model.NotifyValueChangedFromView(tmp);
         }
 
         protected virtual void OnEndEdit(string text)
@@ -55,7 +56,21 @@ namespace Xeon.XDebugger.Control
             }
 
             slider.SetValueWithoutNotify(tmp);
-            onValueChanged?.Invoke(tmp);
+            model.NotifyValueChangedFromView(tmp);
+        }
+
+        private void OnModelChanged() => Refresh();
+
+        private void OnDestroy()
+        {
+            if (slider != null)
+                slider.onValueChanged.RemoveListener(OnSliderValueChanged);
+
+            if (input != null)
+                input.onEndEdit.RemoveListener(OnEndEdit);
+
+            if (model != null)
+                model.Changed -= OnModelChanged;
         }
     }
 }

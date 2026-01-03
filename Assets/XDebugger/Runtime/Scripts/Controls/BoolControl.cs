@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 using Xeon.XDebugger.Model;
@@ -11,14 +10,15 @@ namespace Xeon.XDebugger.Control
         private Toggle toggle;
 
         protected BoolModel model;
-        protected Action<bool> onValueChanged;
 
-
-        public void Setup(BoolModel model, Action<bool> onValueChanged)
+        public void Setup(BoolModel model)
         {
             Setup(model.Title);
+            if (this.model != null)
+                this.model.Changed -= OnModelChanged;
+
             this.model = model;
-            this.onValueChanged = onValueChanged;
+            this.model.Changed += OnModelChanged;
 
             toggle.onValueChanged.RemoveListener(OnValueChanged);
             toggle.onValueChanged.AddListener(OnValueChanged);
@@ -32,6 +32,17 @@ namespace Xeon.XDebugger.Control
         }
 
         private void OnValueChanged(bool flag)
-            => onValueChanged?.Invoke(flag);
+            => model.NotifyValueChangedFromView(flag);
+
+        private void OnModelChanged() => Refresh();
+
+        private void OnDestroy()
+        {
+            if (toggle != null)
+                toggle.onValueChanged.RemoveListener(OnValueChanged);
+
+            if (model != null)
+                model.Changed -= OnModelChanged;
+        }
     }
 }

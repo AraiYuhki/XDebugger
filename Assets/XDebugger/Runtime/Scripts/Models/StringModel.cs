@@ -10,18 +10,12 @@ namespace Xeon.XDebugger.Model
         protected override string prefabAddress => $"XDebugger/{nameof(StringControl)}";
         
         private string text = string.Empty;
-        private StringControl control;
-
         private Action<string> onChangedValue;
 
         public string Text
         {
             get => text;
-            set
-            {
-                text = value;
-                control?.Refresh();
-            }
+            set => SetText(value, false);
         }
 
         public StringModel(string title, string text, Action<string> onChangedValue, int priority = 0) :base(title, priority)
@@ -43,15 +37,23 @@ namespace Xeon.XDebugger.Model
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<StringControl>(parent);
-            control.Setup(this, OnChangedValue);
+            var control = uiFactory.CreateControl<StringControl>(parent);
+            control.Setup(this);
             return control;
         }
 
-        private void OnChangedValue(string newValue)
+        public void NotifyTextChangedFromView(string newValue) => SetText(newValue, true);
+
+        private void SetText(string newValue, bool notifyCallback)
         {
+            if (text == newValue)
+                return;
+
             text = newValue;
-            onChangedValue?.Invoke(text);
+            NotifyChanged();
+
+            if (notifyCallback)
+                onChangedValue?.Invoke(text);
         }
     }
 }

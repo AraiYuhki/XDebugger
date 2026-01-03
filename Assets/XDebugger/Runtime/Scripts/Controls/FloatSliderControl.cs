@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,12 +14,14 @@ namespace Xeon.XDebugger.Control
 
         protected FloatSliderModel model;
 
-        protected Action<float> onValueChanged;
-
-        public void Setup(FloatSliderModel model, Action<float> onValueChanged)
+        public void Setup(FloatSliderModel model)
         {
-            this.model = model;
             Setup(model.Title);
+            if (this.model != null)
+                this.model.Changed -= OnModelChanged;
+
+            this.model = model;
+            this.model.Changed += OnModelChanged;
 
             slider.wholeNumbers = false;
 
@@ -29,8 +30,6 @@ namespace Xeon.XDebugger.Control
 
             input.onEndEdit.RemoveListener(OnEndEdit);
             input.onEndEdit.AddListener(OnEndEdit);
-
-            this.onValueChanged = onValueChanged;
 
             Refresh();
         }
@@ -46,7 +45,7 @@ namespace Xeon.XDebugger.Control
         protected virtual void OnSliderValueChanged(float value)
         {
             input.SetTextWithoutNotify(model.GetRoundedText);
-            onValueChanged?.Invoke(value);
+            model.NotifyValueChangedFromView(value);
         }
 
         protected virtual void OnEndEdit(string text)
@@ -58,7 +57,21 @@ namespace Xeon.XDebugger.Control
             }
 
             slider.SetValueWithoutNotify(tmp);
-            onValueChanged?.Invoke(tmp);
+            model.NotifyValueChangedFromView(tmp);
+        }
+
+        private void OnModelChanged() => Refresh();
+
+        private void OnDestroy()
+        {
+            if (slider != null)
+                slider.onValueChanged.RemoveListener(OnSliderValueChanged);
+
+            if (input != null)
+                input.onEndEdit.RemoveListener(OnEndEdit);
+
+            if (model != null)
+                model.Changed -= OnModelChanged;
         }
     }
 }
