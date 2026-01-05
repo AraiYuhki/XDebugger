@@ -8,24 +8,21 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(LabelControl)}";
 
-        private LabelControl control;
-
         public LabelModel(string title, int priority = 0) : base(title, priority)
         {
         }
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<LabelControl>(parent);
-            control.Setup(Title);
-
+            var control = uiFactory.CreateControl<LabelControl>(parent);
+            control.Setup(this);
             return control;
         }
 
         public void SetText(string title)
         {
             Title = title;
-            control?.Setup(title);
+            NotifyChanged();
         }
     }
 }

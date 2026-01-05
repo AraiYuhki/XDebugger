@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using Xeon.XDebugger.Model;
@@ -12,14 +11,14 @@ namespace Xeon.XDebugger.Control
 
         protected StringModel model;
 
-        protected Action<string> onChangedValue;
-
-        public void Setup(StringModel model, Action<string> onChangedValue)
+        public void Setup(StringModel model)
         {
             Setup(model.Title);
-            
+            if (this.model != null)
+                this.model.Changed -= OnModelChanged;
+
             this.model = model;
-            this.onChangedValue = onChangedValue;
+            this.model.Changed += OnModelChanged;
 
             Refresh();
         }
@@ -31,6 +30,17 @@ namespace Xeon.XDebugger.Control
             inputField.onEndEdit.AddListener(OnEndEdit);
         }
 
-        private void OnEndEdit(string text) => model.Text = text;
+        private void OnEndEdit(string text) => model.NotifyTextChangedFromView(text);
+
+        private void OnModelChanged() => Refresh();
+
+        private void OnDestroy()
+        {
+            if (inputField != null)
+                inputField.onEndEdit.RemoveListener(OnEndEdit);
+
+            if (model != null)
+                model.Changed -= OnModelChanged;
+        }
     }
 }

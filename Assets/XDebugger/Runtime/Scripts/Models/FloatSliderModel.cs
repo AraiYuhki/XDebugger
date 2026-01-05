@@ -10,17 +10,12 @@ namespace Xeon.XDebugger.Model
         protected override string prefabAddress => $"XDebugger/{nameof(FloatSliderControl)}";
 
         private float value, min, max;
-        private FloatSliderControl control;
         private Action<float> onChangedValue;
 
         public float Value
         {
             get => value;
-            set
-            {
-                this.value = value;
-                control?.Refresh();
-            }
+            set => SetValue(value, false);
         }
 
         public float Min => min;
@@ -54,27 +49,35 @@ namespace Xeon.XDebugger.Model
         {
             this.min = min;
             if (isRefreshControl)
-                control?.Refresh();
+                NotifyChanged();
         }
 
         public void SetMax(float max, bool isRefreshControl = true)
         {
             this.max = max;
             if (isRefreshControl)
-                control?.Refresh();
+                NotifyChanged();
         }
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<FloatSliderControl>(parent);
-            control.Setup(this, OnValueChanged);
+            var control = uiFactory.CreateControl<FloatSliderControl>(parent);
+            control.Setup(this);
             return control;
         }
 
-        private void OnValueChanged(float newValue)
+        public void NotifyValueChangedFromView(float newValue) => SetValue(newValue, true);
+
+        private void SetValue(float newValue, bool notifyCallback)
         {
+            if (Mathf.Approximately(value, newValue))
+                return;
+
             value = newValue;
-            onChangedValue?.Invoke(value);
+            NotifyChanged();
+
+            if (notifyCallback)
+                onChangedValue?.Invoke(value);
         }
     }
 }

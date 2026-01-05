@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,18 +15,23 @@ namespace Xeon.XDebugger.Control
         protected Button leftButton;
 
         protected NumberModel model;
-        protected Action<float> onChangedValue;
 
-        public void Setup(NumberModel model, Action<float> onChangedValue)
+        public void Setup(NumberModel model)
         {
             Setup(model.Title);
+            if (this.model != null)
+                this.model.Changed -= OnModelChanged;
+
             this.model = model;
-            this.onChangedValue = onChangedValue;
+            this.model.Changed += OnModelChanged;
 
             input.onEndEdit.RemoveListener(OnEndEdit);
             input.onEndEdit.AddListener(OnEndEdit);
 
             rightButton.onClick.RemoveListener(OnClickRightButton);
+            rightButton.onClick.AddListener(OnClickRightButton);
+
+            leftButton.onClick.RemoveListener(OnClickLeftButton);
             leftButton.onClick.AddListener(OnClickLeftButton);
 
             Refresh();
@@ -41,12 +45,29 @@ namespace Xeon.XDebugger.Control
         protected virtual void OnEndEdit(string text)
         {
             if (float.TryParse(text, out var value))
-                onChangedValue?.Invoke(value);
+                model.NotifyValueChangedFromView(value);
             else
                 Refresh();
         }
 
         protected virtual void OnClickRightButton() => model.Value += model.Step;
         protected virtual void OnClickLeftButton() => model.Value -= model.Step;
+
+        private void OnModelChanged() => Refresh();
+
+        private void OnDestroy()
+        {
+            if (input != null)
+                input.onEndEdit.RemoveListener(OnEndEdit);
+
+            if (rightButton != null)
+                rightButton.onClick.RemoveListener(OnClickRightButton);
+
+            if (leftButton != null)
+                leftButton.onClick.RemoveListener(OnClickLeftButton);
+
+            if (model != null)
+                model.Changed -= OnModelChanged;
+        }
     }
 }

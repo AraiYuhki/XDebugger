@@ -9,18 +9,13 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(BoolControl)}";
 
-        private BoolControl control;
         private bool isOn = false;
         private Action<bool> onChangedValue;
 
         public bool IsOn
         {
             get => isOn;
-            set
-            {
-                isOn = value;
-                control?.Refresh();
-            }
+            set => SetIsOn(value, false);
         }
 
         public BoolModel(string title, bool isOn, Action<bool> onChangedValue, int priority = 0) : base(title, priority)
@@ -42,15 +37,23 @@ namespace Xeon.XDebugger.Model
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateControl<BoolControl>(parent);
-            control.Setup(this, OnChangedValue);
+            var control = uiFactory.CreateControl<BoolControl>(parent);
+            control.Setup(this);
             return control;
         }
 
-        private void OnChangedValue(bool newValue)
+        public void NotifyValueChangedFromView(bool newValue) => SetIsOn(newValue, true);
+
+        private void SetIsOn(bool newValue, bool notifyCallback)
         {
+            if (isOn == newValue)
+                return;
+
             isOn = newValue;
-            onChangedValue?.Invoke(isOn);
+            NotifyChanged();
+
+            if (notifyCallback)
+                onChangedValue?.Invoke(isOn);
         }
     }
 }
