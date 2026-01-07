@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 
@@ -40,7 +39,7 @@ namespace Xeon.XDebugger.Control
 
             displayedPage = pageModel;
             displayedPage.Initialize(uiFactory);
-            displayedPage.OpenPage(content, displayedPage, uiFactory);
+            displayedPage.OpenPage(content, uiFactory);
         }
 
         /// <summary>

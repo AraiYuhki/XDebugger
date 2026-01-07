@@ -58,7 +58,7 @@ namespace Xeon.XDebugger.Control
             }
             if (doRecreate)
             {
-                currentPage.Refresh(content);
+                currentPage.RefreshCurrentPage(content);
                 return;
             }
             currentPage.Refresh();
@@ -77,7 +77,7 @@ namespace Xeon.XDebugger.Control
 
             model ??= new T();
             model.Initialize(uiFactory);
-            model.OpenPage(content, model, uiFactory);
+            model.OpenPage(content, uiFactory);
             pageStack.Add(model);
             currentPage = model;
 

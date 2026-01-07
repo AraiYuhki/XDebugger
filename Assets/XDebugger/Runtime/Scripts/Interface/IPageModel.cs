@@ -21,12 +21,12 @@ namespace Xeon.XDebugger.Model
         void Update();
         void SetGroup(IGroupModel model);
         MonoBehaviour GetControl();
-        void OpenPage(Transform parent, IPageModel pageModel, IUIFactory uiFactory);
+        void OpenPage(Transform parent, IUIFactory uiFactory);
         void Close(Action onClose = null);
         void Show(bool isRefresh = false);
         void Hide(Action onHidden = null);
 
-        void Refresh(Transform parent);
+        void RefreshCurrentPage(Transform parent);
         void Refresh();
     }
 }

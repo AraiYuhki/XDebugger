@@ -11,15 +11,9 @@ namespace Xeon.XDebugger.Model
     [CreateAssetMenu(fileName = "DemoScriptablePage", menuName = "XDebugger/Demo Scriptable Page")]
     public class DemoScriptablePageModel : ScriptablePageModel
     {
-        [SerializeField]
-        private bool autoInitialize = true;
-
         public override void Initialize(IUIFactory uiFactory)
         {
             base.Initialize(uiFactory);
-
-            if (!autoInitialize)
-                return;
 
             // デモ用のコンテンツを生成
             CreateDemoContent();
@@ -102,7 +96,7 @@ namespace Xeon.XDebugger.Model
 
             // アクション
             AddButton("Log All Values", LogAllValues, 27);
-            AddButton("Refresh", () => Refresh(Content), 28);
+            AddButton("Refresh", () => RefreshCurrentPage(Content), 28);
         }
 
         /// <summary>
