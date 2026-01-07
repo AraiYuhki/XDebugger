@@ -66,35 +66,26 @@ namespace Xeon.XDebugger.Model
         /// </summary>
         public MonoBehaviour GetControl() => control;
 
-        public void OpenPage(Transform parent, IPageModel pageModel, IUIFactory uiFactory)
+        public void OpenPage(Transform parent, IUIFactory uiFactory)
         {
             Clear();
             Initialize(uiFactory);
             content = parent;
             CreateControl(parent, uiFactory);
-            
+            OpenedPage();
+        }
+
+        private void CreateControl(Transform parent, IUIFactory uiFactory)
+        {
+            if (control == null)
+                control = uiFactory.CreatePage<PageControl>(parent);
             // controlが見つかった場合のみ処理を続行
             if (control != null && control is PageControl pageControl)
             {
                 foreach (var model in modelList)
                     controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
-                pageControl.Open(pageModel as PageModel);
+                pageControl.Open(this);
             }
-            OpenedPage();
-        }
-
-        /// <summary>
-        /// ページを開く（PageModel版）
-        /// </summary>
-        public void OpenPage(Transform parent, PageModel pageModel, IUIFactory uiFactory)
-        {
-            OpenPage(parent, pageModel as IPageModel, uiFactory);
-        }
-
-        protected virtual void CreateControl(Transform parent, IUIFactory uiFactory)
-        {
-            if (control == null)
-                control = uiFactory.CreatePage<PageControl>(parent);
         }
 
         protected virtual void OpenedPage()
@@ -185,7 +176,7 @@ namespace Xeon.XDebugger.Model
             }
         }
 
-        public virtual void Refresh(Transform parent)
+        public virtual void RefreshCurrentPage(Transform parent)
         {
             Clear();
             Initialize(uiFactory);

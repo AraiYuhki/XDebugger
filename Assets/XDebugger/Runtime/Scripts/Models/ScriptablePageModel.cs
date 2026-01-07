@@ -69,31 +69,30 @@ namespace Xeon.XDebugger.Model
         /// <summary>
         /// ページを開く
         /// </summary>
-        public void OpenPage(Transform parent, IPageModel pageModel, IUIFactory uiFactory)
+        public void OpenPage(Transform parent, IUIFactory uiFactory)
         {
             Clear();
             Initialize(uiFactory);
             content = parent;
             CreateControl(parent, uiFactory);
-
-            if (control != null && control is PageControl pageControl)
-            {
-                foreach (var model in modelList)
-                    controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
-                // ScriptablePageModel は PageModel ではないため、null を渡す
-                // または abstract class を使用する必要がある場合は要検討
-                pageControl.Open(null);
-            }
             OpenedPage();
         }
 
         /// <summary>
         /// 制御コンポーネントを作成
         /// </summary>
-        protected virtual void CreateControl(Transform parent, IUIFactory uiFactory)
+        private void CreateControl(Transform parent, IUIFactory uiFactory)
         {
             if (control == null)
                 control = uiFactory.CreatePage<PageControl>(parent);
+            if (control != null && control is PageControl pageControl)
+            {
+                foreach (var model in modelList)
+                    controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
+                // ScriptablePageModel は PageModel ではないため、null を渡す
+                // または abstract class を使用する必要がある場合は要検討
+                pageControl.Open(this);
+            }
         }
 
         /// <summary>
@@ -155,14 +154,7 @@ namespace Xeon.XDebugger.Model
             if (control != null)
             {
                 control.gameObject.SetActive(true);
-                if (control is PageControl pageControl)
-                {
-                    pageControl.Open();
-                }
-                else if (control is StaticPageControl staticPageControl)
-                {
-                    staticPageControl.Open();
-                }
+                OpenPage();
             }
         }
 
@@ -205,12 +197,25 @@ namespace Xeon.XDebugger.Model
                 control.Refresh();
         }
 
-        public virtual void Refresh(Transform parent)
+        public virtual void RefreshCurrentPage(Transform parent)
         {
             Clear();
             Initialize(uiFactory);
             CreateControl(parent, uiFactory);
+            OpenPage();
             Refresh();
+        }
+
+        protected void OpenPage()
+        {
+            if (control is PageControl pageControl)
+            {
+                pageControl.Open();
+            }
+            else if (control is StaticPageControl staticPageControl)
+            {
+                staticPageControl.Open();
+            }
         }
 
         /// <summary>

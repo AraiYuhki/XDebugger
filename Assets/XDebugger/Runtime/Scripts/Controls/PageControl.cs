@@ -19,7 +19,7 @@ namespace Xeon.XDebugger.Control
         private Action onOpened;
         private Action onClosed;
 
-        private PageModel model;
+        private IPageModel model;
 
         public Transform Content => content;
 
@@ -29,7 +29,7 @@ namespace Xeon.XDebugger.Control
             set => canvasGroup.alpha = value;
         }
 
-        public virtual void Open(PageModel model = null, Action onOpened = null)
+        public virtual void Open(IPageModel model = null, Action onOpened = null)
         {
             this.model = model;
             this.onOpened = onOpened;
