@@ -40,7 +40,7 @@ namespace Xeon.XDebugger.Common
 
         [SerializeField]
         private float holdTimeForShow;
-        
+
         [SerializeField]
         private UIFactoryBase uiFactory;
 
@@ -65,7 +65,7 @@ namespace Xeon.XDebugger.Common
 
 #if UNITY_EDITOR
         [CustomEditor(typeof(XDebuggerSetting))]
-        private class  XDebuggerSettingEditor : Editor
+        private class XDebuggerSettingEditor : UnityEditor.Editor
         {
             public override void OnInspectorGUI()
             {

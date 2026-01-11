@@ -10,5 +10,6 @@ namespace Xeon.XDebugger.Model
         List<string> Labels { get; }
         string Title { get; }
         void NotifySelectedIndexChangedFromView(int index);
+        void SetSelectedIndex(int index, bool notifyCallback);
     }
 }

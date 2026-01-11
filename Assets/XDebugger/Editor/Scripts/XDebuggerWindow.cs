@@ -1,10 +1,16 @@
-using System.Collections;
+using System;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Xeon.XDebugger.Console;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.Profiler;
+using Xeon.XDebugger.Common;
+using Xeon.XDebugger.Editor.Model;
+using Xeon.XDebugger.Model;
+using System.Threading.Tasks;
+
+using UnityEditor.IMGUI.Controls;
 
 namespace Xeon.XDebugger.Editor
 {
@@ -33,7 +39,187 @@ namespace Xeon.XDebugger.Editor
 
             var tabList = instance.TabList.Where(tab => tab.Content is not IProfilerPage and not IConsolePage and not SystemInfoPage).ToList();
             var tabIndex = GUILayout.Toolbar(0, tabList.Select(tab => tab.Title).ToArray());
-            var activeTab = tabList[tabIndex].Content;
+            var activeTab = tabList[tabIndex].Content as IGetPageModel;
+            var pageModel = activeTab.GetPageModel();
+
+            foreach (var model in pageModel.ModelList)
+            {
+                DrawModel(model);
+            }
         }
+
+        private void DrawModel(ControlModelBase model)
+        {
+            switch (model)
+            {
+                case HorizontalGroupModel horizontal:
+                    DrawHorizontalGroup(horizontal);
+                    break;
+                case VerticalGroupModel vertical:
+                    DrawVerticalGroup(vertical);
+                    break;
+                case FoldingGroupModel folding:
+                    DrawFadingGroup(folding);
+                    break;
+                case DisableGroupModel disable:
+                    DrawDisableGroup(disable);
+                    break;
+                case LabelModel label:
+                    DrawLabel(label);
+                    break;
+                case ActionModel action:
+                    DrawButton(action);
+                    break;
+                case StringModel text:
+                    DrawText(text);
+                    break;
+                case IntSliderModel intSlider:
+                    DrawIntSlider(intSlider);
+                    break;
+                case FloatSliderModel floatSlider:
+                    DrawFloatSlider(floatSlider);
+                    break;
+                case NumberModel number:
+                    DrawNumber(number);
+                    break;
+                case BoolModel boolean:
+                    DrawBool(boolean);
+                    break;
+                case IEnumDropdownModel enumDropdown:
+                    DrawEnumDropdown(enumDropdown);
+                    break;
+                case IDropdownModel dropdown:
+                    DrawDropDown(dropdown);
+                    break;
+                default:
+                    EditorGUILayout.LabelField($"Unknown model type: {model.GetType().Name}");
+                    break;
+            }
+        }
+
+        #region Draw Groups
+
+        private void DrawHorizontalGroup(HorizontalGroupModel groupModel)
+        {
+            using var scope = new EditorGUILayout.HorizontalScope(groupModel.Title);
+            foreach (var model in groupModel.Children)
+            {
+                DrawModel(model);
+            }
+        }
+
+        private void DrawVerticalGroup(VerticalGroupModel groupModel)
+        {
+            using var scope = new EditorGUILayout.VerticalScope(groupModel.Title);
+            foreach (var model in groupModel.Children)
+            {
+                DrawModel(model);
+            }
+        }
+
+        private void DrawFadingGroup(FoldingGroupModel groupModel)
+        {
+            var isFolding = EditorGUILayout.Foldout(groupModel.IsFolding, groupModel.Title);
+            if (isFolding != groupModel.IsFolding)
+            {
+                groupModel.IsFolding = isFolding;
+            }
+            if (isFolding)
+                return;
+            EditorGUI.indentLevel++;
+            foreach (var model in groupModel.Children)
+            {
+                DrawModel(model);
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawDisableGroup(DisableGroupModel groupModel)
+        {
+            using var scope = new EditorGUI.DisabledGroupScope(groupModel.IsDisabled);
+            EditorGUILayout.LabelField(groupModel.Title, EditorStyles.boldLabel);
+            foreach (var model in groupModel.Children)
+            {
+                DrawModel(model);
+            }
+        }
+        #endregion
+
+        #region Draw Controls
+        private void DrawLabel(LabelModel model)
+        {
+            EditorGUILayout.LabelField(model.Title);
+        }
+
+        private void DrawButton(ActionModel model)
+        {
+            if (GUILayout.Button(model.Title))
+                model.ExecuteMethod();
+        }
+
+        private void DrawText(StringModel model)
+        {
+            EditorGUI.BeginChangeCheck();
+            var text = EditorGUILayout.TextField(model.Title, model.Text);
+            if (EditorGUI.EndChangeCheck())
+                model.SetText(text, true);
+        }
+
+        private void DrawIntSlider(IntSliderModel model)
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.IntSlider(model.Title, model.Value, model.Min, model.Max);
+            if (EditorGUI.EndChangeCheck())
+                model.SetValue(value, true);
+        }
+
+        private void DrawFloatSlider(FloatSliderModel model)
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.Slider(model.Title, model.Value, model.Min, model.Max);
+            if (EditorGUI.EndChangeCheck())
+                model.SetValue(value, true);
+        }
+
+        private void DrawNumber(NumberModel model)
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.FloatField(model.Title, model.Value);
+            if (EditorGUI.EndChangeCheck())
+                model.SetValue(value, true);
+        }
+
+        private void DrawBool(BoolModel model)
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.Toggle(model.Title, model.Value);
+            if (EditorGUI.EndChangeCheck())
+                model.SetValue(value, true);
+        }
+
+        private void DrawEnumDropdown<T>(EnumDropdownModel<T> model) where T : Enum
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = (T)EditorGUILayout.EnumPopup(model.Title, model.Value);
+            if (EditorGUI.EndChangeCheck())
+                model.SetValue(value, true);
+        }
+
+        private void DrawEnumDropdown(IEnumDropdownModel model)
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.EnumPopup(model.Title, model.Value);
+            if (EditorGUI.EndChangeCheck())
+                model.SetValue(value, true);
+        }
+
+        private void DrawDropDown(IDropdownModel model)
+        {
+            EditorGUI.BeginChangeCheck();
+            var value = EditorGUILayout.Popup(model.Title, model.SelectedIndex, model.Labels.ToArray());
+            if (EditorGUI.EndChangeCheck())
+                model.SetSelectedIndex(value, true);
+        }
+        #endregion
     }
 }

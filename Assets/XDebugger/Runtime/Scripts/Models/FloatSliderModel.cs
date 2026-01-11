@@ -25,7 +25,7 @@ namespace Xeon.XDebugger.Model
         public string GetRoundedText => Math.Round(value, Digits).ToString();
 
         public FloatSliderModel(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0)
-            :base(title, priority)
+            : base(title, priority)
         {
             Initialize(value, min, max, onChangedValue, digits);
         }
@@ -68,7 +68,7 @@ namespace Xeon.XDebugger.Model
 
         public void NotifyValueChangedFromView(float newValue) => SetValue(newValue, true);
 
-        private void SetValue(float newValue, bool notifyCallback)
+        public void SetValue(float newValue, bool notifyCallback)
         {
             if (Mathf.Approximately(value, newValue))
                 return;

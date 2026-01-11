@@ -1,19 +1,23 @@
 ﻿using UnityEngine;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
+using Xeon.XDebugger.Common;
+using Xeon.XDebugger.Editor.Model;
 
 namespace Xeon.XDebugger.Control
 {
     /// <summary>
     /// グローバルメニュータブ。Awakeで設定されたPageModelから自動で単一のページを生成・表示します。
     /// </summary>
-    public class GlobalMenuTabPage : StaticPageControl
+    public class GlobalMenuTabPage : StaticPageControl, IGetPageModel
     {
         [SerializeField]
         private Transform content;
 
         [SerializeField]
         private ScriptablePageModel pageModel;
+
+        public IPageModel GetPageModel() => pageModel;
 
         private void Awake()
         {

@@ -21,7 +21,7 @@ namespace Xeon.XDebugger.Model
 
         public void AddChild(ControlModelBase model) => children.Add(model);
 
-        public IReadOnlyCollection<ControlModelBase> Children => children;
+        public IReadOnlyList<ControlModelBase> Children => children;
 
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {

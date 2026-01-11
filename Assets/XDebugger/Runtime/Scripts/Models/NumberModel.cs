@@ -49,7 +49,7 @@ namespace Xeon.XDebugger.Model
 
         public void NotifyValueChangedFromView(float newValue) => SetValue(newValue, true);
 
-        private void SetValue(float newValue, bool notifyCallback)
+        public void SetValue(float newValue, bool notifyCallback)
         {
             if (Mathf.Approximately(value, newValue))
                 return;

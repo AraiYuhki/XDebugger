@@ -28,7 +28,7 @@ namespace Xeon.XDebugger.Control
 
         public override void Refresh()
         {
-            toggle.SetIsOnWithoutNotify(model.IsOn);
+            toggle.SetIsOnWithoutNotify(model.Value);
         }
 
         private void OnValueChanged(bool flag)

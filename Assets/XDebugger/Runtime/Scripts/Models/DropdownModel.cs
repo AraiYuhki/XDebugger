@@ -46,7 +46,7 @@ namespace Xeon.XDebugger.Model
             if (isRefreshControl)
                 NotifyChanged();
         }
-        
+
 
         public DropdownModel(string title, int value, IEnumerable<string> labels, IEnumerable<T> options, Action<T> onChangedValue, int priority = 0) : base(title, priority)
         {
@@ -65,7 +65,7 @@ namespace Xeon.XDebugger.Model
         }
 
         public DropdownModel(string title, int value, IEnumerable<T> options, Action<T> onChangedValue, IGroupModel parent, int priority = 0)
-            :base(title, parent, priority)
+            : base(title, parent, priority)
         {
             Initialize(value, options.Select(option => option.ToString()), options, onChangedValue);
         }
@@ -88,7 +88,7 @@ namespace Xeon.XDebugger.Model
 
         public void NotifySelectedIndexChangedFromView(int index) => SetSelectedIndex(index, true);
 
-        private void SetSelectedIndex(int index, bool notifyCallback)
+        public void SetSelectedIndex(int index, bool notifyCallback)
         {
             selectedIndex = Mathf.Clamp(index, 0, GetMaxIndex());
             NotifyChanged();
