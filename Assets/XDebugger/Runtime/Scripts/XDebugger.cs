@@ -8,9 +8,6 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
 
-
-
-
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
