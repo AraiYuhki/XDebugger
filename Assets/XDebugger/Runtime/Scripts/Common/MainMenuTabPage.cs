@@ -22,6 +22,8 @@ namespace Xeon.XDebugger.Control
         // ページが変更された時のイベント
         public event Action<PageModel> OnPageChanged;
 
+        public PageModel CurrentPage => currentPage;
+
         private List<PageModel> pageStack = new();
         private PageModel currentPage;
 

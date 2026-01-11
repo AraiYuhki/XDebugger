@@ -22,6 +22,7 @@ namespace Xeon.XDebugger.Model
         protected MonoBehaviour control;
 
         public string Title => title;
+        public bool IsInitialized { get; protected set; }
 
         public Transform Content
         {
@@ -47,9 +48,22 @@ namespace Xeon.XDebugger.Model
             modelList = copyItemModels.ToList();
         }
 
-        public virtual void Initialize(IUIFactory uiFactory)
+        public void Initialize(IUIFactory uiFactory)
         {
+            if (IsInitialized)
+                return;
             this.uiFactory = uiFactory;
+            InitializeInternal();
+            Initialized();
+        }
+
+        protected virtual void InitializeInternal()
+        {
+        }
+
+        protected void Initialized()
+        {
+            IsInitialized = true;
         }
 
         public virtual void Update()
@@ -196,6 +210,7 @@ namespace Xeon.XDebugger.Model
                 GameObject.Destroy(control.gameObject);
             controlList.Clear();
             modelList.Clear();
+            IsInitialized = false;
         }
 
         public GroupLayoutScope HorizontalScope(string title = "", int priority = 0)

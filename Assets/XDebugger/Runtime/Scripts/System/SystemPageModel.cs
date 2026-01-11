@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
 {
@@ -16,9 +15,8 @@ namespace Xeon.XDebugger.Model
         {
         }
 
-        public override void Initialize(IUIFactory uiFactory)
+        protected override void InitializeInternal()
         {
-            this.uiFactory = uiFactory;
             using (HorizontalScope(string.Empty))
             {
                 using (VerticalScope("System"))

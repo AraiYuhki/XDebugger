@@ -15,8 +15,6 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         private ScriptablePageModel pageModel;
 
-        private ScriptablePageModel displayedPage;
-
         private void Awake()
         {
             // uiFactoryが設定されていない場合は、SetUIFactoryが呼ばれたときに初期化される
@@ -37,9 +35,13 @@ namespace Xeon.XDebugger.Control
                 return;
             }
 
-            displayedPage = pageModel;
-            displayedPage.Initialize(uiFactory);
-            displayedPage.OpenPage(content, uiFactory);
+            if (pageModel == null)
+            {
+                Debug.LogError("PageModel is not set. Please ensure global menu tab page prefab has a PageModel assigned.");
+                return;
+            }
+            pageModel.Initialize(uiFactory);
+            pageModel.OpenPage(content, uiFactory);
         }
 
         /// <summary>
@@ -47,16 +49,9 @@ namespace Xeon.XDebugger.Control
         /// </summary>
         public void RefreshPage()
         {
-            if (displayedPage != null)
-            {
-                displayedPage.Refresh();
-            }
+            if (pageModel != null)
+                pageModel.Refresh();
         }
-
-        /// <summary>
-        /// 表示中のページを取得
-        /// </summary>
-        public IPageModel GetDisplayedPage() => displayedPage;
 
         /// <summary>
         /// UIFactoryを設定
@@ -65,14 +60,14 @@ namespace Xeon.XDebugger.Control
         {
             base.SetUIFactory(uiFactory);
             // UIFactoryが設定された後、pageModelが設定されているがまだ表示されていない場合は初期化
-            if (pageModel != null && content != null && displayedPage == null)
+            if (pageModel != null && content != null)
             {
                 CreateAndDisplayPage();
             }
             // 既にページが表示されている場合は再生成
-            else if (displayedPage != null && content != null)
+            else if (pageModel != null && content != null)
             {
-                displayedPage.Close();
+                pageModel.Close();
                 CreateAndDisplayPage();
             }
         }
@@ -82,10 +77,8 @@ namespace Xeon.XDebugger.Control
         /// </summary>
         public void SetPageModel(ScriptablePageModel model)
         {
-            if (displayedPage != null)
-            {
-                displayedPage.Close();
-            }
+            if (pageModel != null)
+                pageModel.Close();
 
             pageModel = model;
             if (content != null && uiFactory != null)

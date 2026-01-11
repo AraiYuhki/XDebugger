@@ -24,6 +24,7 @@ namespace Xeon.XDebugger.Model
         private MonoBehaviour control;
 
         public string Title => pageTitle;
+        public bool IsInitialized { get; protected set; }
 
         public Transform Content
         {
@@ -41,9 +42,22 @@ namespace Xeon.XDebugger.Model
         /// <summary>
         /// ページを初期化
         /// </summary>
-        public virtual void Initialize(IUIFactory uiFactory)
+        public void Initialize(IUIFactory uiFactory)
         {
+            if (IsInitialized)
+                return;
             this.uiFactory = uiFactory;
+            InitializeInternal();
+            Initialized();
+        }
+
+        protected virtual void InitializeInternal()
+        {
+
+        }
+        protected void Initialized()
+        {
+            IsInitialized = true;
         }
 
         /// <summary>
@@ -230,6 +244,7 @@ namespace Xeon.XDebugger.Model
             }
             controlList.Clear();
             modelList.Clear();
+            IsInitialized = false;
         }
 
         #region Add Control Methods

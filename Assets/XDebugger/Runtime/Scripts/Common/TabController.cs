@@ -41,6 +41,8 @@ namespace Xeon.XDebugger.Common
 
         private static float elapsed = 1f;
 
+        public IReadOnlyList<TabData> TabList => tabList;
+
         public static void PreInitialize()
         {
             Application.logMessageReceived += OnReceivedLogMessage;

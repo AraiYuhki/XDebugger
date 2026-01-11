@@ -5,6 +5,10 @@ using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 using System.Linq;
+using System.Collections.Generic;
+using UnityEngine.AddressableAssets;
+
+
 
 
 #if ENABLE_INPUT_SYSTEM
@@ -27,7 +31,35 @@ namespace Xeon.XDebugger
         /// <summary>
         /// シングルトンインスタンス取得
         /// </summary>
-        public static XDebugger Instance => instance;
+        public static XDebugger Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    var prefab = Addressables.LoadAssetAsync<GameObject>(nameof(XDebugger)).WaitForCompletion();
+                    if (prefab == null)
+                    {
+                        Debug.LogError("XDebugger prefab not found in Addressables.");
+                        return null;
+                    }
+                    var go = Instantiate(prefab);
+                    if (go == null)
+                    {
+                        Debug.LogError("Failed to instantiate XDebugger prefab.");
+                        return null;
+                    }
+                    instance = go.GetComponent<XDebugger>();
+
+                    if (instance == null)
+                    {
+                        Debug.LogError("XDebugger component not found on instantiated prefab.");
+                        return null;
+                    }
+                }
+                return instance;
+            }
+        }
         private static PageModel initialPage;
 
         [SerializeField]
@@ -57,6 +89,12 @@ namespace Xeon.XDebugger
         // ホールド系の状態管理
         private float holdStartTime = 0f; // ホールド開始時間
         private bool isHolding = false; // ホールド中かどうか
+
+        private bool isInitialized = false;
+
+        public IReadOnlyList<TabData> TabList => tabController?.TabList;
+
+        public string Title => titleLabel.text;
 
         /// <summary>
         /// UIFactoryを設定（依存注入用）
@@ -98,6 +136,7 @@ namespace Xeon.XDebugger
             }
             tabController.Setup(setting.UIFactory, setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
             InitializeTrigger();
+            isInitialized = true;
         }
 
         private void InitializeTrigger()
