@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace XDebugger.Terminal
+namespace Xeon.UniTerminal_X
 {
     public sealed class TerminalSession
     {

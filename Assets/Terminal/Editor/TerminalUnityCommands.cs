@@ -11,9 +11,9 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
-using XDebugger.Terminal;
+using Xeon.UniTerminal_X;
 
-namespace XDebugger.TerminalEditor
+namespace Xeon.UniTerminal_X.Editor
 {
     public sealed class TerminalUnityCommands
     {

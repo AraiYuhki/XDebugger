@@ -1,6 +1,6 @@
 using System;
 
-namespace XDebugger.Terminal
+namespace Xeon.UniTerminal_X
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class TerminalCommandAttribute : Attribute

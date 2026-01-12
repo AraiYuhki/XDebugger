@@ -1,7 +1,7 @@
 using NUnit.Framework;
-using XDebugger.Terminal;
+using Xeon.UniTerminal_X;
 
-namespace XDebugger.Terminal.Tests
+namespace Xeon.UniTerminal_X.Tests
 {
     public sealed class TerminalCommandParserTests
     {

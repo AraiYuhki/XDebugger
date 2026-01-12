@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace XDebugger.Terminal
+namespace Xeon.UniTerminal_X
 {
     public sealed class TerminalFileCommands
     {

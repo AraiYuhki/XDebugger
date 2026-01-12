@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace XDebugger.Terminal
+namespace Xeon.UniTerminal_X
 {
     public sealed class TerminalController : MonoBehaviour
     {
@@ -42,7 +42,7 @@ namespace XDebugger.Terminal
         public void TryRegisterEditorCommands()
         {
             EnsureInitialized();
-            var editorExtensionType = Type.GetType("XDebugger.TerminalEditor.TerminalCommandRegistryEditorExtensions, Terminal.Editor");
+            var editorExtensionType = Type.GetType("Xeon.UniTerminal_X.Editor.TerminalCommandRegistryEditorExtensions, UniTerminalX.Editor");
             var method = editorExtensionType?.GetMethod("RegisterEditorCommands", BindingFlags.Public | BindingFlags.Static);
             method?.Invoke(null, new object[] { _registry });
         }

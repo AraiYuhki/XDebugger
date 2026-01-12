@@ -1,6 +1,6 @@
-using XDebugger.Terminal;
+using Xeon.UniTerminal_X;
 
-namespace XDebugger.TerminalEditor
+namespace Xeon.UniTerminal_X.Editor
 {
     public static class TerminalCommandRegistryEditorExtensions
     {

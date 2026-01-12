@@ -1,7 +1,7 @@
 {
-  "name": "Terminal.Tests.Editor",
+  "name": "UniTerminalX.Tests.Editor",
   "references": [
-    "Terminal.Runtime"
+    "UniTerminalX.Runtime"
   ],
   "includePlatforms": [
     "Editor"

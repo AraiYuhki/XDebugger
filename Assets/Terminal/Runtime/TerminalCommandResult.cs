@@ -1,4 +1,4 @@
-namespace XDebugger.Terminal
+namespace Xeon.UniTerminal_X
 {
     public sealed class TerminalCommandResult
     {

@@ -1,7 +1,7 @@
 {
-  "name": "Terminal.Editor",
+  "name": "UniTerminalX.Editor",
   "references": [
-    "Terminal.Runtime",
+    "UniTerminalX.Runtime",
     "Unity.Addressables"
   ],
   "includePlatforms": [

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace XDebugger.Terminal
+namespace Xeon.UniTerminal_X
 {
     public static class TerminalCommandParser
     {
