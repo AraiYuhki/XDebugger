@@ -11,6 +11,9 @@ using Xeon.XDebugger.Model;
 using System.Threading.Tasks;
 
 using UnityEditor.IMGUI.Controls;
+using NUnit.Framework;
+using System.Collections.Generic;
+using UnityEditor.TerrainTools;
 
 namespace Xeon.XDebugger.Editor
 {
@@ -20,6 +23,11 @@ namespace Xeon.XDebugger.Editor
         public static void Open() => GetWindow<XDebuggerWindow>("XDebugger");
 
         private XDebugger instance;
+        private int selectedTabIndex = 0;
+        private Vector2 scrollPosition;
+        private IPageModel currentPageModel;
+
+        private List<IPageModel> pageStack = new List<IPageModel>();
 
         private void OnGUI()
         {
@@ -38,14 +46,27 @@ namespace Xeon.XDebugger.Editor
             }
 
             var tabList = instance.TabList.Where(tab => tab.Content is not IProfilerPage and not IConsolePage and not SystemInfoPage).ToList();
-            var tabIndex = GUILayout.Toolbar(0, tabList.Select(tab => tab.Title).ToArray());
-            var activeTab = tabList[tabIndex].Content as IGetPageModel;
-            var pageModel = activeTab.GetPageModel();
-
-            foreach (var model in pageModel.ModelList)
+            selectedTabIndex = GUILayout.Toolbar(selectedTabIndex, tabList.Select(tab => tab.Title).ToArray());
+            var content = tabList[selectedTabIndex].Content;
+            using var scope = new EditorGUILayout.ScrollViewScope(scrollPosition);
+            if (content is GlobalMenuTabPage globalPage)
             {
-                DrawModel(model);
+                var pageModel = globalPage.GetPageModel();
+                pageModel.Initialize(instance.UIFactory);
+                foreach (var model in pageModel.ModelList)
+                    DrawModel(model);
             }
+            else
+            {
+
+                currentPageModel ??= XDebugger.GetOrCreateInitialPage();
+                currentPageModel.Initialize(instance.UIFactory);
+
+                foreach (var model in currentPageModel.ModelList)
+                    DrawModel(model);
+            }
+
+            scrollPosition = scope.scrollPosition;
         }
 
         private void DrawModel(ControlModelBase model)
@@ -59,13 +80,16 @@ namespace Xeon.XDebugger.Editor
                     DrawVerticalGroup(vertical);
                     break;
                 case FoldingGroupModel folding:
-                    DrawFadingGroup(folding);
+                    DrawFoldingGroup(folding);
                     break;
                 case DisableGroupModel disable:
                     DrawDisableGroup(disable);
                     break;
                 case LabelModel label:
                     DrawLabel(label);
+                    break;
+                case PageLinkActionModel pageLink:
+                    DrawPageLinkButton(pageLink);
                     break;
                 case ActionModel action:
                     DrawButton(action);
@@ -117,14 +141,15 @@ namespace Xeon.XDebugger.Editor
             }
         }
 
-        private void DrawFadingGroup(FoldingGroupModel groupModel)
+        private void DrawFoldingGroup(FoldingGroupModel groupModel)
         {
-            var isFolding = EditorGUILayout.Foldout(groupModel.IsFolding, groupModel.Title);
-            if (isFolding != groupModel.IsFolding)
+            var isFoldout = !groupModel.IsFolding;
+            var newIsFoldout = EditorGUILayout.Foldout(isFoldout, groupModel.Title);
+            if (newIsFoldout != isFoldout)
             {
-                groupModel.IsFolding = isFolding;
+                groupModel.IsFolding = !newIsFoldout;
             }
-            if (isFolding)
+            if (groupModel.IsFolding)
                 return;
             EditorGUI.indentLevel++;
             foreach (var model in groupModel.Children)
@@ -155,6 +180,17 @@ namespace Xeon.XDebugger.Editor
         {
             if (GUILayout.Button(model.Title))
                 model.ExecuteMethod();
+        }
+
+        private void DrawPageLinkButton(PageLinkActionModel model)
+        {
+            if (GUILayout.Button(model.Title))
+            {
+                pageStack.Add(currentPageModel);
+                currentPageModel = model.PageModel;
+                currentPageModel.Initialize(instance.UIFactory);
+                Repaint();
+            }
         }
 
         private void DrawText(StringModel model)
@@ -193,14 +229,6 @@ namespace Xeon.XDebugger.Editor
         {
             EditorGUI.BeginChangeCheck();
             var value = EditorGUILayout.Toggle(model.Title, model.Value);
-            if (EditorGUI.EndChangeCheck())
-                model.SetValue(value, true);
-        }
-
-        private void DrawEnumDropdown<T>(EnumDropdownModel<T> model) where T : Enum
-        {
-            EditorGUI.BeginChangeCheck();
-            var value = (T)EditorGUILayout.EnumPopup(model.Title, model.Value);
             if (EditorGUI.EndChangeCheck())
                 model.SetValue(value, true);
         }

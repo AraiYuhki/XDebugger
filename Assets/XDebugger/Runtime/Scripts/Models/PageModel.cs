@@ -229,7 +229,7 @@ namespace Xeon.XDebugger.Model
             return scope;
         }
 
-        public DisableGroupScope　DisableScope(out DisableGroupModel model, string title = "", bool isDisabled = false, int priority = 0)
+        public DisableGroupScope DisableScope(out DisableGroupModel model, string title = "", bool isDisabled = false, int priority = 0)
         {
             var scope = new DisableGroupScope(title, this, priority);
             model = scope.Model as DisableGroupModel;
@@ -275,7 +275,7 @@ namespace Xeon.XDebugger.Model
 
         public ActionModel AddPageLinkButton<T>(string text, int priority = 0) where T : PageModel, new()
         {
-            var model = new ActionModel(text, () => XDebugger.Instance.OpenPage<T>(), priority);
+            var model = new PageLinkActionModel(text, new T(), priority);
             modelList.Add(model);
             return model;
         }
@@ -287,7 +287,7 @@ namespace Xeon.XDebugger.Model
             AddText(model);
             return model;
         }
-        
+
         public void AddNumber(NumberModel model) => AddChild(model);
         public NumberModel AddNumber(string title, float value, float step, Action<float> onChangedValue = null, int priority = 0)
         {

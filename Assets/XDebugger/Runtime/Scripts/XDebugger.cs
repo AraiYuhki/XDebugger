@@ -78,11 +78,11 @@ namespace Xeon.XDebugger
         private Button trigger;
 
         private bool isShow = false; // メニュー表示状態
-        
+
         // タップ系の状態管理
         private float tapElapsedTime = 0f; // タップ入力の経過時間
         private int clickedCount = 0;   // クリック回数カウント
-        
+
         // ホールド系の状態管理
         private float holdStartTime = 0f; // ホールド開始時間
         private bool isHolding = false; // ホールド中かどうか
@@ -92,6 +92,8 @@ namespace Xeon.XDebugger
         public IReadOnlyList<TabData> TabList => tabController?.TabList;
 
         public string Title => titleLabel.text;
+
+        public UIFactoryBase UIFactory => setting.UIFactory;
 
         /// <summary>
         /// UIFactoryを設定（依存注入用）
@@ -104,7 +106,7 @@ namespace Xeon.XDebugger
 
             tabController.SetUIFactory(uiFactory);
         }
-        
+
         /// <summary>
         /// インスタンス初期化。シングルトン化と初期状態設定。
         /// </summary>
@@ -118,7 +120,7 @@ namespace Xeon.XDebugger
             instance = this;
             mainObject.SetActive(false);
             isShow = false;
-            
+
             TabController.PreInitialize();
 
             DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
@@ -259,14 +261,14 @@ namespace Xeon.XDebugger
         public void OnClickTrigger()
         {
             if (setting == null) return;
-            
+
             var triggerMode = setting.TriggerMode;
             if (triggerMode != TriggerMode.DoubleTap && triggerMode != TriggerMode.TripleTap)
                 return;
 
             tapElapsedTime = 0f;
             clickedCount++;
-            
+
             int requiredClicks = triggerMode == TriggerMode.DoubleTap ? 2 : 3;
             if (clickedCount >= requiredClicks)
             {
@@ -280,7 +282,7 @@ namespace Xeon.XDebugger
             if (setting == null) return;
 
             var triggerMode = setting.TriggerMode;
-            
+
             // タップ系の処理
             if (triggerMode == TriggerMode.DoubleTap || triggerMode == TriggerMode.TripleTap)
             {
