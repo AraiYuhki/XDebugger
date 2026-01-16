@@ -35,6 +35,14 @@ namespace Xeon.XDebugger.Model
 
         protected void NotifyChanged() => Changed?.Invoke();
 
+        /// <summary>
+        /// プレハブをインスタンス化します。
+        /// </summary>
+        /// <remarks>
+        /// 注意: WaitForCompletion()は同期的にブロッキングするため、パフォーマンスに影響する可能性があります。
+        /// 大量のコントロールを生成する場合や、パフォーマンスが重要な場面では、
+        /// 非同期ロード（LoadAssetAsync + await）やプリロードパターンの使用を検討してください。
+        /// </remarks>
         protected virtual T Instantiate<T>(Transform parent) where T : ControlBase, new()
         {
             var prefab = Addressables.LoadAssetAsync<GameObject>(prefabAddress).WaitForCompletion();

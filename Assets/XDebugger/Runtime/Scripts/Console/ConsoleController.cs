@@ -49,8 +49,9 @@ namespace Xeon.XDebugger.Console
 
         private void OnDestroy()
         {
-            logDataBuffer.CollectionChanged -= OnCollectionChanged;
-            controller.Dispose();
+            if (logDataBuffer != null)
+                logDataBuffer.CollectionChanged -= OnCollectionChanged;
+            controller?.Dispose();
         }
 
         public void Initialize(ILogDataBuffer logDataList)

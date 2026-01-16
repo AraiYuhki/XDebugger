@@ -65,11 +65,23 @@ namespace Xeon.XDebugger.Common
 
 #if UNITY_EDITOR
         [CustomEditor(typeof(XDebuggerSetting))]
-        private class  XDebuggerSettingEditor : Editor
+        private class XDebuggerSettingEditor : Editor
         {
+            private SerializedProperty topPageTabListProperty;
+
+            private void OnEnable()
+            {
+                topPageTabListProperty = serializedObject.FindProperty("topPageTabList");
+            }
+
             public override void OnInspectorGUI()
             {
+                serializedObject.Update();
+
                 var setting = target as XDebuggerSetting;
+
+                EditorGUI.BeginChangeCheck();
+
                 EditorGUILayout.LabelField("Trigger Settings", EditorStyles.boldLabel);
                 setting.triggerMode = (TriggerMode)EditorGUILayout.EnumPopup("Trigger Mode", setting.triggerMode);
                 if (setting.triggerMode is TriggerMode.DoubleFingerHold or TriggerMode.TripleFingerHold)
@@ -87,9 +99,14 @@ namespace Xeon.XDebugger.Common
                 EditorGUILayout.LabelField("UI Settings", EditorStyles.boldLabel);
                 setting.uiFactory = (UIFactoryBase)EditorGUILayout.ObjectField("UI Factory", setting.uiFactory, typeof(UIFactoryBase), false);
                 setting.tabButtonPrefab = (TabButton)EditorGUILayout.ObjectField("Tab Button Prefab", setting.tabButtonPrefab, typeof(TabButton), false);
-                var serializedObject = new SerializedObject(setting);
-                var topPageTabListProperty = serializedObject.FindProperty("topPageTabList");
                 EditorGUILayout.PropertyField(topPageTabListProperty, true);
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    EditorUtility.SetDirty(target);
+                }
+
+                serializedObject.ApplyModifiedProperties();
             }
         }
 #endif
