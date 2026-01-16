@@ -37,8 +37,20 @@ namespace Xeon.XDebugger.Console
         [SerializeField]
         private Toggle errorToggle;
 
+#if UNITY_EDITOR
+        [Header("Debug")]
+        [SerializeField]
+        private bool enableDebugLog = false;
+        [SerializeField, Range(0.1f, 5f)]
+        private float debugLogInterval = 1f;
+
+        private float debugLogElapsed = 0f;
+        private int debugLogCount = 0;
+#endif
+
         ILogDataBuffer logDataBuffer;
         private FlyweightScrollViewController<LogItemData, LogItem> controller;
+        private bool isInitialized = false;
 
         private void Awake()
         {
@@ -49,13 +61,33 @@ namespace Xeon.XDebugger.Console
 
         private void OnDestroy()
         {
+            Cleanup();
+        }
+
+        /// <summary>
+        /// 既存のリソースをクリーンアップします。
+        /// </summary>
+        private void Cleanup()
+        {
             if (logDataBuffer != null)
                 logDataBuffer.CollectionChanged -= OnCollectionChanged;
+
             controller?.Dispose();
+            controller = null;
+
+            // Toggleのリスナーを解除
+            infoToggle.onValueChanged.RemoveAllListeners();
+            warningToggle.onValueChanged.RemoveAllListeners();
+            errorToggle.onValueChanged.RemoveAllListeners();
+            clearButton.onClick.RemoveAllListeners();
         }
 
         public void Initialize(ILogDataBuffer logDataList)
         {
+            // 既に初期化済みの場合は既存のリソースをクリーンアップ
+            if (isInitialized)
+                Cleanup();
+
             logDataBuffer = logDataList;
             logDataBuffer.CollectionChanged += OnCollectionChanged;
             controller = new (logItemPrefab, logDataBuffer, OnCreatedItem);
@@ -74,6 +106,8 @@ namespace Xeon.XDebugger.Console
             OnAddInfoLog(logDataBuffer.InfoCount);
             OnAddWarningLog(logDataBuffer.WarnCount);
             OnAddErrorLog(logDataBuffer.ErrorCount);
+
+            isInitialized = true;
         }
 
         public void OnAddInfoLog(int count)
@@ -119,6 +153,34 @@ namespace Xeon.XDebugger.Console
             OnAddWarningLog(0);
             OnAddErrorLog(0);
         }
+
+#if UNITY_EDITOR
+        private void Update()
+        {
+            if (!enableDebugLog)
+                return;
+
+            debugLogElapsed += Time.deltaTime;
+            if (debugLogElapsed < debugLogInterval)
+                return;
+
+            debugLogElapsed = 0f;
+            debugLogCount++;
+
+            switch (debugLogCount % 3)
+            {
+                case 0:
+                    Debug.Log($"[Debug] Test info log #{debugLogCount}");
+                    break;
+                case 1:
+                    Debug.LogWarning($"[Debug] Test warning log #{debugLogCount}");
+                    break;
+                case 2:
+                    Debug.LogError($"[Debug] Test error log #{debugLogCount}");
+                    break;
+            }
+        }
+#endif
 
     }
 }

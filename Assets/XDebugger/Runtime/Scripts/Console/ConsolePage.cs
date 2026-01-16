@@ -10,10 +10,19 @@ namespace Xeon.XDebugger.Console
         [SerializeField]
         private ConsoleController controller;
 
+        private bool isSetup = false;
+
         public ConsoleController Controller => controller;
 
+        /// <summary>
+        /// 外部からログバッファを指定して初期化する場合に使用します。
+        /// Setup()が呼ばれる前に使用することを想定しています。
+        /// </summary>
         public void Initialize(ILogDataBuffer logDataList)
         {
+            if (controller == null)
+                return;
+
             controller.Initialize(logDataList);
         }
 
@@ -22,6 +31,15 @@ namespace Xeon.XDebugger.Console
             if (controller == null)
                 return;
 
+            // 既にSetup済みの場合は、ハンドラの再登録のみ行う
+            if (isSetup)
+            {
+                // 一度解除してから再登録（重複防止）
+                TabController.UnregisterLogHandlers(controller.OnAddInfoLog, controller.OnAddWarningLog, controller.OnAddErrorLog);
+                TabController.RegisterLogHandlers(controller.OnAddInfoLog, controller.OnAddWarningLog, controller.OnAddErrorLog);
+                return;
+            }
+
             base.Setup(tabController, uiFactory);
 
             // Initialize controller with shared log buffer from TabController
@@ -29,9 +47,8 @@ namespace Xeon.XDebugger.Console
 
             // Register for count update callbacks
             TabController.RegisterLogHandlers(controller.OnAddInfoLog, controller.OnAddWarningLog, controller.OnAddErrorLog);
-            controller.OnAddInfoLog(TabController.LogBuffer.InfoCount);
-            controller.OnAddWarningLog(TabController.LogBuffer.WarnCount);
-            controller.OnAddErrorLog(TabController.LogBuffer.ErrorCount);
+
+            isSetup = true;
         }
 
         private void OnDestroy()

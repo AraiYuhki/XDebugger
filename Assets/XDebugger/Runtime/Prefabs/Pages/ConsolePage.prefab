@@ -2039,6 +2039,8 @@ MonoBehaviour:
   infoToggle: {fileID: 2420369304062336525}
   warningToggle: {fileID: 8285138875439665164}
   errorToggle: {fileID: 3851485965562707118}
+  enableDebugLog: 1
+  debugLogInterval: 0.2
 --- !u!114 &6857672174403021485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2386,7 +2388,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4174158465660255707, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
       propertyPath: m_Size
-      value: 0.9999966
+      value: 0.9994737
       objectReference: {fileID: 0}
     - target: {fileID: 4558968507453773187, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
       propertyPath: m_AnchorMax.x
@@ -2410,7 +2412,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4905293765551762347, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.000015258789
+      value: 0.000289917
       objectReference: {fileID: 0}
     - target: {fileID: 7800088331860383036, guid: a8bb06a09375e8848ab983881d47ecb0, type: 3}
       propertyPath: prevIsReverse
