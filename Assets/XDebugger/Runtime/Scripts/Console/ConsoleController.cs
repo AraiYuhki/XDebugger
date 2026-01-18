@@ -51,6 +51,7 @@ namespace Xeon.XDebugger.Console
         ILogDataBuffer logDataBuffer;
         private FlyweightScrollViewController<LogItemData, LogItem> controller;
         private bool isInitialized = false;
+        private LogItemData? selectedLogItemData = null;
 
         private void Awake()
         {
@@ -133,6 +134,7 @@ namespace Xeon.XDebugger.Console
 
         private void OnChangedSelectItem(LogItemData data)
         {
+            selectedLogItemData = data;
             detailLabel.text = data.ToString();
         }
 
@@ -152,6 +154,40 @@ namespace Xeon.XDebugger.Console
             OnAddInfoLog(0);
             OnAddWarningLog(0);
             OnAddErrorLog(0);
+        }
+
+        /// <summary>
+        /// 選択中のメッセージをクリップボードにコピーします。
+        /// </summary>
+        public void CopySelectedMessageToClipboard()
+        {
+            if (selectedLogItemData == null)
+            {
+                Debug.LogWarning("No message selected to copy.");
+                return;
+            }
+
+            var data = selectedLogItemData.Value;
+            var plainText = GetPlainTextFromLogItemData(data);
+            GUIUtility.systemCopyBuffer = plainText;
+        }
+
+        /// <summary>
+        /// LogItemDataからカラータグを除去したプレーンテキストを取得します。
+        /// </summary>
+        private string GetPlainTextFromLogItemData(LogItemData data)
+        {
+            var prefix = data.Type switch
+            {
+                LogType.Log => "[info]",
+                LogType.Warning => "[warning]",
+                LogType.Error => "[error]",
+                LogType.Exception => "[exception]",
+                LogType.Assert => "[assert]",
+                _ => "[unknown]"
+            };
+
+            return $"{prefix} {data.Contents}\nStack trace: {data.StackTrace}";
         }
 
 #if UNITY_EDITOR
