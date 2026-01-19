@@ -12,10 +12,10 @@ namespace Xeon.XDebugger.Model
         private bool isOn = false;
         private Action<bool> onChangedValue;
 
-        public bool IsOn
+        public bool Value
         {
             get => isOn;
-            set => SetIsOn(value, false);
+            set => SetValue(value, false);
         }
 
         public BoolModel(string title, bool isOn, Action<bool> onChangedValue, int priority = 0) : base(title, priority)
@@ -42,9 +42,9 @@ namespace Xeon.XDebugger.Model
             return control;
         }
 
-        public void NotifyValueChangedFromView(bool newValue) => SetIsOn(newValue, true);
+        public void NotifyValueChangedFromView(bool newValue) => SetValue(newValue, true);
 
-        private void SetIsOn(bool newValue, bool notifyCallback)
+        public void SetValue(bool newValue, bool notifyCallback)
         {
             if (isOn == newValue)
                 return;

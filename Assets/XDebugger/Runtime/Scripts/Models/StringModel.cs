@@ -8,7 +8,7 @@ namespace Xeon.XDebugger.Model
     public class StringModel : ControlModelBase
     {
         protected override string prefabAddress => $"XDebugger/{nameof(StringControl)}";
-        
+
         private string text = string.Empty;
         private Action<string> onChangedValue;
 
@@ -18,7 +18,7 @@ namespace Xeon.XDebugger.Model
             set => SetText(value, false);
         }
 
-        public StringModel(string title, string text, Action<string> onChangedValue, int priority = 0) :base(title, priority)
+        public StringModel(string title, string text, Action<string> onChangedValue, int priority = 0) : base(title, priority)
         {
             Initialize(text, onChangedValue);
         }
@@ -44,7 +44,7 @@ namespace Xeon.XDebugger.Model
 
         public void NotifyTextChangedFromView(string newValue) => SetText(newValue, true);
 
-        private void SetText(string newValue, bool notifyCallback)
+        public void SetText(string newValue, bool notifyCallback)
         {
             if (text == newValue)
                 return;

@@ -1,5 +1,3 @@
-using Xeon.XDebugger.UI;
-
 namespace Xeon.XDebugger.Model
 {
     public class MockNavigationPageModel : PageModel
@@ -8,9 +6,8 @@ namespace Xeon.XDebugger.Model
         {
         }
 
-        public override void Initialize(IUIFactory uiFactory)
+        protected override void InitializeInternal()
         {
-            base.Initialize(uiFactory);
             AddLabel("This is a mock page for navigation checks.");
             AddButton("Back to Default Page", () => XDebugger.Instance.ClosePage(this));
         }

@@ -20,7 +20,7 @@ namespace Xeon.XDebugger.Model
 
         public int Min => min;
         public int Max => max;
-        
+
         public IntSliderModel(string title, int value, int min, int max, Action<int> onChangedValue, int priority = 0)
             : base(title, priority)
         {
@@ -64,7 +64,7 @@ namespace Xeon.XDebugger.Model
 
         public void NotifyValueChangedFromView(int newValue) => SetValue(newValue, true);
 
-        private void SetValue(int newValue, bool notifyCallback)
+        public void SetValue(int newValue, bool notifyCallback)
         {
             if (value == newValue)
                 return;

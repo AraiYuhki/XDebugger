@@ -68,7 +68,8 @@ namespace Xeon.XDebugger.Common
 
         public void Setup(UIFactoryBase uiFactory, TabButton tabButtonPrefab, StaticPageControl[] pageList, Action<string> onChangedTitle)
         {
-            foreach (var tab in tabList)
+            foreach (var tab in 
+            )
             {
                 Destroy(tab.TabButton);
                 Destroy(tab.Content);

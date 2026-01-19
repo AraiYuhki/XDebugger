@@ -40,7 +40,7 @@ namespace Xeon.XDebugger.Common
 
         [SerializeField]
         private float holdTimeForShow;
-        
+
         [SerializeField]
         private UIFactoryBase uiFactory;
 

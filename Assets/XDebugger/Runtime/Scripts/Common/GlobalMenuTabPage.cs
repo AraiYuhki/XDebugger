@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
+using Xeon.XDebugger.Common;
+using Xeon.XDebugger.Editor.Model;
 
 namespace Xeon.XDebugger.Control
 {
     /// <summary>
     /// グローバルメニュータブ。Awakeで設定されたPageModelから自動で単一のページを生成・表示します。
     /// </summary>
-    public class GlobalMenuTabPage : StaticPageControl
+    public class GlobalMenuTabPage : StaticPageControl, IGetPageModel
     {
         [SerializeField]
         private Transform content;
@@ -15,7 +17,7 @@ namespace Xeon.XDebugger.Control
         [SerializeField]
         private ScriptablePageModel pageModel;
 
-        private ScriptablePageModel displayedPage;
+        public IPageModel GetPageModel() => pageModel;
 
         private void Awake()
         {
@@ -37,9 +39,13 @@ namespace Xeon.XDebugger.Control
                 return;
             }
 
-            displayedPage = pageModel;
-            displayedPage.Initialize(uiFactory);
-            displayedPage.OpenPage(content, uiFactory);
+            if (pageModel == null)
+            {
+                Debug.LogError("PageModel is not set. Please ensure global menu tab page prefab has a PageModel assigned.");
+                return;
+            }
+            pageModel.Initialize(uiFactory);
+            pageModel.OpenPage(content, uiFactory);
         }
 
         /// <summary>
@@ -47,16 +53,9 @@ namespace Xeon.XDebugger.Control
         /// </summary>
         public void RefreshPage()
         {
-            if (displayedPage != null)
-            {
-                displayedPage.Refresh();
-            }
+            if (pageModel != null)
+                pageModel.Refresh();
         }
-
-        /// <summary>
-        /// 表示中のページを取得
-        /// </summary>
-        public IPageModel GetDisplayedPage() => displayedPage;
 
         /// <summary>
         /// UIFactoryを設定
@@ -65,14 +64,14 @@ namespace Xeon.XDebugger.Control
         {
             base.SetUIFactory(uiFactory);
             // UIFactoryが設定された後、pageModelが設定されているがまだ表示されていない場合は初期化
-            if (pageModel != null && content != null && displayedPage == null)
+            if (pageModel != null && content != null)
             {
                 CreateAndDisplayPage();
             }
             // 既にページが表示されている場合は再生成
-            else if (displayedPage != null && content != null)
+            else if (pageModel != null && content != null)
             {
-                displayedPage.Close();
+                pageModel.Close();
                 CreateAndDisplayPage();
             }
         }
@@ -82,10 +81,8 @@ namespace Xeon.XDebugger.Control
         /// </summary>
         public void SetPageModel(ScriptablePageModel model)
         {
-            if (displayedPage != null)
-            {
-                displayedPage.Close();
-            }
+            if (pageModel != null)
+                pageModel.Close();
 
             pageModel = model;
             if (content != null && uiFactory != null)

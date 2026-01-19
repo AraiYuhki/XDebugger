@@ -85,6 +85,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3da1e5f74a94a9418499058079d741b
+    m_Address: XDebugger
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: e561d64bb3e833047bd7f298c829d5f9, type: 2}
   m_SchemaSet:

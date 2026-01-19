@@ -10,7 +10,7 @@ namespace Xeon.XDebugger.Model
         IGroupModel Parent { get; }
         string Title { get; }
         int Priority { get; }
-        IReadOnlyCollection<ControlModelBase> Children { get; }
+        IReadOnlyList<ControlModelBase> Children { get; }
         void AddChild(ControlModelBase model);
         ControlBase CreateControl(Transform parent, IUIFactory uiFactory);
     }

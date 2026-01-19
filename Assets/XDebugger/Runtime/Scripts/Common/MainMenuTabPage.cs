@@ -4,14 +4,15 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Xeon.XDebugger.Model;
-using Xeon.XDebugger.UI;
+using Xeon.XDebugger.Common;
+using Xeon.XDebugger.Editor.Model;
 
 namespace Xeon.XDebugger.Control
 {
     /// <summary>
     /// メインメニュータブ。ページスタック管理と動的ページ表示を担当します。
     /// </summary>
-    public class MainMenuTabPage : StaticPageControl, IMainMenuTabPage
+    public class MainMenuTabPage : StaticPageControl, IMainMenuTabPage, IGetPageModel
     {
         [SerializeField]
         private Transform content;
@@ -21,6 +22,8 @@ namespace Xeon.XDebugger.Control
 
         // ページが変更された時のイベント
         public event Action<PageModel> OnPageChanged;
+
+        public IPageModel GetPageModel() => currentPage;
 
         private List<PageModel> pageStack = new();
         private PageModel currentPage;

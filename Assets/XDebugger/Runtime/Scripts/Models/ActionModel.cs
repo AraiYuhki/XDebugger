@@ -9,8 +9,8 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(ActionControl)}";
 
-        private ActionControl control;
-        private Action action;
+        protected ActionControl control;
+        protected Action action;
 
         public ActionModel(string title, Action action, int priority = 0) : base(title, priority)
         {

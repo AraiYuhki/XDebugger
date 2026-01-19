@@ -11,10 +11,8 @@ namespace Xeon.XDebugger.Model
     [CreateAssetMenu(fileName = "DemoScriptablePage", menuName = "XDebugger/Demo Scriptable Page")]
     public class DemoScriptablePageModel : ScriptablePageModel
     {
-        public override void Initialize(IUIFactory uiFactory)
+        protected override void InitializeInternal()
         {
-            base.Initialize(uiFactory);
-
             // デモ用のコンテンツを生成
             CreateDemoContent();
         }

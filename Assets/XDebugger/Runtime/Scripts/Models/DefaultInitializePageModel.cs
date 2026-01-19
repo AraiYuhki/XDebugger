@@ -1,6 +1,3 @@
-using System;
-using Xeon.XDebugger.UI;
-
 namespace Xeon.XDebugger.Model
 {
     public class DefaultInitializePageModel : PageModel
@@ -34,10 +31,9 @@ namespace Xeon.XDebugger.Model
         public DefaultInitializePageModel() : base("Initial Page")
         {
         }
-        
-        public override void Initialize(IUIFactory uiFactory)
+
+        protected override void InitializeInternal()
         {
-            base.Initialize(uiFactory);
             AddLabel("PageModel Feature Check");
             refreshLabel = AddLabel($"Refresh Count : {refreshCount}");
             statusLabel = AddLabel(BuildStatusLabel());

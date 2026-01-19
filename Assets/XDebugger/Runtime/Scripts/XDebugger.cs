@@ -6,7 +6,8 @@ using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 using System.Linq;
-
+using System.Collections.Generic;
+using UnityEngine.AddressableAssets;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -41,7 +42,35 @@ namespace Xeon.XDebugger
         /// <summary>
         /// シングルトンインスタンス取得
         /// </summary>
-        public static XDebugger Instance => instance;
+        public static XDebugger Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    var prefab = Addressables.LoadAssetAsync<GameObject>(nameof(XDebugger)).WaitForCompletion();
+                    if (prefab == null)
+                    {
+                        Debug.LogError("XDebugger prefab not found in Addressables.");
+                        return null;
+                    }
+                    var go = Instantiate(prefab);
+                    if (go == null)
+                    {
+                        Debug.LogError("Failed to instantiate XDebugger prefab.");
+                        return null;
+                    }
+                    instance = go.GetComponent<XDebugger>();
+
+                    if (instance == null)
+                    {
+                        Debug.LogError("XDebugger component not found on instantiated prefab.");
+                        return null;
+                    }
+                }
+                return instance;
+            }
+        }
         private static PageModel initialPage;
 
         [SerializeField]
@@ -63,14 +92,22 @@ namespace Xeon.XDebugger
         private Button trigger;
 
         private bool isShow = false; // メニュー表示状態
-        
+
         // タップ系の状態管理
         private float tapElapsedTime = 0f; // タップ入力の経過時間
         private int clickedCount = 0;   // クリック回数カウント
-        
+
         // ホールド系の状態管理
         private float holdStartTime = 0f; // ホールド開始時間
         private bool isHolding = false; // ホールド中かどうか
+
+        private bool isInitialized = false;
+
+        public IReadOnlyList<TabData> TabList => tabController?.TabList;
+
+        public string Title => titleLabel.text;
+
+        public UIFactoryBase UIFactory => setting.UIFactory;
 
         /// <summary>
         /// UIFactoryを設定（依存注入用）
@@ -83,7 +120,7 @@ namespace Xeon.XDebugger
 
             tabController.SetUIFactory(uiFactory);
         }
-        
+
         /// <summary>
         /// インスタンス初期化。シングルトン化と初期状態設定。
         /// </summary>
@@ -97,7 +134,7 @@ namespace Xeon.XDebugger
             instance = this;
             mainObject.SetActive(false);
             isShow = false;
-            
+
             TabController.PreInitialize();
 
             DontDestroyOnLoad(gameObject); // シーン切り替えでも破棄しない
@@ -112,6 +149,7 @@ namespace Xeon.XDebugger
             }
             tabController.Setup(setting.UIFactory, setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
             InitializeTrigger();
+            isInitialized = true;
         }
 
         private void InitializeTrigger()
@@ -194,14 +232,14 @@ namespace Xeon.XDebugger
         public void OnClickTrigger()
         {
             if (setting == null) return;
-            
+
             var triggerMode = setting.TriggerMode;
             if (triggerMode != TriggerMode.DoubleTap && triggerMode != TriggerMode.TripleTap)
                 return;
 
             tapElapsedTime = 0f;
             clickedCount++;
-            
+
             int requiredClicks = triggerMode == TriggerMode.DoubleTap ? 2 : 3;
             if (clickedCount >= requiredClicks)
             {
@@ -215,7 +253,7 @@ namespace Xeon.XDebugger
             if (setting == null) return;
 
             var triggerMode = setting.TriggerMode;
-            
+
             // タップ系の処理
             if (triggerMode == TriggerMode.DoubleTap || triggerMode == TriggerMode.TripleTap)
             {
