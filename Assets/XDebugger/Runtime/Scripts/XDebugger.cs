@@ -1,14 +1,13 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
-using System.Linq;
-using System.Collections.Generic;
-using UnityEngine.AddressableAssets;
-
+using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -101,8 +100,6 @@ namespace Xeon.XDebugger
         private float holdStartTime = 0f; // ホールド開始時間
         private bool isHolding = false; // ホールド中かどうか
 
-        private bool isInitialized = false;
-
         public IReadOnlyList<TabData> TabList => tabController?.TabList;
 
         public string Title => titleLabel.text;
@@ -149,7 +146,6 @@ namespace Xeon.XDebugger
             }
             tabController.Setup(setting.UIFactory, setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
             InitializeTrigger();
-            isInitialized = true;
         }
 
         private void InitializeTrigger()
@@ -304,9 +300,9 @@ namespace Xeon.XDebugger
         private bool HandleMobileHoldModeForInputSystem(int requiredFingers)
         {
             return Touchscreen.current.touches.Count(touch => touch.phase.value
-                is UnityEngine.InputSystem.TouchPhase.Stationary
-                or UnityEngine.InputSystem.TouchPhase.Moved
-                or UnityEngine.InputSystem.TouchPhase.Began) >= requiredFingers;
+                is TouchPhase.Stationary
+                or TouchPhase.Moved
+                or TouchPhase.Began) >= requiredFingers;
         }
 #endif
 

@@ -39,6 +39,8 @@ namespace Xeon.XDebugger.Common
 
         private Action<string> onChangedTitle;
 
+        public IReadOnlyList<TabData> TabList => tabList;
+
         public static void PreInitialize()
         {
             Application.logMessageReceived += OnReceivedLogMessage;
