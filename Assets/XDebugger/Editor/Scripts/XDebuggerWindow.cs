@@ -22,6 +22,8 @@ namespace Xeon.XDebugger.Editor
         [MenuItem("Window/XDebugger")]
         public static void Open() => GetWindow<XDebuggerWindow>("XDebugger");
 
+        private static GUIStyle groupBoxStyle;
+
         private XDebugger instance;
         private int selectedTabIndex = 0;
         private Vector2 scrollPosition;
@@ -123,9 +125,21 @@ namespace Xeon.XDebugger.Editor
 
         #region Draw Groups
 
+        private static GUIStyle GroupBoxStyle => groupBoxStyle ??= new GUIStyle(GUI.skin.box)
+        {
+            padding = new RectOffset(8, 8, 6, 6)
+        };
+
+        private static void DrawGroupHeader(string title)
+        {
+            if (!string.IsNullOrEmpty(title))
+                EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+        }
+
         private void DrawHorizontalGroup(HorizontalGroupModel groupModel)
         {
-            using var scope = new EditorGUILayout.HorizontalScope(groupModel.Title);
+            using var scope = new EditorGUILayout.HorizontalScope(GroupBoxStyle);
+            DrawGroupHeader(groupModel.Title);
             foreach (var model in groupModel.Children)
             {
                 DrawModel(model);
@@ -134,7 +148,8 @@ namespace Xeon.XDebugger.Editor
 
         private void DrawVerticalGroup(VerticalGroupModel groupModel)
         {
-            using var scope = new EditorGUILayout.VerticalScope(groupModel.Title);
+            using var scope = new EditorGUILayout.VerticalScope(GroupBoxStyle);
+            DrawGroupHeader(groupModel.Title);
             foreach (var model in groupModel.Children)
             {
                 DrawModel(model);
@@ -143,26 +158,29 @@ namespace Xeon.XDebugger.Editor
 
         private void DrawFoldingGroup(FoldingGroupModel groupModel)
         {
+            using var scope = new EditorGUILayout.VerticalScope(GroupBoxStyle);
             var isFoldout = !groupModel.IsFolding;
-            var newIsFoldout = EditorGUILayout.Foldout(isFoldout, groupModel.Title);
+            var newIsFoldout = EditorGUILayout.Foldout(isFoldout, groupModel.Title, true);
             if (newIsFoldout != isFoldout)
             {
                 groupModel.IsFolding = !newIsFoldout;
             }
             if (groupModel.IsFolding)
                 return;
-            EditorGUI.indentLevel++;
-            foreach (var model in groupModel.Children)
+            using (new EditorGUI.IndentLevelScope())
             {
-                DrawModel(model);
+                foreach (var model in groupModel.Children)
+                {
+                    DrawModel(model);
+                }
             }
-            EditorGUI.indentLevel--;
         }
 
         private void DrawDisableGroup(DisableGroupModel groupModel)
         {
             using var scope = new EditorGUI.DisabledGroupScope(groupModel.IsDisabled);
-            EditorGUILayout.LabelField(groupModel.Title, EditorStyles.boldLabel);
+            using var boxScope = new EditorGUILayout.VerticalScope(GroupBoxStyle);
+            DrawGroupHeader(groupModel.Title);
             foreach (var model in groupModel.Children)
             {
                 DrawModel(model);
@@ -178,13 +196,17 @@ namespace Xeon.XDebugger.Editor
 
         private void DrawButton(ActionModel model)
         {
-            if (GUILayout.Button(model.Title))
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.IndentedRect(rect);
+            if (GUI.Button(rect, model.Title))
                 model.ExecuteMethod();
         }
 
         private void DrawPageLinkButton(PageLinkActionModel model)
         {
-            if (GUILayout.Button(model.Title))
+            var rect = EditorGUILayout.GetControlRect();
+            rect = EditorGUI.IndentedRect(rect);
+            if (GUI.Button(rect, model.Title))
             {
                 pageStack.Add(currentPageModel);
                 currentPageModel = model.PageModel;
