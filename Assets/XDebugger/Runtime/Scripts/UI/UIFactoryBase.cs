@@ -26,7 +26,7 @@ namespace Xeon.XDebugger.UI
         [SerializeField]
         protected DropdownControl dropdownControlPrefab;
 
-        [Header("Groupd")]
+        [Header("Groups")]
         [SerializeField]
         protected ContentGroup verticalGroupPrefab;
         [SerializeField]

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,6 +25,19 @@ namespace Xeon.XDebugger
         private static readonly int OpenId = Animator.StringToHash("Open");
         private static readonly int CloseId = Animator.StringToHash("Close");
         private static XDebugger instance;
+
+        // TriggerPositionに対応するアンカー設定
+        private static readonly Dictionary<TriggerPosition, Vector2> AnchorSettings = new()
+        {
+            { TriggerPosition.TopLeft, new Vector2(0, 1) },
+            { TriggerPosition.TopCenter, new Vector2(0.5f, 1) },
+            { TriggerPosition.TopRight, new Vector2(1, 1) },
+            { TriggerPosition.MiddleLeft, new Vector2(0, 0.5f) },
+            { TriggerPosition.MiddleRight, new Vector2(1, 0.5f) },
+            { TriggerPosition.BottomLeft, new Vector2(0, 0) },
+            { TriggerPosition.BottomCenter, new Vector2(0.5f, 0) },
+            { TriggerPosition.BottomRight, new Vector2(1, 0) },
+        };
 
         /// <summary>
         /// シングルトンインスタンス取得
@@ -149,56 +163,13 @@ namespace Xeon.XDebugger
 
             var rectTransform = trigger.GetComponent<RectTransform>();
 
-            switch (setting.TriggerPosition)
+            if (AnchorSettings.TryGetValue(setting.TriggerPosition, out var anchor))
             {
-                case TriggerPosition.TopLeft:
-                    rectTransform.anchorMin = new Vector2(0, 1);
-                    rectTransform.anchorMax = new Vector2(0, 1);
-                    rectTransform.pivot = new Vector2(0, 1);
-                    break;
-
-                case TriggerPosition.TopCenter:
-                    rectTransform.anchorMin = new Vector2(0.5f, 1);
-                    rectTransform.anchorMax = new Vector2(0.5f, 1);
-                    rectTransform.pivot = new Vector2(0.5f, 1);
-                    break;
-
-                case TriggerPosition.TopRight:
-                    rectTransform.anchorMin = new Vector2(1, 1);
-                    rectTransform.anchorMax = new Vector2(1, 1);
-                    rectTransform.pivot = new Vector2(1, 1);
-                    break;
-
-                case TriggerPosition.MiddleLeft:
-                    rectTransform.anchorMin = new Vector2(0, 0.5f);
-                    rectTransform.anchorMax = new Vector2(0, 0.5f);
-                    rectTransform.pivot = new Vector2(0, 0.5f);
-                    break;
-
-                case TriggerPosition.MiddleRight:
-                    rectTransform.anchorMin = new Vector2(1, 0.5f);
-                    rectTransform.anchorMax = new Vector2(1, 0.5f);
-                    rectTransform.pivot = new Vector2(1, 0.5f);
-                    break;
-
-                case TriggerPosition.BottomLeft:
-                    rectTransform.anchorMin = new Vector2(0, 0);
-                    rectTransform.anchorMax = new Vector2(0, 0);
-                    rectTransform.pivot = new Vector2(0, 0);
-                    break;
-
-                case TriggerPosition.BottomCenter:
-                    rectTransform.anchorMin = new Vector2(0.5f, 0);
-                    rectTransform.anchorMax = new Vector2(0.5f, 0);
-                    rectTransform.pivot = new Vector2(0.5f, 0);
-                    break;
-
-                case TriggerPosition.BottomRight:
-                    rectTransform.anchorMin = new Vector2(1, 0);
-                    rectTransform.anchorMax = new Vector2(1, 0);
-                    rectTransform.pivot = new Vector2(1, 0);
-                    break;
+                rectTransform.anchorMin = anchor;
+                rectTransform.anchorMax = anchor;
+                rectTransform.pivot = anchor;
             }
+
             rectTransform.anchoredPosition = Vector2.zero;
         }
 

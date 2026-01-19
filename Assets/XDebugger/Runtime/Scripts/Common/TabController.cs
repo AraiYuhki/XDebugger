@@ -39,18 +39,12 @@ namespace Xeon.XDebugger.Common
 
         private Action<string> onChangedTitle;
 
-        private static float elapsed = 1f;
-
-        public IReadOnlyList<TabData> TabList => tabList;
-
         public static void PreInitialize()
         {
             Application.logMessageReceived += OnReceivedLogMessage;
-            Application.onBeforeRender += InternalUpdate;
             Application.quitting += () =>
             {
                 Application.logMessageReceived -= OnReceivedLogMessage;
-                Application.onBeforeRender -= InternalUpdate;
             };
         }
 
@@ -74,7 +68,8 @@ namespace Xeon.XDebugger.Common
 
         public void Setup(UIFactoryBase uiFactory, TabButton tabButtonPrefab, StaticPageControl[] pageList, Action<string> onChangedTitle)
         {
-            foreach (var tab in tabList)
+            foreach (var tab in 
+            )
             {
                 Destroy(tab.TabButton);
                 Destroy(tab.Content);
@@ -190,25 +185,6 @@ namespace Xeon.XDebugger.Common
             {
                 tab.Content.SetUIFactory(uiFactory);
             }
-        }
-
-        private static void InternalUpdate()
-        {
-            elapsed -= Time.deltaTime;
-            if (elapsed > 0f) return;
-            switch (UnityEngine.Random.Range(0, 3))
-            {
-                case 0:
-                    Debug.Log($"Test log {logDataList.InfoCount}");
-                    break;
-                case 1:
-                    Debug.LogWarning($"Test warning {logDataList.WarnCount}");
-                    break;
-                default:
-                    Debug.LogError($"Test error {logDataList.ErrorCount}");
-                    break;
-            }
-            elapsed = 1f;
         }
 
         private static void OnReceivedLogMessage(string condition, string stackTrace, LogType type)

@@ -8,7 +8,7 @@ namespace Xeon.XDebugger.Model
     public abstract class GroupModel : ControlModelBase, IGroupModel
     {
         protected List<ControlModelBase> children = new();
-        protected List<ControlBase> childrenControlls = new();
+        protected List<ControlBase> childrenControls = new();
 
         public GroupModel(string title, int priority = 0) : base(title, priority)
         {
@@ -35,11 +35,11 @@ namespace Xeon.XDebugger.Model
 
         protected void ResetChildren(ContentGroup control, IUIFactory uiFactory)
         {
-            childrenControlls.Clear();
+            childrenControls.Clear();
 
             foreach (var child in children)
             {
-                childrenControlls.Add(child.CreateControl(control.GetContent(), uiFactory));
+                childrenControls.Add(child.CreateControl(control.GetContent(), uiFactory));
             }
         }
     }
