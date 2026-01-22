@@ -2,47 +2,130 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Xeon.Common.FlyweightScrollView
 {
+    /// <summary>
+    /// Flyweightスクロールビューコントローラーの基底クラス
+    /// アイテムの生成、再配置、スクロール位置の管理などのコア機能を提供する
+    /// </summary>
     public abstract class FlyweightScrollViewControllerBase : IDisposable
     {
         // ====================================================================================================
         // Fields & Properties
         // ====================================================================================================
 
-        // Fields
+        /// <summary>
+        /// 表示中のアイテムを管理するリンクリスト
+        /// 先頭・末尾からの追加・削除がO(1)で行えるため、スクロール時の再配置に適しています
+        /// </summary>
         private LinkedList<FlyweightScrollViewItemBase> itemList = new();
+
+        /// <summary>
+        /// アイテム数が変更されたときに呼び出されるコールバック
+        /// </summary>
         private Action<int> onChangedItemCount;
 
+        /// <summary>
+        /// 現在のスクロール位置（0.0〜1.0の正規化された値）
+        /// </summary>
         protected float scrollPosition = 0f;
+
+        /// <summary>
+        /// 表示中のアイテムの先頭インデックス
+        /// </summary>
         protected int headIndex = 0;
+
+        /// <summary>
+        /// 表示中のアイテムの末尾インデックス
+        /// </summary>
         protected int tailIndex = 0;
 
-        // Setupで初期化される変数
+        /// <summary>
+        /// アイテムのサイズ。Setupで初期化されます
+        /// </summary>
         protected Vector2 itemSize;
+
+        /// <summary>
+        /// スクロールビューコンポーネント
+        /// </summary>
         protected ScrollRect scrollView;
+
+        /// <summary>
+        /// スクロールビューのパラメータ設定
+        /// </summary>
         protected FlyweightScrollViewParam param;
+
+        /// <summary>
+        /// ビューポートのRectTransform
+        /// </summary>
         protected RectTransform viewPort => param.ViewPort;
+
+        /// <summary>
+        /// コンテンツコンテナのRectTransform
+        /// </summary>
         protected RectTransform container;
+
+        /// <summary>
+        /// コンテンツのパディング
+        /// </summary>
         protected RectOffset padding => param.Padding;
+
+        /// <summary>
+        /// アイテム間のスペース
+        /// </summary>
         protected float spacing => param.Spacing;
+
+        /// <summary>
+        /// 子アイテムのサイズを自動制御するかどうか
+        /// </summary>
         protected bool isControlChildSize => param.IsControlChildSize;
+
+        /// <summary>
+        /// 逆順表示モードかどうか
+        /// </summary>
         protected bool isReverse => param.IsReverse;
+
+        /// <summary>
+        /// 末尾固定モードかどうか
+        /// </summary>
         protected bool isAtLastSticky => param.IsAtLastSticky;
 
+        /// <summary>
+        /// 垂直方向の配置設定
+        /// </summary>
         protected VerticalAlignment verticalAlignment;
+
+        /// <summary>
+        /// 水平方向の配置設定
+        /// </summary>
         protected HorizontalAlignment horizontalAlignment;
 
+        /// <summary>
+        /// スクロール位置が末尾かどうか
+        /// </summary>
         protected bool isPositionLast = false;
+
+        /// <summary>
+        /// アイテム数変更処理中かどうか
+        /// </summary>
         protected bool isItemCountChanging = false;
+
+        /// <summary>
+        /// レイアウト計算を行うレイアウター
+        /// </summary>
         protected Layouter layouter;
 
-        // Properties
+        /// <summary>
+        /// データソースの総アイテム数
+        /// </summary>
         public abstract int ItemCount { get; }
+
+        /// <summary>
+        /// 再描画が必要かどうかのフラグ
+        /// </summary>
         public bool IsDirty { get; set; }
 
 
@@ -50,8 +133,15 @@ namespace Xeon.Common.FlyweightScrollView
         // Constructor
         // ====================================================================================================
 
+        /// <summary>
+        /// デフォルトコンストラクタ
+        /// </summary>
         public FlyweightScrollViewControllerBase() { }
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="onChangedItemCount">アイテム数が変更されたときに呼び出されるコールバック</param>
         public FlyweightScrollViewControllerBase(Action<int> onChangedItemCount = null)
         {
             this.onChangedItemCount = onChangedItemCount;
@@ -63,9 +153,13 @@ namespace Xeon.Common.FlyweightScrollView
         // ====================================================================================================
 
         /// <summary>
-        /// スクロールビューを初期化します。
+        /// 垂直スクロール用にスクロールビューを初期化します
         /// </summary>
-        public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
+        /// <param name="scrollView">ScrollRectコンポーネント</param>
+        /// <param name="param">スクロールビューのパラメータ</param>
+        /// <param name="container">コンテンツコンテナのRectTransform</param>
+        /// <param name="alignment">水平方向の配置設定</param>
+        public virtual void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
         {
             this.scrollView = scrollView;
             this.container = container;
@@ -77,9 +171,13 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// スクロールビューを初期化します。
+        /// 水平スクロール用にスクロールビューを初期化します
         /// </summary>
-        public void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, VerticalAlignment alignment)
+        /// <param name="scrollView">ScrollRectコンポーネント</param>
+        /// <param name="param">スクロールビューのパラメータ</param>
+        /// <param name="container">コンテンツコンテナのRectTransform</param>
+        /// <param name="alignment">垂直方向の配置設定</param>
+        public virtual void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, VerticalAlignment alignment)
         {
             this.scrollView = scrollView;
             this.container = container;
@@ -90,6 +188,10 @@ namespace Xeon.Common.FlyweightScrollView
             UpdateViewportSize();
         }
 
+        /// <summary>
+        /// ビューポートサイズが変更された際の更新処理
+        /// 必要なアイテム数を再計算し、アイテムを再生成します
+        /// </summary>
         public void UpdateViewportSize()
         {
             tailIndex = layouter.GetTailIndex();
@@ -99,8 +201,11 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// スクロール位置に応じてビューを更新します。
+        /// スクロール位置に応じてビューを更新します
         /// </summary>
+        /// <param name="isNext">次方向（下/右）にスクロールしているかどうか</param>
+        /// <param name="normalizedPosition">正規化されたスクロール位置（0.0〜1.0）</param>
+        /// <param name="isPositionLast">スクロール位置が末尾かどうか</param>
         public void Update(bool isNext, float normalizedPosition, bool isPositionLast)
         {
             scrollPosition = normalizedPosition;
@@ -118,7 +223,7 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// 現在のインデックスに基づいてビュー全体を再描画します。
+        /// 現在のインデックスに基づいてビュー全体を再描画します
         /// </summary>
         public void UpdateView()
         {
@@ -139,6 +244,9 @@ namespace Xeon.Common.FlyweightScrollView
             }
         }
 
+        /// <summary>
+        /// スクロール位置を先頭に固定します
+        /// </summary>
         public virtual void FixToHead()
         {
             headIndex = 0;
@@ -146,6 +254,9 @@ namespace Xeon.Common.FlyweightScrollView
             IsDirty = true;
         }
 
+        /// <summary>
+        /// スクロール位置を末尾に固定します
+        /// </summary>
         public virtual void FixToLast()
         {
             tailIndex = ItemCount;
@@ -154,14 +265,16 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// ItemCountが変更された際のコールバックを設定します。
+        /// アイテム数変更時のコールバックを設定します
         /// </summary>
+        /// <param name="onChangedItemCount">アイテム数が変更されたときに呼び出されるコールバック</param>
         public void SetOnChangedItemCount(Action<int> onChangedItemCount)
             => this.onChangedItemCount = onChangedItemCount;
 
         /// <summary>
-        /// アイテム間のスペースを設定し、ビューを更新します。
+        /// アイテム間のスペースを設定し、ビューを更新します
         /// </summary>
+        /// <param name="spacing">アイテム間のスペース（ピクセル）</param>
         public void SetSpacing(float spacing)
         {
             layouter.Spacing = spacing;
@@ -170,6 +283,10 @@ namespace Xeon.Common.FlyweightScrollView
             IsDirty = true;
         }
 
+        /// <summary>
+        /// 水平方向の配置を設定します
+        /// </summary>
+        /// <param name="horizontalAlignment">配置方法</param>
         public void SetHorizontalAlignment(HorizontalAlignment horizontalAlignment)
         {
             this.horizontalAlignment = horizontalAlignment;
@@ -179,6 +296,10 @@ namespace Xeon.Common.FlyweightScrollView
                 item.SetHorizontalAlignment(horizontalAlignment);
         }
 
+        /// <summary>
+        /// 垂直方向の配置を設定します
+        /// </summary>
+        /// <param name="verticalAlignment">配置方法</param>
         public void SetVerticalAlignment(VerticalAlignment verticalAlignment)
         {
             this.verticalAlignment = verticalAlignment;
@@ -188,12 +309,20 @@ namespace Xeon.Common.FlyweightScrollView
                 item.SetVerticalAlignment(verticalAlignment);
         }
 
+        /// <summary>
+        /// 逆順表示モードを設定します
+        /// </summary>
+        /// <param name="isReverse">逆順表示を有効にするかどうか</param>
         public void SetIsReverse(bool isReverse)
         {
             param.IsReverse = isReverse;
             IsDirty = true;
         }
 
+        /// <summary>
+        /// 末尾位置フラグを設定します
+        /// </summary>
+        /// <param name="flag">末尾に固定するかどうか</param>
         public void SetIsPositionLast(bool flag)
         {
             isPositionLast = flag;
@@ -201,6 +330,10 @@ namespace Xeon.Common.FlyweightScrollView
                 FixToLast();
         }
 
+        /// <summary>
+        /// リソースを解放します
+        /// 管理しているすべてのアイテムオブジェクトを破棄します
+        /// </summary>
         public virtual void Dispose()
         {
             if (itemList == null) return;
@@ -214,13 +347,19 @@ namespace Xeon.Common.FlyweightScrollView
             itemList.Clear();
         }
 
+        /// <summary>
+        /// コンテナサイズに合わせたアイテムサイズを取得します
+        /// </summary>
+        /// <returns>パディングを除いたコンテナサイズ</returns>
+        public Vector2 GetFitItemSize() => layouter.GetFitItemSize();
+
 
         // ====================================================================================================
         // Protected Methods (For Derived Classes & Core Logic)
         // ====================================================================================================
 
         /// <summary>
-        /// 下方向にスクロールした際のアイテム再配置処理。
+        /// 下方向にスクロールした際のアイテム再配置処理
         /// </summary>
         protected void RepositionForNext()
         {
@@ -250,7 +389,7 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// 上方向にスクロールした際のアイテム再配置処理。
+        /// 上方向にスクロールした際のアイテム再配置処理
         /// </summary>
         protected void RepositionForPrev()
         {
@@ -280,7 +419,7 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// 総アイテム数が表示可能数に満たない場合の表示更新処理。
+        /// 総アイテム数が表示可能数に満たない場合の表示更新処理
         /// </summary>
         protected void UpdateNotEnoughData()
         {
@@ -301,6 +440,10 @@ namespace Xeon.Common.FlyweightScrollView
             }
         }
 
+        /// <summary>
+        /// アイテムが追加された際の更新処理
+        /// コンテナサイズを更新し、必要に応じて末尾にスクロールします
+        /// </summary>
         private void UpdateForAddItem()
         {
             UpdateContainerSize();
@@ -314,6 +457,10 @@ namespace Xeon.Common.FlyweightScrollView
                 IsDirty = true;
         }
 
+        /// <summary>
+        /// アイテムが削除された際の更新処理
+        /// コンテナサイズを更新し、表示範囲を調整します
+        /// </summary>
         private void UpdateForRemove()
         {
             // アイテム削除時はサイズ更新
@@ -330,12 +477,11 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// データソースのアイテム数が変更されたときに呼び出されるイベントハンドラ。
+        /// データソースのアイテム数が変更されたときに呼び出されるイベントハンドラ
+        /// 不要な再計算を避け、差分のみを更新します
         /// </summary>
-        /// <summary>
-        /// データソースのアイテム数が変更されたときに呼び出されるイベントハンドラ。
-        /// 不要な再計算を避け、差分のみを更新します。
-        /// </summary>
+        /// <param name="sender">イベントの送信元</param>
+        /// <param name="e">変更の詳細情報</param>
         protected void OnChangedItemCount(object sender, NotifyCollectionChangedEventArgs e)
         {
             switch (e.Action)
@@ -374,7 +520,7 @@ namespace Xeon.Common.FlyweightScrollView
 
 
         /// <summary>
-        /// スクロールコンテンツ全体のサイズを更新します。
+        /// スクロールコンテンツ全体のサイズを更新します
         /// </summary>
         public void UpdateContainerSize()
         {
@@ -382,7 +528,7 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// スクロール位置から、表示すべきアイテムの先頭と末尾のインデックスを計算します。
+        /// スクロール位置から、表示すべきアイテムの先頭と末尾のインデックスを計算します
         /// </summary>
         protected (int headIndex, int tailIndex) CalculateIndex()
         {
@@ -394,7 +540,7 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// 指定されたインデックスのアイテムが配置されるべきローカル座標を計算します。
+        /// 指定されたインデックスのアイテムが配置されるべきローカル座標を計算します
         /// </summary>
         protected Vector3 CreatePosition(int index)
         {
@@ -407,7 +553,7 @@ namespace Xeon.Common.FlyweightScrollView
         // ====================================================================================================
 
         /// <summary>
-        /// 内部的な更新処理。
+        /// 内部的な更新処理
         /// </summary>
         private void UpdateInternal()
         {
@@ -417,7 +563,7 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// 表示に必要なアイテムオブジェクトを生成または破棄します。
+        /// 表示に必要なアイテムオブジェクトを生成または破棄します
         /// </summary>
         private void CreateItems()
         {
@@ -453,13 +599,19 @@ namespace Xeon.Common.FlyweightScrollView
         // ====================================================================================================
 
         /// <summary>
-        /// 指定したインデックスに対応するアイテムのインスタンスを生成します。
+        /// 指定したインデックスに対応するアイテムのインスタンスを生成します
+        /// 派生クラスで実装し、具体的なアイテムオブジェクトを生成します
         /// </summary>
+        /// <param name="index">アイテムのインデックス</param>
+        /// <returns>生成されたアイテム</returns>
         protected abstract FlyweightScrollViewItemBase CreateItem(int index);
 
         /// <summary>
-        /// アイテムの表示内容を、指定したインデックスのデータで更新します。
+        /// アイテムの表示内容を、指定したインデックスのデータで更新します
+        /// 派生クラスで実装し、データのバインディングを行います
         /// </summary>
+        /// <param name="index">データのインデックス</param>
+        /// <param name="target">更新対象のアイテム</param>
         protected abstract void OnChangedItemIndex(int index, FlyweightScrollViewItemBase target);
     }
 }

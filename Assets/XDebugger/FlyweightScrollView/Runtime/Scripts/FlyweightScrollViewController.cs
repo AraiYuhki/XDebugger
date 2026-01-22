@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Xeon.Common.FlyweightScrollView
 {
     /// <summary>
-    /// VirtualScrollViewControllerBaseのジェネリックな実装クラス。
+    /// Flyweightスクロールビューコントローラーのジェネリック実装クラス
+    /// データリストとUIアイテムのバインディングを管理します
     /// </summary>
     /// <typeparam name="TData">リストに表示するデータの型</typeparam>
-    /// <typeparam name="TItem">表示に使用するUIアイテムのコンポーネントの型</typeparam>
+    /// <typeparam name="TItem">表示に使用するUIアイテムのコンポーネントの型。IBindable&lt;TData&gt;を実装する必要があります</typeparam>
     public class FlyweightScrollViewController<TData, TItem> : FlyweightScrollViewControllerBase
         where TItem : MonoBehaviour, IBindable<TData>
     {
@@ -16,11 +19,30 @@ namespace Xeon.Common.FlyweightScrollView
         // Fields & Properties
         // ====================================================================================================
 
+        /// <summary>
+        /// 表示するデータのコレクション
+        /// </summary>
         private IObservableCollection<TData> dataList;
+
+        /// <summary>
+        /// アイテムのプレハブ
+        /// </summary>
         private readonly TItem prefab;
 
+        /// <summary>
+        /// サンプルアイテム（サイズ計算用）
+        /// </summary>
+        private FlyweightScrollItem<TItem> sample;
+
+        /// <summary>
+        /// アイテムが生成されたときに発火するイベント
+        /// </summary>
         private event Action<TItem> onItemCreated;
 
+        /// <summary>
+        /// アイテムが生成されたときに発火するイベント
+        /// 重複登録を防ぐため、追加前に一度削除します
+        /// </summary>
         public event Action<TItem> OnItemCreated
         {
             add
@@ -31,6 +53,7 @@ namespace Xeon.Common.FlyweightScrollView
             remove => onItemCreated -= value;
         }
 
+        /// <inheritdoc/>
         public override int ItemCount => dataList == null ? 0 : dataList.Count;
 
 
@@ -38,10 +61,23 @@ namespace Xeon.Common.FlyweightScrollView
         // Constructor
         // ====================================================================================================
 
+        /// <summary>
+        /// ObservableCollectionを使用するコンストラクタ
+        /// 内部でFlyweightScrollViewDataAdapterにラップされます
+        /// </summary>
+        /// <param name="prefab">アイテムのプレハブ</param>
+        /// <param name="dataList">表示するデータのObservableCollection</param>
+        /// <param name="onCreatedItem">アイテム生成時のコールバック</param>
         public FlyweightScrollViewController(TItem prefab, ObservableCollection<TData> dataList, Action<TItem> onCreatedItem) : this(prefab, new FlyweightScrollViewDataAdapter<TData>(dataList), onCreatedItem)
         {
         }
 
+        /// <summary>
+        /// IObservableCollectionを使用するコンストラクタ
+        /// </summary>
+        /// <param name="prefab">アイテムのプレハブ</param>
+        /// <param name="dataList">表示するデータのコレクション</param>
+        /// <param name="onItemCreated">アイテム生成時のコールバック</param>
         public FlyweightScrollViewController(TItem prefab, IObservableCollection<TData> dataList, Action<TItem> onItemCreated = null)
         {
             this.prefab = prefab;
@@ -51,14 +87,25 @@ namespace Xeon.Common.FlyweightScrollView
             this.dataList.CollectionChanged += OnChangedItemCount;
         }
 
-
         // ====================================================================================================
         // Public Methods
         // ====================================================================================================
 
+        /// <inheritdoc/>
+        public override void Setup(ScrollRect scrollView, FlyweightScrollViewParam param, RectTransform container, HorizontalAlignment alignment)
+        {
+            base.Setup(scrollView, param, container, alignment);
+            var sampleObject = GameObject.Instantiate(prefab, container);
+            sample = new FlyweightScrollItem<TItem>(sampleObject, viewPort, horizontalAlignment);
+            sample.gameObject.SetActive(false);
+            layouter.SetItemSize(sample);
+        }
+
         /// <summary>
-        /// 表示するデータリストを差し替えます。
+        /// 表示するデータリストを差し替えます
+        /// 既存のデータリストのイベント登録を解除し、新しいデータリストに登録します
         /// </summary>
+        /// <param name="newDataList">新しいデータコレクション</param>
         public void SetDataList(IObservableCollection<TData> newDataList)
         {
             if (dataList != null)
@@ -69,9 +116,11 @@ namespace Xeon.Common.FlyweightScrollView
             dataList = newDataList;
             dataList.CollectionChanged += OnChangedItemCount;
 
-            OnChangedItemCount(null, null);
+            // データリスト全体が置き換わったことを通知
+            OnChangedItemCount(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
+        /// <inheritdoc/>
         public override void Dispose()
         {
             UpdateContainerSize();
@@ -80,17 +129,30 @@ namespace Xeon.Common.FlyweightScrollView
                 dataList.CollectionChanged -= OnChangedItemCount;
                 dataList = null;
             }
+            if (sample != null)
+            {
+                GameObject.Destroy(sample.gameObject);
+                sample = null;
+            }
 
             base.Dispose();
         }
+
+        /// <summary>
+        /// サンプルアイテムを取得します
+        /// </summary>
+        /// <returns>サンプルアイテムのコンポーネント</returns>
+        public TItem GetSample() => sample.Value;
 
         // ====================================================================================================
         // Protected Overrides (Base Class Implementation)
         // ====================================================================================================
 
         /// <summary>
-        /// プレハブからアイテムのインスタンスを生成します。
+        /// プレハブからアイテムのインスタンスを生成します
         /// </summary>
+        /// <param name="index">アイテムのインデックス</param>
+        /// <returns>生成されたFlyweightScrollItem</returns>
         protected override FlyweightScrollViewItemBase CreateItem(int index)
         {
             var instance = GameObject.Instantiate(prefab, container);
@@ -104,8 +166,11 @@ namespace Xeon.Common.FlyweightScrollView
         }
 
         /// <summary>
-        /// アイテムの表示を、指定したインデックスのデータで更新します。
+        /// アイテムの表示を、指定したインデックスのデータで更新します
+        /// 逆順モードの場合はインデックスを反転させてデータを取得します
         /// </summary>
+        /// <param name="index">データのインデックス</param>
+        /// <param name="target">更新対象のアイテム</param>
         protected override void OnChangedItemIndex(int index, FlyweightScrollViewItemBase target)
         {
             if (target is not FlyweightScrollItem<TItem> item) return;

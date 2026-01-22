@@ -2,26 +2,68 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
 
 namespace Xeon.Common.FlyweightScrollView.Model
 {
+    /// <summary>
+    /// 固定サイズの循環バッファ
+    /// 容量を超えた場合、最も古い要素が自動的に上書きされます
+    /// ログの保存などに適したデータ構造です
+    /// </summary>
+    /// <typeparam name="T">バッファに格納する要素の型</typeparam>
     public class CircularBuffer<T> : IObservableCollection<T>, IReadOnlyList<T>
     {
-        protected T[] buffer;  // バッファ本体
+        /// <summary>
+        /// バッファ本体の配列
+        /// </summary>
+        protected T[] buffer;
 
-        protected int start;   // 先頭インデックス
-        protected int end;     // 次に追加される位置
+        /// <summary>
+        /// 論理的な先頭を指すインデックス
+        /// </summary>
+        protected int start;
 
+        /// <summary>
+        /// 次に追加される位置を指すインデックス
+        /// </summary>
+        protected int end;
+
+        /// <summary>
+        /// コレクションが変更されたときに発火するイベント
+        /// </summary>
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
+        /// <summary>
+        /// バッファの最大容量
+        /// </summary>
         public int Capacity => buffer.Length;
+
+        /// <summary>
+        /// バッファが満杯かどうか
+        /// </summary>
         public bool IsFull => Count == Capacity;
+
+        /// <summary>
+        /// バッファが空かどうか
+        /// </summary>
         public bool IsEmpty => Count == 0;
+
+        /// <summary>
+        /// 現在の要素数
+        /// </summary>
         public int Count { get; protected set; }
 
+        /// <summary>
+        /// 読み取り専用かどうか。常にfalseを返します
+        /// </summary>
         public bool IsReadOnly => false;
 
+        /// <summary>
+        /// 指定したインデックスの要素を取得または設定します
+        /// </summary>
+        /// <param name="index">論理インデックス（0から始まる）</param>
+        /// <returns>指定したインデックスの要素</returns>
+        /// <exception cref="IndexOutOfRangeException">インデックスが範囲外の場合</exception>
         public virtual T this[int index]
         {
             get
@@ -53,6 +95,12 @@ namespace Xeon.Common.FlyweightScrollView.Model
             }
         }
 
+        /// <summary>
+        /// 初期データを指定してバッファを初期化します
+        /// </summary>
+        /// <param name="capacity">バッファの最大容量</param>
+        /// <param name="items">初期データの配列。容量を超える場合は先頭から容量分のみコピーされます</param>
+        /// <exception cref="ArgumentException">容量が1未満の場合</exception>
         public CircularBuffer(int capacity, T[] items)
         {
             if (capacity < 1)
@@ -70,25 +118,37 @@ namespace Xeon.Common.FlyweightScrollView.Model
             end = copyCount % Capacity;
         }
 
+        /// <summary>
+        /// 指定した容量でバッファを初期化します
+        /// </summary>
+        /// <param name="capacity">バッファの最大容量</param>
+        /// <param name="fill">trueの場合、デフォルト値で容量いっぱいまで初期化します</param>
+        /// <exception cref="ArgumentException">容量が1未満の場合</exception>
         public CircularBuffer(int capacity, bool fill = false)
         {
             if (capacity < 1)
                 throw new ArgumentException("容量は1以上でなければなりません。", nameof(capacity));
+
+            buffer = new T[capacity];
+            start = 0;
+            end = 0;
+
             if (fill)
             {
-                buffer = Enumerable.Repeat<T>(default, capacity).ToArray();
+                for (var i = 0; i < capacity; i++)
+                    buffer[i] = default;
                 Count = Capacity;
-                end = buffer.Length / Capacity;
             }
             else
             {
-                buffer = new T[capacity];
                 Count = 0;
             }
-            start = 0;
-            end = 0;
         }
 
+        /// <summary>
+        /// バッファをクリアし、すべての要素を削除します
+        /// </summary>
+        /// <param name="isNotify">変更通知を発火するかどうか</param>
         public virtual void Clear(bool isNotify = true)
         {
             // バッファ全体をクリア
@@ -105,12 +165,22 @@ namespace Xeon.Common.FlyweightScrollView.Model
             }
         }
 
+        /// <summary>
+        /// 先頭の要素を取得します
+        /// </summary>
+        /// <returns>先頭の要素</returns>
+        /// <exception cref="InvalidOperationException">バッファが空の場合</exception>
         public T Front()
         {
             ThrowIfEmpty();
             return buffer[start];
         }
 
+        /// <summary>
+        /// 末尾の要素を取得します
+        /// </summary>
+        /// <returns>末尾の要素</returns>
+        /// <exception cref="InvalidOperationException">バッファが空の場合</exception>
         public T Back()
         {
             ThrowIfEmpty();
@@ -118,14 +188,22 @@ namespace Xeon.Common.FlyweightScrollView.Model
             return buffer[lastIndex];
         }
 
+        /// <summary>
+        /// 末尾に要素を追加します。PushBackのエイリアスです
+        /// </summary>
+        /// <param name="item">追加する要素</param>
+        /// <param name="isNotify">変更通知を発火するかどうか</param>
         public virtual void Add(T item, bool isNotify = true)
         {
             PushBack(item, isNotify);
         }
 
         /// <summary>
-        /// 末尾に要素を追加（満杯の場合は先頭を上書き）
+        /// 末尾に要素を追加します
+        /// バッファが満杯の場合は先頭の要素が上書きされます
         /// </summary>
+        /// <param name="item">追加する要素</param>
+        /// <param name="isNotify">変更通知を発火するかどうか</param>
         public virtual void PushBack(T item, bool isNotify = true)
         {
             if (IsFull)
@@ -164,8 +242,11 @@ namespace Xeon.Common.FlyweightScrollView.Model
         }
 
         /// <summary>
-        /// 先頭に要素を追加（満杯の場合は末尾を上書き）
+        /// 先頭に要素を追加します
+        /// バッファが満杯の場合は末尾の要素が上書きされます
         /// </summary>
+        /// <param name="item">追加する要素</param>
+        /// <param name="isNotify">変更通知を発火するかどうか</param>
         public virtual void PushFront(T item, bool isNotify = true)
         {
             Decrement(ref start);
@@ -200,8 +281,10 @@ namespace Xeon.Common.FlyweightScrollView.Model
         }
 
         /// <summary>
-        /// 末尾の要素を削除
+        /// 末尾の要素を削除します
         /// </summary>
+        /// <param name="isNotify">変更通知を発火するかどうか</param>
+        /// <exception cref="InvalidOperationException">バッファが空の場合</exception>
         public virtual void PopBack(bool isNotify = true)
         {
             ThrowIfEmpty("バッファが空のため、要素を削除できません。");
@@ -223,8 +306,10 @@ namespace Xeon.Common.FlyweightScrollView.Model
         }
 
         /// <summary>
-        /// 先頭の要素を削除
+        /// 先頭の要素を削除します
         /// </summary>
+        /// <param name="isNotify">変更通知を発火するかどうか</param>
+        /// <exception cref="InvalidOperationException">バッファが空の場合</exception>
         public virtual void PopFront(bool isNotify = true)
         {
             ThrowIfEmpty("バッファが空のため、要素を削除できません。");
@@ -244,8 +329,10 @@ namespace Xeon.Common.FlyweightScrollView.Model
         }
 
         /// <summary>
-        /// バッファが空の場合に例外を送出
+        /// バッファが空の場合に例外を送出します
         /// </summary>
+        /// <param name="message">例外メッセージ</param>
+        /// <exception cref="InvalidOperationException">バッファが空の場合</exception>
         private void ThrowIfEmpty(string message = "バッファが空のためアクセスできません。")
         {
             if (!IsEmpty) return;
@@ -253,8 +340,10 @@ namespace Xeon.Common.FlyweightScrollView.Model
         }
 
         /// <summary>
-        /// インデックスを1進める（末尾に達したら0に戻す）
+        /// インデックスを1進めます
+        /// 末尾に達した場合は0に戻ります（循環）
         /// </summary>
+        /// <param name="index">進めるインデックスの参照</param>
         private void Increment(ref int index)
         {
             index++;
@@ -263,8 +352,10 @@ namespace Xeon.Common.FlyweightScrollView.Model
         }
 
         /// <summary>
-        /// インデックスを1戻す（0なら末尾に戻す）
+        /// インデックスを1戻します
+        /// 0の場合は末尾に戻ります（循環）
         /// </summary>
+        /// <param name="index">戻すインデックスの参照</param>
         private void Decrement(ref int index)
         {
             if (index == 0)
@@ -272,6 +363,10 @@ namespace Xeon.Common.FlyweightScrollView.Model
             index--;
         }
 
+        /// <summary>
+        /// コレクションを反復処理する列挙子を返します
+        /// </summary>
+        /// <returns>コレクションの列挙子</returns>
         public IEnumerator<T> GetEnumerator()
         {
             for (var index = 0; index < Count; index++)
@@ -281,6 +376,7 @@ namespace Xeon.Common.FlyweightScrollView.Model
             }
         }
 
+        /// <inheritdoc/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
