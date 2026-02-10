@@ -5,6 +5,9 @@ using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger
 {
+    /// <summary>
+    /// ヘッダークリックでコンテンツの展開・折りたたみができるグループ
+    /// </summary>
     public class FoldingGroup : ContentGroup
     {
         [SerializeField]
@@ -19,12 +22,22 @@ namespace Xeon.XDebugger
             headerButton.onClick.AddListener(OnClickHeader);
         }
 
+        /// <summary>
+        /// グループモデルと初期折りたたみ状態を設定する
+        /// </summary>
+        /// <param name="model">グループのデータモデル</param>
+        /// <param name="parent">親のContentGroup</param>
+        /// <param name="isFolding">trueで初期状態を折りたたみにする</param>
         public void Setup(IGroupModel model, ContentGroup parent, bool isFolding)
         {
             Setup(model, parent);
             SetFolding(isFolding);
         }
 
+        /// <summary>
+        /// 折りたたみ状態を設定し、UIに反映する
+        /// </summary>
+        /// <param name="isFolding">trueで折りたたむ</param>
         public void SetFolding(bool isFolding)
         {
             this.isFolding = isFolding;

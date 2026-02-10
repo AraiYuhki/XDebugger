@@ -4,6 +4,9 @@ using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
+    /// <summary>
+    /// ボタン押下でアクションを実行するコントロール
+    /// </summary>
     public class ActionControl : ControlBase
     {
         [SerializeField]
@@ -11,6 +14,10 @@ namespace Xeon.XDebugger.Control
 
         protected ActionModel model;
 
+        /// <summary>
+        /// アクションモデルを設定し、ボタンにコールバックを登録する
+        /// </summary>
+        /// <param name="model">アクションのデータモデル</param>
         public void Setup(ActionModel model)
         {
             Setup(model.Title);

@@ -8,6 +8,9 @@ using Xeon.XDebugger.Console;
 
 namespace Xeon.XDebugger.Model
 {
+    /// <summary>
+    /// ログ項目を循環バッファで管理し、ログ種別によるフィルタリング機能を提供するクラス。
+    /// </summary>
     public class LogItemBuffer : ILogDataBuffer, IDisposable
     {
         private bool visibleInfo = true;
@@ -18,14 +21,19 @@ namespace Xeon.XDebugger.Model
         private CircularBuffer<LogItemData> buffer;
         private CircularBuffer<LogItemData> filteredBuffer;
 
+        /// <summary>Infoログの総数。</summary>
         public int InfoCount { get; private set; }
+        /// <summary>Warningログの総数。</summary>
         public int WarnCount { get; private set; }
+        /// <summary>Errorログの総数。</summary>
         public int ErrorCount { get; private set; }
 
+        /// <summary>コレクション変更時に発火されるイベント。</summary>
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
         private bool visibleAll => visibleInfo && visibleWarn && visibleError;
 
+        /// <summary>Infoログの表示状態。変更時にフィルタが再適用される。</summary>
         public bool VisibleInfo
         {
             get => visibleInfo;
@@ -36,6 +44,7 @@ namespace Xeon.XDebugger.Model
             }
         }
 
+        /// <summary>Warningログの表示状態。変更時にフィルタが再適用される。</summary>
         public bool VisibleWarn
         {
             get => visibleWarn;
@@ -46,6 +55,7 @@ namespace Xeon.XDebugger.Model
             }
         }
 
+        /// <summary>Errorログの表示状態。変更時にフィルタが再適用される。</summary>
         public bool VisibleError
         {
             get => visibleError;
@@ -56,6 +66,7 @@ namespace Xeon.XDebugger.Model
             }
         }
 
+        /// <summary>現在のフィルタ条件に基づくログ件数。</summary>
         public int Count
         {
             get
@@ -64,6 +75,7 @@ namespace Xeon.XDebugger.Model
             }
         }
 
+        /// <summary>指定インデックスのログ項目を取得する。</summary>
         public LogItemData this[int index]
         {
             get
@@ -72,6 +84,10 @@ namespace Xeon.XDebugger.Model
             }
         }
 
+        /// <summary>
+        /// <see cref="LogItemBuffer"/> のコンストラクタ。
+        /// </summary>
+        /// <param name="capacity">バッファの最大容量。</param>
         public LogItemBuffer(int capacity)
         {
             buffer = new CircularBuffer<LogItemData>(capacity);
@@ -80,6 +96,10 @@ namespace Xeon.XDebugger.Model
             filteredBuffer.CollectionChanged += OnChangedCollection;
         }
 
+        /// <summary>
+        /// ログ項目をバッファに追加する。
+        /// </summary>
+        /// <param name="data">追加するログ項目データ。</param>
         public void Add(LogItemData data)
         {
             buffer.PushBack(data, visibleAll);
@@ -112,6 +132,10 @@ namespace Xeon.XDebugger.Model
             };
         }
 
+        /// <summary>
+        /// バッファ内の全ログを消去し、カウントをリセットする。
+        /// </summary>
+        /// <param name="isNotify">trueの場合、コレクション変更を通知する。</param>
         public void Clear(bool isNotify = true)
         {
             if (isNotify)
@@ -129,6 +153,7 @@ namespace Xeon.XDebugger.Model
             ErrorCount = 0;
         }
 
+        /// <inheritdoc/>
         public IEnumerator<LogItemData> GetEnumerator()
         {
             var target = visibleAll ? buffer : filteredBuffer;
@@ -157,6 +182,7 @@ namespace Xeon.XDebugger.Model
             CollectionChanged?.Invoke(sender, e);
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             buffer.CollectionChanged -= OnChangedCollection;

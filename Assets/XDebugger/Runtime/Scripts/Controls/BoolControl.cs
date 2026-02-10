@@ -4,6 +4,9 @@ using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
+    /// <summary>
+    /// トグルUIで真偽値を操作するコントロール
+    /// </summary>
     public class BoolControl : ControlBase
     {
         [SerializeField]
@@ -11,6 +14,10 @@ namespace Xeon.XDebugger.Control
 
         protected BoolModel model;
 
+        /// <summary>
+        /// 真偽値モデルを設定し、トグルUIと双方向バインドする
+        /// </summary>
+        /// <param name="model">真偽値のデータモデル</param>
         public void Setup(BoolModel model)
         {
             Setup(model.Title);
@@ -26,6 +33,9 @@ namespace Xeon.XDebugger.Control
             Refresh();
         }
 
+        /// <summary>
+        /// モデルの値でトグルUIを更新する
+        /// </summary>
         public override void Refresh()
         {
             toggle.SetIsOnWithoutNotify(model.Value);

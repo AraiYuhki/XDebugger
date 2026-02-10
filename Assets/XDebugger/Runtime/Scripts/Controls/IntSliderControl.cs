@@ -5,6 +5,9 @@ using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
+    /// <summary>
+    /// スライダーと入力フィールドで整数値を操作するコントロール
+    /// </summary>
     public class IntSliderControl : ControlBase
     {
         [SerializeField]
@@ -14,6 +17,10 @@ namespace Xeon.XDebugger.Control
 
         protected IntSliderModel model;
 
+        /// <summary>
+        /// 整数スライダーモデルを設定し、UIと双方向バインドする
+        /// </summary>
+        /// <param name="model">整数スライダーのデータモデル</param>
         public void Setup(IntSliderModel model)
         {
             Setup(model.Title);
@@ -34,6 +41,9 @@ namespace Xeon.XDebugger.Control
             Refresh();
         }
 
+        /// <summary>
+        /// モデルの値でスライダーと入力フィールドを更新する
+        /// </summary>
         public override void Refresh()
         {
             slider.minValue = model.Min;
