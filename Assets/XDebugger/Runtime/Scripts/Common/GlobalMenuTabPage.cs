@@ -74,7 +74,7 @@ namespace Xeon.XDebugger.Control
         /// </summary>
         public void SetPageModel(ScriptablePageModel model)
         {
-            if (pageModel != null)
+            if (pageModel != null && pageModel.GetControl() != null)
                 pageModel.Close();
 
             pageModel = model;
