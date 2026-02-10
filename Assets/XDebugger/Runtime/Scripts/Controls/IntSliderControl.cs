@@ -36,6 +36,8 @@ namespace Xeon.XDebugger.Control
 
         public override void Refresh()
         {
+            slider.minValue = model.Min;
+            slider.maxValue = model.Max;
             slider.SetValueWithoutNotify(model.Value);
             input.SetTextWithoutNotify(model.Value.ToString());
         }

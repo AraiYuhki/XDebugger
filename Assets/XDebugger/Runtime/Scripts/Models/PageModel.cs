@@ -114,7 +114,6 @@ namespace Xeon.XDebugger.Model
                 {
                     ClosedPage();
                     Clear();
-                    XDebugger.Instance.ClosePage(this);
                     onClose?.Invoke();
                     GameObject.Destroy(pageControl.gameObject);
                     content = null;
@@ -127,7 +126,6 @@ namespace Xeon.XDebugger.Model
                 {
                     ClosedPage();
                     staticPageControl.gameObject.SetActive(false);
-                    XDebugger.Instance.ClosePage(this);
                     onClose?.Invoke();
                     content = null;
                     control = null;
@@ -136,7 +134,6 @@ namespace Xeon.XDebugger.Model
             else
             {
                 ClosedPage();
-                XDebugger.Instance.ClosePage(this);
                 onClose?.Invoke();
             }
         }

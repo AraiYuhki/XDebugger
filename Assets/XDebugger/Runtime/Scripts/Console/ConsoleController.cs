@@ -53,6 +53,10 @@ namespace Xeon.XDebugger.Console
         private bool isInitialized = false;
         private LogItemData? selectedLogItemData = null;
 
+        private UnityEngine.Events.UnityAction<bool> infoToggleAction;
+        private UnityEngine.Events.UnityAction<bool> warningToggleAction;
+        private UnityEngine.Events.UnityAction<bool> errorToggleAction;
+
         private void Awake()
         {
             infoCountLabel.text = "0";
@@ -77,10 +81,10 @@ namespace Xeon.XDebugger.Console
             controller = null;
 
             // Toggleのリスナーを解除
-            infoToggle.onValueChanged.RemoveAllListeners();
-            warningToggle.onValueChanged.RemoveAllListeners();
-            errorToggle.onValueChanged.RemoveAllListeners();
-            clearButton.onClick.RemoveAllListeners();
+            if (infoToggleAction != null) infoToggle.onValueChanged.RemoveListener(infoToggleAction);
+            if (warningToggleAction != null) warningToggle.onValueChanged.RemoveListener(warningToggleAction);
+            if (errorToggleAction != null) errorToggle.onValueChanged.RemoveListener(errorToggleAction);
+            clearButton.onClick.RemoveListener(ClearLog);
         }
 
         public void Initialize(ILogDataBuffer logDataList)
@@ -99,9 +103,13 @@ namespace Xeon.XDebugger.Console
             warningToggle.isOn = logDataList.VisibleWarn;
             errorToggle.isOn = logDataList.VisibleError;
 
-            infoToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleInfo = isOn);
-            warningToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleWarn = isOn);
-            errorToggle.onValueChanged.AddListener(isOn => logDataBuffer.VisibleError = isOn);
+            infoToggleAction = isOn => logDataBuffer.VisibleInfo = isOn;
+            warningToggleAction = isOn => logDataBuffer.VisibleWarn = isOn;
+            errorToggleAction = isOn => logDataBuffer.VisibleError = isOn;
+
+            infoToggle.onValueChanged.AddListener(infoToggleAction);
+            warningToggle.onValueChanged.AddListener(warningToggleAction);
+            errorToggle.onValueChanged.AddListener(errorToggleAction);
             clearButton.onClick.AddListener(ClearLog);
 
             OnAddInfoLog(logDataBuffer.InfoCount);

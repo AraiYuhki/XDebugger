@@ -9,12 +9,12 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(FloatSliderControl)}";
 
-        private float value, min, max;
+        private float _value, min, max;
         private Action<float> onChangedValue;
 
         public float Value
         {
-            get => value;
+            get => _value;
             set => SetValue(value, false);
         }
 
@@ -22,7 +22,7 @@ namespace Xeon.XDebugger.Model
         public float Max => max;
         public int Digits { get; private set; }
 
-        public string GetRoundedText => Math.Round(value, Digits).ToString();
+        public string GetRoundedText => Math.Round(_value, Digits).ToString();
 
         public FloatSliderModel(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0)
             : base(title, priority)
@@ -31,14 +31,14 @@ namespace Xeon.XDebugger.Model
         }
 
         public FloatSliderModel(string title, float value, float min, float max, Action<float> onChangedValue, IGroupModel parent, int digits = 2, int priority = 0)
-            : base(title, priority)
+            : base(title, parent, priority)
         {
             Initialize(value, min, max, onChangedValue, digits);
         }
 
         private void Initialize(float value, float min, float max, Action<float> onChangedValue, int digits)
         {
-            this.value = value;
+            this._value = value;
             this.min = min;
             this.max = max;
             Digits = digits;
@@ -70,14 +70,14 @@ namespace Xeon.XDebugger.Model
 
         public void SetValue(float newValue, bool notifyCallback)
         {
-            if (Mathf.Approximately(value, newValue))
+            if (Mathf.Approximately(_value, newValue))
                 return;
 
-            value = newValue;
+            _value = newValue;
             NotifyChanged();
 
             if (notifyCallback)
-                onChangedValue?.Invoke(value);
+                onChangedValue?.Invoke(_value);
         }
     }
 }

@@ -2,7 +2,6 @@
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 using Xeon.XDebugger.Common;
-using Xeon.XDebugger.Editor.Model;
 
 namespace Xeon.XDebugger.Control
 {
@@ -66,12 +65,6 @@ namespace Xeon.XDebugger.Control
             // UIFactoryが設定された後、pageModelが設定されているがまだ表示されていない場合は初期化
             if (pageModel != null && content != null)
             {
-                CreateAndDisplayPage();
-            }
-            // 既にページが表示されている場合は再生成
-            else if (pageModel != null && content != null)
-            {
-                pageModel.Close();
                 CreateAndDisplayPage();
             }
         }

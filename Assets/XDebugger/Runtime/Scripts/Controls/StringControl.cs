@@ -20,14 +20,15 @@ namespace Xeon.XDebugger.Control
             this.model = model;
             this.model.Changed += OnModelChanged;
 
+            inputField.onEndEdit.RemoveListener(OnEndEdit);
+            inputField.onEndEdit.AddListener(OnEndEdit);
+
             Refresh();
         }
 
         public override void Refresh()
         {
             inputField.SetTextWithoutNotify(model.Text);
-            inputField.onEndEdit.RemoveListener(OnEndEdit);
-            inputField.onEndEdit.AddListener(OnEndEdit);
         }
 
         private void OnEndEdit(string text) => model.NotifyTextChangedFromView(text);

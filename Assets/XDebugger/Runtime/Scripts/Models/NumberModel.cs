@@ -9,14 +9,14 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(NumberControl)}";
 
-        private float value = 0f;
+        private float _value = 0f;
         private float step = 1f;
 
         private Action<float> onChangedValue;
 
         public float Value
         {
-            get => value;
+            get => _value;
             set => SetValue(value, false);
         }
 
@@ -35,7 +35,7 @@ namespace Xeon.XDebugger.Model
 
         private void Initialize(float value, float step, Action<float> onChangedValue)
         {
-            this.value = value;
+            this._value = value;
             this.step = step;
             this.onChangedValue = onChangedValue;
         }
@@ -51,14 +51,14 @@ namespace Xeon.XDebugger.Model
 
         public void SetValue(float newValue, bool notifyCallback)
         {
-            if (Mathf.Approximately(value, newValue))
+            if (Mathf.Approximately(_value, newValue))
                 return;
 
-            value = newValue;
+            _value = newValue;
             NotifyChanged();
 
             if (notifyCallback)
-                onChangedValue?.Invoke(value);
+                onChangedValue?.Invoke(_value);
         }
     }
 }

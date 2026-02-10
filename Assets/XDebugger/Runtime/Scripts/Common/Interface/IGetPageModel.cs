@@ -1,6 +1,6 @@
 using Xeon.XDebugger.Model;
 
-namespace Xeon.XDebugger.Editor.Model
+namespace Xeon.XDebugger.Common
 {
     public interface IGetPageModel
     {

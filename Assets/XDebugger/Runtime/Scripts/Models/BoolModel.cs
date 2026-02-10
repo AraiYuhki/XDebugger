@@ -24,7 +24,7 @@ namespace Xeon.XDebugger.Model
         }
 
         public BoolModel(string title, bool isOn, Action<bool> onChangedValue, IGroupModel parent, int priority = 0)
-            : base(title, priority)
+            : base(title, parent, priority)
         {
             Initialize(isOn, onChangedValue);
         }
