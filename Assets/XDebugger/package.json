@@ -1,0 +1,26 @@
+{
+    "name": "jp.xeon.x-debugger",
+    "version": "1.0.0",
+    "displayName": "XDebugger",
+    "description": "Unity向け汎用デバッグ機能パッケージ。ランタイムデバッグUI（コンソール、プロファイラー、システム情報等）をAddressablesベースのシングルトンとして提供します。",
+    "unity": "6000.0",
+    "author": {
+        "name": "Xeon_Lagunas",
+        "email": "xeon.lagunas@gmail.com",
+        "url": "https://github.com/AraiYuhki"
+    },
+    "dependencies": {
+        "com.unity.addressables": "2.8.0",
+        "com.unity.textmeshpro": "3.0.0",
+        "com.unity.ugui": "2.0.0"
+    },
+    "keywords": [
+        "debug",
+        "debugger",
+        "console",
+        "profiler",
+        "runtime",
+        "ui"
+    ],
+    "samples": []
+}
