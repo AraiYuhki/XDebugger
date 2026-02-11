@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.Common;
-using Xeon.XDebugger.Editor.Model;
 
 namespace Xeon.XDebugger.Control
 {

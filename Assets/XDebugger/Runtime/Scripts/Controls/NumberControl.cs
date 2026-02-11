@@ -5,6 +5,9 @@ using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
+    /// <summary>
+    /// 入力フィールドと増減ボタンで数値を操作するコントロール
+    /// </summary>
     public class NumberControl : ControlBase
     {
         [SerializeField]
@@ -16,6 +19,10 @@ namespace Xeon.XDebugger.Control
 
         protected NumberModel model;
 
+        /// <summary>
+        /// 数値モデルを設定し、入力フィールドとボタンをバインドする
+        /// </summary>
+        /// <param name="model">数値のデータモデル</param>
         public void Setup(NumberModel model)
         {
             Setup(model.Title);
@@ -37,6 +44,9 @@ namespace Xeon.XDebugger.Control
             Refresh();
         }
 
+        /// <summary>
+        /// モデルの値で入力フィールドを更新する
+        /// </summary>
         public override void Refresh()
         {
             input.SetTextWithoutNotify(model.Value.ToString());

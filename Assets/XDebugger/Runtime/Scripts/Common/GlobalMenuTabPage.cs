@@ -2,7 +2,6 @@
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
 using Xeon.XDebugger.Common;
-using Xeon.XDebugger.Editor.Model;
 
 namespace Xeon.XDebugger.Control
 {
@@ -68,12 +67,6 @@ namespace Xeon.XDebugger.Control
             {
                 CreateAndDisplayPage();
             }
-            // 既にページが表示されている場合は再生成
-            else if (pageModel != null && content != null)
-            {
-                pageModel.Close();
-                CreateAndDisplayPage();
-            }
         }
 
         /// <summary>
@@ -81,7 +74,7 @@ namespace Xeon.XDebugger.Control
         /// </summary>
         public void SetPageModel(ScriptablePageModel model)
         {
-            if (pageModel != null)
+            if (pageModel != null && pageModel.GetControl() != null)
                 pageModel.Close();
 
             pageModel = model;

@@ -73,7 +73,6 @@ public class FlowHorizontalLayoutGroup : LayoutGroup
     public override void SetLayoutHorizontal()
     {
         var availableWidth = Mathf.Max(0f, GetCanvasSpaceScreenWidth() - padding.horizontal);
-        Debug.Log(availableWidth);
 
         lineList.Clear();
         var currentLine = new Line() { Items = new() };
@@ -137,7 +136,8 @@ public class FlowHorizontalLayoutGroup : LayoutGroup
         {
             result += line.Height;
         }
-        result += spaceY;
+        if (lines.Count > 1)
+            result += spaceY * (lines.Count - 1);
         return result;
     }
 

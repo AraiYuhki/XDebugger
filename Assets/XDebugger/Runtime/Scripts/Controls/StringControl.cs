@@ -4,6 +4,9 @@ using Xeon.XDebugger.Model;
 
 namespace Xeon.XDebugger.Control
 {
+    /// <summary>
+    /// テキスト入力フィールドで文字列を操作するコントロール
+    /// </summary>
     public class StringControl : ControlBase
     {
         [SerializeField]
@@ -11,6 +14,10 @@ namespace Xeon.XDebugger.Control
 
         protected StringModel model;
 
+        /// <summary>
+        /// 文字列モデルを設定し、入力フィールドと双方向バインドする
+        /// </summary>
+        /// <param name="model">文字列のデータモデル</param>
         public void Setup(StringModel model)
         {
             Setup(model.Title);
@@ -20,14 +27,18 @@ namespace Xeon.XDebugger.Control
             this.model = model;
             this.model.Changed += OnModelChanged;
 
+            inputField.onEndEdit.RemoveListener(OnEndEdit);
+            inputField.onEndEdit.AddListener(OnEndEdit);
+
             Refresh();
         }
 
+        /// <summary>
+        /// モデルのテキストで入力フィールドを更新する
+        /// </summary>
         public override void Refresh()
         {
             inputField.SetTextWithoutNotify(model.Text);
-            inputField.onEndEdit.RemoveListener(OnEndEdit);
-            inputField.onEndEdit.AddListener(OnEndEdit);
         }
 
         private void OnEndEdit(string text) => model.NotifyTextChangedFromView(text);

@@ -7,9 +7,9 @@ using UnityEngine.UI;
 using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
 using Xeon.XDebugger.UI;
-using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 #endif
 
 namespace Xeon.XDebugger

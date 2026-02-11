@@ -160,7 +160,7 @@ namespace Xeon.XDebugger.Profiler
         private string GetValueWithSISuffix(double value)
         {
             var index = 0;
-            while (value > 1024)
+            while (value > 1024 && index < suffixList.Length - 1)
             {
                 value /= 1024d;
                 index++;

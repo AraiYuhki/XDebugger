@@ -5,6 +5,9 @@ using Xeon.XDebugger.Model;
 namespace Xeon.XDebugger.Control
 {
 
+    /// <summary>
+    /// ドロップダウンUIで選択肢を操作するコントロール
+    /// </summary>
     public class DropdownControl : ControlBase
     {
         [SerializeField]
@@ -12,6 +15,10 @@ namespace Xeon.XDebugger.Control
 
         protected IDropdownModel model;
 
+        /// <summary>
+        /// ドロップダウンモデルを設定し、選択肢を初期化する
+        /// </summary>
+        /// <param name="model">ドロップダウンのデータモデル</param>
         public void Setup(IDropdownModel model)
         {
             Setup(model.Title);
@@ -26,6 +33,9 @@ namespace Xeon.XDebugger.Control
             Refresh();
         }
 
+        /// <summary>
+        /// ドロップダウンの選択肢と選択状態を更新する
+        /// </summary>
         public override void Refresh()
         {
             dropdown.ClearOptions();
