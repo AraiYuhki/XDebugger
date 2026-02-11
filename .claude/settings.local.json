@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__unity__check_status",
+      "mcp__unity__run_editmode_tests"
+    ]
+  }
+}

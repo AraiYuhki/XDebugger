@@ -9,12 +9,13 @@ namespace Xeon.XDebugger.Model
     {
         protected override string prefabAddress => $"XDebugger/{nameof(FloatSliderControl)}";
 
-        private float _value, min, max;
+        private float value, min, max;
         private Action<float> onChangedValue;
 
         public float Value
         {
-            get => _value;
+            get => value;
+            // valueはsetterの方が優先されるので、これでOK
             set => SetValue(value, false);
         }
 
@@ -22,7 +23,7 @@ namespace Xeon.XDebugger.Model
         public float Max => max;
         public int Digits { get; private set; }
 
-        public string GetRoundedText => Math.Round(_value, Digits).ToString();
+        public string GetRoundedText => Math.Round(value, Digits).ToString();
 
         public FloatSliderModel(string title, float value, float min, float max, Action<float> onChangedValue, int digits = 2, int priority = 0)
             : base(title, priority)
@@ -38,7 +39,7 @@ namespace Xeon.XDebugger.Model
 
         private void Initialize(float value, float min, float max, Action<float> onChangedValue, int digits)
         {
-            this._value = value;
+            this.value = value;
             this.min = min;
             this.max = max;
             Digits = digits;
@@ -70,14 +71,14 @@ namespace Xeon.XDebugger.Model
 
         public void SetValue(float newValue, bool notifyCallback)
         {
-            if (Mathf.Approximately(_value, newValue))
+            if (Mathf.Approximately(value, newValue))
                 return;
 
-            _value = newValue;
+            value = newValue;
             NotifyChanged();
 
             if (notifyCallback)
-                onChangedValue?.Invoke(_value);
+                onChangedValue?.Invoke(value);
         }
     }
 }

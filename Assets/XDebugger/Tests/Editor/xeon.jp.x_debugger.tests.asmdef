@@ -1,0 +1,24 @@
+{
+    "name": "xeon.jp.x_debugger.tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f1fb321ef21c451499466427ee9a1419",
+        "GUID:9d2118f59bfe4d043bcb554a5a40f44e",
+        "GUID:6f9b8ae7e24f4a948baa889217e5fae3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
