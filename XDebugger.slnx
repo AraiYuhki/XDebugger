@@ -1,12 +1,8 @@
 ﻿<Solution>
+  <Project Path="xeon.jp.x_debugger.tests.csproj" />
   <Project Path="xeon.jp.x_debugger.csproj" />
-  <Project Path="StompyRobot.SRDebugger.csproj" />
   <Project Path="xeon.jp.xgraphs.csproj" />
-  <Project Path="StompyRobot.SRF.csproj" />
   <Project Path="xeon.jp.x_debugger.editor.csproj" />
-  <Project Path="StompyRobot.SRDebugger.Editor.csproj" />
   <Project Path="xeon.jp.flyweight_scrollview.runtime.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="StompyRobot.SRF.Editor.csproj" />
   <Project Path="xeon.jp.xgraphs.editor.csproj" />
 </Solution>
