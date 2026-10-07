@@ -54,7 +54,11 @@ public class FlowHorizontalLayoutGroup : LayoutGroup
                 totalHeight += spaceY;
             totalHeight += lineList[index].Height;
         }
+#if XDEBUGGER_UGUI_LAYOUT_MAX_SIZE
+        SetLayoutInputForAxis(totalHeight, float.PositiveInfinity, totalHeight, -1, 1);
+#else
         SetLayoutInputForAxis(totalHeight, totalHeight, -1, 1);
+#endif
     }
 
     public override void CalculateLayoutInputHorizontal()
@@ -62,7 +66,11 @@ public class FlowHorizontalLayoutGroup : LayoutGroup
         base.CalculateLayoutInputHorizontal();
         var minWidth = GetPreferredWidth();
         var preferredWidth = minWidth;
+#if XDEBUGGER_UGUI_LAYOUT_MAX_SIZE
+        SetLayoutInputForAxis(minWidth, float.PositiveInfinity, preferredWidth, -1, 0);
+#else
         SetLayoutInputForAxis(minWidth, preferredWidth, -1, 0);
+#endif
     }
 
     private float GetPreferredWidth()

@@ -22,6 +22,11 @@
             "name": "com.cysharp.unitask",
             "expression": "",
             "define": "XDEBUGGER_UNI_TASK_SUPPORT"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.6.0",
+            "define": "XDEBUGGER_UGUI_LAYOUT_MAX_SIZE"
         }
     ],
     "noEngineReferences": false
