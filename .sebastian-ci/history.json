@@ -1,0 +1,15 @@
+{
+  "38f25fecd80a15e014eaa49a9a82a3bed92c5ad8": {
+    "executedAt": "2026-10-07T14:00:11.9473839+09:00",
+    "isSuccess": false,
+    "logDirectoryPath": "D:\\Projects\\XDebugger\\.sebastian-ci\\logs\\38f25fecd80a15e014eaa49a9a82a3bed92c5ad8",
+    "jobs": [
+      {
+        "jobId": "build",
+        "status": "Failed",
+        "durationSeconds": 463.7,
+        "tests": null
+      }
+    ]
+  }
+}

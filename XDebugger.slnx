@@ -5,4 +5,5 @@
   <Project Path="xeon.jp.x_debugger.editor.csproj" />
   <Project Path="xeon.jp.flyweight_scrollview.runtime.csproj" />
   <Project Path="xeon.jp.xgraphs.editor.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
