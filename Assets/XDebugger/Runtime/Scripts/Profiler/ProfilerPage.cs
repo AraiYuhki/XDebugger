@@ -53,13 +53,24 @@ namespace Xeon.XDebugger.Profiler
 
         private DoubleCircularBuffer totalTimeBuffer = new(FrameBufferSize);
 
+#if UNITY_6000_5_OR_NEWER
+        private static readonly Color UpdateTimeColor = Color.darkSeaGreen;
+        private static readonly Color RenderTimeColor = Color.cadetBlue;
+        private static readonly Color OtherTimeColor = Color.burlywood;
+#else
+        // 旧バージョンには名前付きカラーが無いため同等のRGB値を使用
+        private static readonly Color UpdateTimeColor = new Color32(143, 188, 143, 255);
+        private static readonly Color RenderTimeColor = new Color32(95, 158, 160, 255);
+        private static readonly Color OtherTimeColor = new Color32(222, 184, 135, 255);
+#endif
+
         private void Awake()
         {
             timeBuffer = new MultiValueSeries(new List<Series>()
             {
-                new Series("UpdateTime", Color.darkSeaGreen, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
-                new Series("RenderTime", Color.cadetBlue, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
-                new Series("OtherTime", Color.burlywood, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray()))
+                new Series("UpdateTime", UpdateTimeColor, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
+                new Series("RenderTime", RenderTimeColor, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray())),
+                new Series("OtherTime", OtherTimeColor, new CircularBuffer<float>(FrameBufferSize, Enumerable.Repeat(0f, FrameBufferSize).ToArray()))
             }, Color.white);
             
             RenderPipelineManager.beginContextRendering += RenderPipelineOnBeginFrameRendering;
