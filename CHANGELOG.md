@@ -6,6 +6,9 @@
 
 ## [Unreleased]
 
+
+## [2026.10.12] - 2026-10-12
+
 ### Fixed (修正)
 - `NumberModel.Value` / `FloatSliderModel.Value`: プロパティセッターでバッキングフィールドとC#キーワードの名前衝突を修正（`_value`にリネーム）
 - `FloatSliderModel`: コンストラクタで`parent`パラメータが基底クラスに渡されていない問題を修正
