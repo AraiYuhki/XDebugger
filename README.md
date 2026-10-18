@@ -132,5 +132,5 @@ iOS, Android, PC (Windows/macOS/Linux), PlayStation, Xbox, Switch
 
 ## 対応Unityバージョン
 
-- 動作確認済み最新バージョン: 6000.6.5f1
+- 動作確認済み最新バージョン: 6000.6.6f1
 - 最低対応バージョン: 6000.0.0f1
