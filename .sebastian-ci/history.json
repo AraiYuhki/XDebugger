@@ -11,5 +11,18 @@
         "tests": null
       }
     ]
+  },
+  "967aca9f3ab98bc09f324024a0622f888c17bb6e": {
+    "executedAt": "2026-10-12T15:30:21.3348348+09:00",
+    "isSuccess": true,
+    "logDirectoryPath": "D:\\Projects\\XDebugger\\.sebastian-ci\\logs\\967aca9f3ab98bc09f324024a0622f888c17bb6e",
+    "jobs": [
+      {
+        "jobId": "build",
+        "status": "Success",
+        "durationSeconds": 889.3,
+        "tests": null
+      }
+    ]
   }
 }
