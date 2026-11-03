@@ -97,7 +97,7 @@ namespace Xeon.XDebugger.Model
             if (control != null && control is PageControl pageControl)
             {
                 foreach (var model in modelList)
-                    controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
+                    controlList.Add(model.BuildControl(pageControl.Content, uiFactory));
                 pageControl.Open(this);
             }
         }
@@ -205,6 +205,7 @@ namespace Xeon.XDebugger.Model
         {
             foreach (var control in controlList)
                 GameObject.Destroy(control.gameObject);
+            Xeon.XDebugger.Pin.PinManager.UnpinTree(modelList); // 破棄されるモデルのピン止めUIも消す
             controlList.Clear();
             modelList.Clear();
             IsInitialized = false;
@@ -230,6 +231,7 @@ namespace Xeon.XDebugger.Model
         {
             var scope = new DisableGroupScope(title, this, priority);
             model = scope.Model as DisableGroupModel;
+            model.IsDisabled = isDisabled;
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;
@@ -240,6 +242,7 @@ namespace Xeon.XDebugger.Model
         {
             var scope = new FoldingGroupScope(title, this, priority);
             model = scope.Model as FoldingGroupModel;
+            model.SetFoldingWithoutNotify(isFolding);
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;

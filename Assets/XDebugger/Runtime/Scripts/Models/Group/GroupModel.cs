@@ -37,7 +37,11 @@ namespace Xeon.XDebugger.Model
         /// 子コントロールモデルをグループに追加する。
         /// </summary>
         /// <param name="model">追加する子コントロールモデル。</param>
-        public void AddChild(ControlModelBase model) => children.Add(model);
+        public void AddChild(ControlModelBase model)
+        {
+            model.SetParent(this);
+            children.Add(model);
+        }
 
         /// <summary>
         /// グループに所属する子コントロールモデルの読み取り専用リスト。
@@ -61,7 +65,7 @@ namespace Xeon.XDebugger.Model
 
             foreach (var child in children)
             {
-                childrenControls.Add(child.CreateControl(control.GetContent(), uiFactory));
+                childrenControls.Add(child.BuildControl(control.GetContent(), uiFactory));
             }
         }
     }
