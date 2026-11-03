@@ -122,15 +122,17 @@ namespace Xeon.XDebugger.Pin
             itemGo.transform.SetParent(itemsRoot, false);
             ConfigureLayout(itemGo.GetComponent<VerticalLayoutGroup>(), 0f, 0);
 
-            // ピン用コントロールにはメニュー用のピンボタンを付けない
-            PinManager.SuppressAttach = true;
+            // グループ内の子には「この子だけ外す」ボタンが付く（PinManager.AttachPinButton）
+            var context = new PinContext(model);
+            PinManager.CurrentContext = context;
             try
             {
-                model.CreateControl(itemGo.transform, uiFactory);
+                var control = model.CreateControl(itemGo.transform, uiFactory);
+                context.Register(model, control);
             }
             finally
             {
-                PinManager.SuppressAttach = false;
+                PinManager.CurrentContext = null;
             }
             // 解除用ボタン（ピン止めモード中のみ表示）
             PinButton.Create(itemGo.transform, model, "×");

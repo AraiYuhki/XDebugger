@@ -92,5 +92,59 @@ namespace Xeon.XDebugger.Tests
             Assert.IsFalse(child.IsPinned);
             Assert.IsTrue(other.IsPinned);
         }
+
+        [Test]
+        public void PinContext_ExcludeChild_KeepsGroupPinned()
+        {
+            var group = new VerticalGroupModel("g");
+            var a = new LabelModel("a");
+            var b = new LabelModel("b");
+            group.AddChild(a);
+            group.AddChild(b);
+            group.Pin();
+            var context = new PinContext(group);
+
+            context.Exclude(a);
+
+            Assert.IsTrue(group.IsPinned);
+            Assert.IsFalse(context.IsVisible(a));
+            Assert.IsTrue(context.IsVisible(b));
+        }
+
+        [Test]
+        public void PinContext_ExcludeAllChildren_UnpinsGroup()
+        {
+            var group = new VerticalGroupModel("g");
+            var a = new LabelModel("a");
+            var b = new LabelModel("b");
+            group.AddChild(a);
+            group.AddChild(b);
+            group.Pin();
+            var context = new PinContext(group);
+
+            context.Exclude(a);
+            context.Exclude(b);
+
+            Assert.IsFalse(group.IsPinned);
+        }
+
+        [Test]
+        public void PinContext_EmptyNestedGroup_BecomesInvisible()
+        {
+            var root = new VerticalGroupModel("root");
+            var inner = new VerticalGroupModel("inner");
+            var a = new LabelModel("a");
+            var b = new LabelModel("b");
+            inner.AddChild(a);
+            root.AddChild(inner);
+            root.AddChild(b);
+            root.Pin();
+            var context = new PinContext(root);
+
+            context.Exclude(a);
+
+            Assert.IsFalse(context.IsVisible(inner));
+            Assert.IsTrue(root.IsPinned);
+        }
     }
 }

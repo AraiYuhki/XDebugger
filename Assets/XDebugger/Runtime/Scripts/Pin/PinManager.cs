@@ -28,8 +28,8 @@ namespace Xeon.XDebugger.Pin
         public static event Action PinModeChanged;
         public static event Action PinnedVisibleChanged;
 
-        /// <summary>ピン用コントロール生成中は、ピンボタンの付与を抑止する</summary>
-        internal static bool SuppressAttach { get; set; }
+        /// <summary>ピン用コントロール生成中のコンテキスト。生成された子には除外ボタンが付く</summary>
+        internal static PinContext CurrentContext { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void ResetState()
@@ -102,8 +102,16 @@ namespace Xeon.XDebugger.Pin
         /// <summary>メニュー内に生成したコントロールへピンボタンを付与する</summary>
         internal static void AttachPinButton(ControlModelBase model, ControlBase control)
         {
-            if (SuppressAttach || model == null || control == null)
+            if (model == null || control == null)
                 return;
+            var context = CurrentContext;
+            if (context != null)
+            {
+                // ピン止めされたグループ内の子: この子だけピン止めから外せる
+                context.Register(model, control);
+                PinExcludeButton.Create(control.transform, model, context);
+                return;
+            }
             PinButton.Create(control.transform, model, "UNPIN");
         }
     }

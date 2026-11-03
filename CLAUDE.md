@@ -111,6 +111,7 @@ public class MyScriptablePage : ScriptablePageModel
 - メニューを開かずに表示切替: `XDebugger.Instance.TogglePinned()` / `SetPinnedVisible(bool)` / 画面上の `PINNED` ボタン / キー(`PinnedToggleKey`, 既定F2)
 - コードから: `model.Pin()` / `model.Unpin()` / `model.IsPinned`、状態は `PinManager`
 - 設定: `XDebuggerSetting` の Pin Settings (起点位置、幅、透明度、切替ボタン、切替キー)
+- グループをピン止めした後は、ピン側の各子の `×` ボタン(ピン止めモード中のみ)でその子だけを外せる。子が全て外れるとグループのピン止めも解除される
 - 同一Modelから別Viewを生成するため、メニュー側とピン側は `Changed` で同期する。永続化はしない
 
 ### スタイルシステム
