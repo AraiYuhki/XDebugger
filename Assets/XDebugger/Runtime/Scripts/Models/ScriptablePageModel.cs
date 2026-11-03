@@ -242,6 +242,7 @@ namespace Xeon.XDebugger.Model
                 if (control != null)
                     GameObject.Destroy(control.gameObject);
             }
+            Xeon.XDebugger.Pin.PinManager.UnpinTree(modelList); // 破棄されるモデルのピン止めUIも消す
             controlList.Clear();
             modelList.Clear();
             IsInitialized = false;

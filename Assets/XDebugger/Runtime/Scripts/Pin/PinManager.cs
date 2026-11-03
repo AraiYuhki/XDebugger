@@ -59,6 +59,22 @@ namespace Xeon.XDebugger.Pin
             PinChanged?.Invoke(model, false);
         }
 
+        /// <summary>
+        /// モデルとその子孫（グループ配下）のピン止めを全て解除する。
+        /// モデルが破棄される際に呼び、接続先を失ったピン止めUIを消す。
+        /// </summary>
+        public static void UnpinTree(IEnumerable<ControlModelBase> models)
+        {
+            if (models == null)
+                return;
+            foreach (var model in models)
+            {
+                if (model is IGroupModel group)
+                    UnpinTree(group.Children);
+                Unpin(model);
+            }
+        }
+
         public static void TogglePin(ControlModelBase model)
         {
             if (IsPinned(model))

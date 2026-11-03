@@ -74,5 +74,23 @@ namespace Xeon.XDebugger.Tests
             PinManager.SetPinMode(true);
             Assert.AreEqual(1, count);
         }
+
+        [Test]
+        public void UnpinTree_UnpinsModelAndGroupDescendants()
+        {
+            var group = new VerticalGroupModel("g");
+            var child = new LabelModel("c");
+            var other = new LabelModel("o");
+            group.AddChild(child);
+            group.Pin();
+            child.Pin();
+            other.Pin();
+
+            PinManager.UnpinTree(new ControlModelBase[] { group });
+
+            Assert.IsFalse(group.IsPinned);
+            Assert.IsFalse(child.IsPinned);
+            Assert.IsTrue(other.IsPinned);
+        }
     }
 }
