@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.UI;
@@ -11,7 +12,8 @@ namespace Xeon.XDebugger.Model
     public class FoldingGroupModel : GroupModel
     {
         private bool isFolding = false;
-        private FoldingGroup control;
+        // メニュー用・ピン用など、同一モデルから生成された全てのView
+        private readonly List<FoldingGroup> controls = new();
 
         private Action<bool> onChangedFolding; 
         
@@ -24,7 +26,7 @@ namespace Xeon.XDebugger.Model
             set
             {
                 isFolding = value;
-                control?.SetFolding(value);
+                ApplyToControls(null);
                 onChangedFolding?.Invoke(value);
             }
         }
@@ -60,12 +62,35 @@ namespace Xeon.XDebugger.Model
         /// <inheritdoc/>
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateFoldingGroup(parent);
+            var control = uiFactory.CreateFoldingGroup(parent);
             control.Setup(this, parent.GetComponent<ContentGroup>(), isFolding);
+            controls.RemoveAll(c => c == null);
+            controls.Add(control);
 
             ResetChildren(control, uiFactory);
 
             return control;
+        }
+
+        /// <summary>
+        /// Viewの操作で折りたたみ状態が変わったことを通知する。
+        /// 操作元以外のView（ピン止め側など）へ状態を同期する。
+        /// </summary>
+        public void NotifyFoldingFromView(FoldingGroup sender, bool isFolding)
+        {
+            this.isFolding = isFolding;
+            ApplyToControls(sender);
+            onChangedFolding?.Invoke(isFolding);
+        }
+
+        private void ApplyToControls(FoldingGroup except)
+        {
+            controls.RemoveAll(c => c == null);
+            foreach (var control in controls)
+            {
+                if (control != except)
+                    control.SetFolding(isFolding);
+            }
         }
 
         /// <summary>

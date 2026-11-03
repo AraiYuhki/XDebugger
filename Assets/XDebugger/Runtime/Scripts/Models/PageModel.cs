@@ -231,6 +231,7 @@ namespace Xeon.XDebugger.Model
         {
             var scope = new DisableGroupScope(title, this, priority);
             model = scope.Model as DisableGroupModel;
+            model.IsDisabled = isDisabled;
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;
@@ -241,6 +242,7 @@ namespace Xeon.XDebugger.Model
         {
             var scope = new FoldingGroupScope(title, this, priority);
             model = scope.Model as FoldingGroupModel;
+            model.SetFoldingWithoutNotify(isFolding);
             AddChild(scope.Model);
             SetGroup(scope.Model as IGroupModel);
             return scope;

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Xeon.XDebugger.Control;
 using Xeon.XDebugger.UI;
@@ -10,7 +11,8 @@ namespace Xeon.XDebugger.Model
     public class DisableGroupModel : GroupModel
     {
         private bool isDisabled = false;
-        private DisableGroup control;
+        // メニュー用・ピン用など、同一モデルから生成された全てのView
+        private readonly List<DisableGroup> controls = new();
 
         /// <summary>
         /// グループの無効化状態。trueの場合、子コントロールが無効化される。
@@ -21,7 +23,10 @@ namespace Xeon.XDebugger.Model
             set
             {
                 isDisabled = value;
-                control?.SetDisable(isDisabled);
+                controls.RemoveAll(c => c == null);
+                foreach (var control in controls)
+                    control.SetDisable(isDisabled);
+                NotifyChanged();
             }
         }
 
@@ -39,8 +44,11 @@ namespace Xeon.XDebugger.Model
         /// <inheritdoc/>
         public override ControlBase CreateControl(Transform parent, IUIFactory uiFactory)
         {
-            control = uiFactory.CreateDisableGroup(parent);
+            var control = uiFactory.CreateDisableGroup(parent);
             control.Setup(this, parent.GetComponent<ContentGroup>());
+            control.SetDisable(isDisabled);
+            controls.RemoveAll(c => c == null);
+            controls.Add(control);
 
             ResetChildren(control, uiFactory);
 

@@ -41,8 +41,6 @@ namespace Xeon.XDebugger
         public void SetFolding(bool isFolding)
         {
             this.isFolding = isFolding;
-            if (model is FoldingGroupModel foldingGroupModel)
-                foldingGroupModel.SetFoldingWithoutNotify(isFolding);
             ApplyFolding();
         }
 
@@ -55,6 +53,9 @@ namespace Xeon.XDebugger
         private void OnClickHeader()
         {
             SetFolding(!isFolding);
+            // 同一モデルから生成された他のView(ピン止め側など)へ同期する
+            if (model is FoldingGroupModel foldingGroupModel)
+                foldingGroupModel.NotifyFoldingFromView(this, isFolding);
         }
         
 #if UNITY_EDITOR
