@@ -13,7 +13,7 @@ namespace Xeon.XDebugger.Pin
     /// </summary>
     public sealed class PinnedPanel : MonoBehaviour
     {
-        private readonly Dictionary<ControlModelBase, GameObject> items = new();
+        private readonly Dictionary<ControlModelBase, (GameObject go, PinContext context)> items = new();
 
         private IUIFactory uiFactory;
         private CanvasGroup canvasGroup;
@@ -103,18 +103,29 @@ namespace Xeon.XDebugger.Pin
             _ => new Vector2(1, 0),
         };
 
-        private void OnPinChanged(ControlModelBase model, bool isPinned)
+        private void OnPinChanged(ControlModelBase leaf, bool isPinned)
         {
-            if (isPinned)
-                AddItem(model);
+            var root = PinManager.RootOf(leaf);
+            if (root == null)
+                return;
+
+            if (PinManager.HasPinned(root))
+            {
+                if (!items.ContainsKey(root))
+                    AddItem(root);
+                if (items.TryGetValue(root, out var item))
+                    item.context.Refresh();
+            }
             else
-                RemoveItem(model);
+            {
+                RemoveItem(root);
+            }
             RefreshVisibility();
         }
 
-        private void AddItem(ControlModelBase model)
+        private void AddItem(ControlModelBase root)
         {
-            if (items.ContainsKey(model) || uiFactory == null)
+            if (uiFactory == null)
                 return;
 
             var itemGo = new GameObject("PinnedItem", typeof(RectTransform), typeof(VerticalLayoutGroup));
@@ -122,29 +133,28 @@ namespace Xeon.XDebugger.Pin
             itemGo.transform.SetParent(itemsRoot, false);
             ConfigureLayout(itemGo.GetComponent<VerticalLayoutGroup>(), 0f, 0);
 
-            // グループ内の子には「この子だけ外す」ボタンが付く（PinManager.AttachPinButton）
-            var context = new PinContext(model);
+            // ツリー全体を生成し、ピン止めされていない部分は PinContext.Refresh で非表示にする
+            var context = new PinContext(root);
             PinManager.CurrentContext = context;
             try
             {
-                var control = model.CreateControl(itemGo.transform, uiFactory);
-                context.Register(model, control);
+                var control = root.CreateControl(itemGo.transform, uiFactory);
+                context.Register(root, control);
             }
             finally
             {
                 PinManager.CurrentContext = null;
             }
-            // 解除用ボタン（ピン止めモード中のみ表示）
-            PinButton.Create(itemGo.transform, model, "×");
-            items.Add(model, itemGo);
+            PinButton.Create(itemGo.transform, root, "×");
+            items.Add(root, (itemGo, context));
         }
 
-        private void RemoveItem(ControlModelBase model)
+        private void RemoveItem(ControlModelBase root)
         {
-            if (!items.Remove(model, out var go))
+            if (!items.Remove(root, out var item))
                 return;
-            go.transform.SetParent(null, false); // レイアウトを即時更新するため先に切り離す
-            Destroy(go);
+            item.go.transform.SetParent(null, false); // レイアウトを即時更新するため先に切り離す
+            Destroy(item.go);
         }
 
         private void OnPinModeChanged() => RefreshVisibility();

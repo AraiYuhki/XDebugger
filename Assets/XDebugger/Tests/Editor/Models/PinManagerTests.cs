@@ -75,61 +75,68 @@ namespace Xeon.XDebugger.Tests
             Assert.AreEqual(1, count);
         }
 
-        [Test]
-        public void UnpinTree_UnpinsModelAndGroupDescendants()
-        {
-            var group = new VerticalGroupModel("g");
-            var child = new LabelModel("c");
-            var other = new LabelModel("o");
-            group.AddChild(child);
-            group.Pin();
-            child.Pin();
-            other.Pin();
-
-            PinManager.UnpinTree(new ControlModelBase[] { group });
-
-            Assert.IsFalse(group.IsPinned);
-            Assert.IsFalse(child.IsPinned);
-            Assert.IsTrue(other.IsPinned);
-        }
-
-        [Test]
-        public void PinContext_ExcludeChild_KeepsGroupPinned()
+        private static (VerticalGroupModel group, LabelModel a, LabelModel b) CreateGroup()
         {
             var group = new VerticalGroupModel("g");
             var a = new LabelModel("a");
             var b = new LabelModel("b");
             group.AddChild(a);
             group.AddChild(b);
+            return (group, a, b);
+        }
+
+        [Test]
+        public void PinGroup_PinsAllDescendantLeaves()
+        {
+            var (group, a, b) = CreateGroup();
             group.Pin();
-            var context = new PinContext(group);
-
-            context.Exclude(a);
-
+            Assert.IsTrue(a.IsPinned);
+            Assert.IsTrue(b.IsPinned);
             Assert.IsTrue(group.IsPinned);
-            Assert.IsFalse(context.IsVisible(a));
-            Assert.IsTrue(context.IsVisible(b));
         }
 
         [Test]
-        public void PinContext_ExcludeAllChildren_UnpinsGroup()
+        public void Group_IsNotPinned_WhenAnyChildIsNotPinned()
         {
-            var group = new VerticalGroupModel("g");
-            var a = new LabelModel("a");
-            var b = new LabelModel("b");
-            group.AddChild(a);
-            group.AddChild(b);
+            var (group, a, b) = CreateGroup();
             group.Pin();
-            var context = new PinContext(group);
-
-            context.Exclude(a);
-            context.Exclude(b);
-
+            a.Unpin();
             Assert.IsFalse(group.IsPinned);
+            Assert.IsTrue(b.IsPinned);
         }
 
         [Test]
-        public void PinContext_EmptyNestedGroup_BecomesInvisible()
+        public void Group_BecomesPinned_WhenAllChildrenArePinnedIndividually()
+        {
+            var (group, a, b) = CreateGroup();
+            a.Pin();
+            Assert.IsFalse(group.IsPinned);
+            b.Pin();
+            Assert.IsTrue(group.IsPinned);
+        }
+
+        [Test]
+        public void TogglePin_OnPartiallyPinnedGroup_PinsAll()
+        {
+            var (group, a, b) = CreateGroup();
+            a.Pin();
+            PinManager.TogglePin(group);
+            Assert.IsTrue(a.IsPinned);
+            Assert.IsTrue(b.IsPinned);
+        }
+
+        [Test]
+        public void TogglePin_OnFullyPinnedGroup_UnpinsAll()
+        {
+            var (group, a, b) = CreateGroup();
+            group.Pin();
+            PinManager.TogglePin(group);
+            Assert.IsFalse(a.IsPinned);
+            Assert.IsFalse(b.IsPinned);
+        }
+
+        [Test]
+        public void NestedGroup_PinAndPartialUnpin()
         {
             var root = new VerticalGroupModel("root");
             var inner = new VerticalGroupModel("inner");
@@ -138,13 +145,42 @@ namespace Xeon.XDebugger.Tests
             inner.AddChild(a);
             root.AddChild(inner);
             root.AddChild(b);
+
             root.Pin();
-            var context = new PinContext(root);
+            Assert.IsTrue(inner.IsPinned);
 
-            context.Exclude(a);
+            a.Unpin();
+            Assert.IsFalse(inner.IsPinned);
+            Assert.IsFalse(root.IsPinned);
+            Assert.IsTrue(b.IsPinned);
+            Assert.IsFalse(PinManager.IsVisibleInPin(inner));
+            Assert.IsTrue(PinManager.IsVisibleInPin(root));
+        }
 
-            Assert.IsFalse(context.IsVisible(inner));
-            Assert.IsTrue(root.IsPinned);
+        [Test]
+        public void RootOf_ReturnsTopLevelModel()
+        {
+            var root = new VerticalGroupModel("root");
+            var inner = new VerticalGroupModel("inner");
+            var a = new LabelModel("a");
+            inner.AddChild(a);
+            root.AddChild(inner);
+            Assert.AreSame(root, PinManager.RootOf(a));
+        }
+
+        [Test]
+        public void UnpinTree_UnpinsModelAndGroupDescendants()
+        {
+            var (group, a, b) = CreateGroup();
+            var other = new LabelModel("o");
+            group.Pin();
+            other.Pin();
+
+            PinManager.UnpinTree(new ControlModelBase[] { group });
+
+            Assert.IsFalse(a.IsPinned);
+            Assert.IsFalse(b.IsPinned);
+            Assert.IsTrue(other.IsPinned);
         }
     }
 }

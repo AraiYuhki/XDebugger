@@ -40,8 +40,7 @@ namespace Xeon.XDebugger.Pin
 
         private void OnPinChanged(ControlModelBase changed, bool _)
         {
-            if (changed == model)
-                Refresh();
+            Refresh(); // グループの状態は配下の葉から導出されるため常に更新する
         }
 
         private void Refresh()
