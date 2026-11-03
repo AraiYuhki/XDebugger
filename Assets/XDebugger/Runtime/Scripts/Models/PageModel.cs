@@ -97,7 +97,7 @@ namespace Xeon.XDebugger.Model
             if (control != null && control is PageControl pageControl)
             {
                 foreach (var model in modelList)
-                    controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
+                    controlList.Add(model.BuildControl(pageControl.Content, uiFactory));
                 pageControl.Open(this);
             }
         }

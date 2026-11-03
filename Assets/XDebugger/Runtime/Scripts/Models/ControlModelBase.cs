@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Xeon.XDebugger.Control;
+using Xeon.XDebugger.Pin;
 using Xeon.XDebugger.UI;
 
 namespace Xeon.XDebugger.Model
@@ -50,5 +51,24 @@ namespace Xeon.XDebugger.Model
         }
 
         public abstract ControlBase CreateControl(Transform parent, IUIFactory uiFactory);
+
+        /// <summary>
+        /// メニュー内用のコントロールを生成し、ピン止めボタンを付与する。
+        /// </summary>
+        public ControlBase BuildControl(Transform parent, IUIFactory uiFactory)
+        {
+            var control = CreateControl(parent, uiFactory);
+            PinManager.AttachPinButton(this, control);
+            return control;
+        }
+
+        /// <summary>ピン止めされているか</summary>
+        public bool IsPinned => PinManager.IsPinned(this);
+
+        /// <summary>画面上にピン止めする</summary>
+        public void Pin() => PinManager.Pin(this);
+
+        /// <summary>ピン止めを解除する</summary>
+        public void Unpin() => PinManager.Unpin(this);
     }
 }

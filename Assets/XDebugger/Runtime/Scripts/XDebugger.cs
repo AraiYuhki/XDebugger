@@ -6,6 +6,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Xeon.XDebugger.Common;
 using Xeon.XDebugger.Model;
+using Xeon.XDebugger.Pin;
 using Xeon.XDebugger.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -92,6 +93,11 @@ namespace Xeon.XDebugger
 
         private bool isShow = false; // メニュー表示状態
 
+        private PinnedPanel pinnedPanel;
+#if ENABLE_INPUT_SYSTEM
+        private Key pinnedToggleInputKey = Key.None;
+#endif
+
         // タップ系の状態管理
         private float tapElapsedTime = 0f; // タップ入力の経過時間
         private int clickedCount = 0;   // クリック回数カウント
@@ -116,7 +122,24 @@ namespace Xeon.XDebugger
                 return;
 
             tabController.SetUIFactory(uiFactory);
+            if (pinnedPanel != null)
+                pinnedPanel.SetUIFactory(uiFactory);
         }
+
+        /// <summary>ピン止めモードが有効か</summary>
+        public bool PinMode => PinManager.PinMode;
+
+        /// <summary>ピン止めUIが表示されているか</summary>
+        public bool PinnedVisible => PinManager.PinnedVisible;
+
+        /// <summary>ピン止めモードを切り替える（メニュー内の各コントロールにピンボタンを表示）</summary>
+        public void SetPinMode(bool value) => PinManager.SetPinMode(value);
+
+        /// <summary>ピン止めUIの表示/非表示を設定する。メニューを開かずに利用可能</summary>
+        public void SetPinnedVisible(bool value) => PinManager.SetPinnedVisible(value);
+
+        /// <summary>ピン止めUIの表示/非表示を切り替える</summary>
+        public void TogglePinned() => PinManager.SetPinnedVisible(!PinManager.PinnedVisible);
 
         /// <summary>
         /// インスタンス初期化。シングルトン化と初期状態設定。
@@ -146,6 +169,52 @@ namespace Xeon.XDebugger
             }
             tabController.Setup(setting.UIFactory, setting.TabButtonPrefab, setting.TopPageTabList, title => titleLabel.text = title);
             InitializeTrigger();
+            InitializePin();
+        }
+
+        private void InitializePin()
+        {
+            pinnedPanel = PinnedPanel.Create(transform, setting);
+
+            var header = FindDeep(mainObject.transform, "Header") ?? mainObject.transform;
+            // CloseButton(幅50)の左隣
+            PinModeButton.Create(header, new Vector2(-95f, 0f));
+
+#if ENABLE_INPUT_SYSTEM
+            if (setting.PinnedToggleKey != KeyCode.None
+                && !System.Enum.TryParse(setting.PinnedToggleKey.ToString(), out pinnedToggleInputKey))
+                pinnedToggleInputKey = Key.None;
+#endif
+        }
+
+        private static Transform FindDeep(Transform root, string name)
+        {
+            foreach (Transform child in root)
+            {
+                if (child.name == name)
+                    return child;
+                var found = FindDeep(child, name);
+                if (found != null)
+                    return found;
+            }
+            return null;
+        }
+
+        private void HandlePinnedToggleKey()
+        {
+            if (setting.PinnedToggleKey == KeyCode.None)
+                return;
+            var pressed = false;
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            if (keyboard != null && pinnedToggleInputKey != Key.None)
+                pressed = keyboard[pinnedToggleInputKey].wasPressedThisFrame;
+#endif
+#if ENABLE_LEGACY_INPUT_MANAGER
+            pressed |= Input.GetKeyDown(setting.PinnedToggleKey);
+#endif
+            if (pressed)
+                TogglePinned();
         }
 
         private void InitializeTrigger()
@@ -209,6 +278,7 @@ namespace Xeon.XDebugger
                 return;
 
             isShow = false;
+            PinManager.SetPinMode(false); // ピン止めUIはピンモードに関係なく表示され続ける
             animator.Play(CloseId);
         }
 
@@ -220,6 +290,7 @@ namespace Xeon.XDebugger
         public void OnHidden()
         {
             isShow = false;
+            PinManager.SetPinMode(false);
         }
 
         /// <summary>
@@ -247,6 +318,8 @@ namespace Xeon.XDebugger
         private void Update()
         {
             if (setting == null) return;
+
+            HandlePinnedToggleKey();
 
             var triggerMode = setting.TriggerMode;
 

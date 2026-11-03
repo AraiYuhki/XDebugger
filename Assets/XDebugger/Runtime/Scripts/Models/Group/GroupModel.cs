@@ -61,7 +61,7 @@ namespace Xeon.XDebugger.Model
 
             foreach (var child in children)
             {
-                childrenControls.Add(child.CreateControl(control.GetContent(), uiFactory));
+                childrenControls.Add(child.BuildControl(control.GetContent(), uiFactory));
             }
         }
     }

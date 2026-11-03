@@ -44,6 +44,18 @@ namespace Xeon.XDebugger.Common
         [SerializeField]
         private UIFactoryBase uiFactory;
 
+        [Header("Pin")]
+        [SerializeField]
+        private TriggerPosition pinPosition = TriggerPosition.TopRight;
+        [SerializeField]
+        private float pinnedWidth = 320f;
+        [SerializeField, Range(0.1f, 1f)]
+        private float pinnedAlpha = 0.9f;
+        [SerializeField]
+        private bool showPinnedToggleButton = true;
+        [SerializeField]
+        private KeyCode pinnedToggleKey = KeyCode.F2;
+
         [SerializeField]
         private TabButton tabButtonPrefab;
         [SerializeField]
@@ -58,6 +70,15 @@ namespace Xeon.XDebugger.Common
         public float HoldTimeForShow => holdTimeForShow;
 
         public UIFactoryBase UIFactory => uiFactory;
+
+        /// <summary>ピン止めUIの起点位置</summary>
+        public TriggerPosition PinPosition => pinPosition;
+        public float PinnedWidth => pinnedWidth;
+        public float PinnedAlpha => pinnedAlpha;
+        /// <summary>ピン止めUIの表示切替ボタンを画面上に出すか</summary>
+        public bool ShowPinnedToggleButton => showPinnedToggleButton;
+        /// <summary>ピン止めUIの表示切替キー（キーボード接続時）。None で無効</summary>
+        public KeyCode PinnedToggleKey => pinnedToggleKey;
 
         public TabButton TabButtonPrefab => tabButtonPrefab;
 
@@ -95,6 +116,13 @@ namespace Xeon.XDebugger.Common
                     setting.inputGraceTime = EditorGUILayout.FloatField("Input grace time", setting.inputGraceTime);
                     setting.inputGraceTime = Mathf.Max(0.01f, setting.inputGraceTime);
                 }
+
+                EditorGUILayout.LabelField("Pin Settings", EditorStyles.boldLabel);
+                setting.pinPosition = (TriggerPosition)EditorGUILayout.EnumPopup("Pin position", setting.pinPosition);
+                setting.pinnedWidth = Mathf.Max(100f, EditorGUILayout.FloatField("Pinned width", setting.pinnedWidth));
+                setting.pinnedAlpha = EditorGUILayout.Slider("Pinned alpha", setting.pinnedAlpha, 0.1f, 1f);
+                setting.showPinnedToggleButton = EditorGUILayout.Toggle("Show toggle button", setting.showPinnedToggleButton);
+                setting.pinnedToggleKey = (KeyCode)EditorGUILayout.EnumPopup("Toggle key", setting.pinnedToggleKey);
 
                 EditorGUILayout.LabelField("UI Settings", EditorStyles.boldLabel);
                 setting.uiFactory = (UIFactoryBase)EditorGUILayout.ObjectField("UI Factory", setting.uiFactory, typeof(UIFactoryBase), false);

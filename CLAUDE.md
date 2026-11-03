@@ -103,6 +103,16 @@ public class MyScriptablePage : ScriptablePageModel
 
 プレハブに`GlobalMenuTabPage`を配置し、`ScriptablePageModel`をInspectorでアサインすることで、タブとして常駐するページを作成できる。UIFactoryの注入後に自動で初期化・表示される。
 
+### ピン止め機能
+
+全コントロール(グループ含む)を画面上にピン止めできる。ピン止めUIは専用Canvas(`PinnedPanel`)で描画され、メニューの開閉・ピン止めモードとは独立して表示される。
+
+- メニューのヘッダーの `PIN: OFF/ON` ボタンでピン止めモードを切替 → 各コントロール右上に `PIN` ボタンが出る。メニューを閉じるとピン止めモードは自動で解除されるが、ピン済みUIは表示されたまま
+- メニューを開かずに表示切替: `XDebugger.Instance.TogglePinned()` / `SetPinnedVisible(bool)` / 画面上の `PINNED` ボタン / キー(`PinnedToggleKey`, 既定F2)
+- コードから: `model.Pin()` / `model.Unpin()` / `model.IsPinned`、状態は `PinManager`
+- 設定: `XDebuggerSetting` の Pin Settings (起点位置、幅、透明度、切替ボタン、切替キー)
+- 同一Modelから別Viewを生成するため、メニュー側とピン側は `Changed` で同期する。永続化はしない
+
 ### スタイルシステム
 
 `ControlBase.ApplyStyle()`にIStyle実装を渡してレイアウトを調整する。

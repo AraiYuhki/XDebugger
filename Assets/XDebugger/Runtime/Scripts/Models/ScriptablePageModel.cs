@@ -102,7 +102,7 @@ namespace Xeon.XDebugger.Model
             if (control != null && control is PageControl pageControl)
             {
                 foreach (var model in modelList)
-                    controlList.Add(model.CreateControl(pageControl.Content, uiFactory));
+                    controlList.Add(model.BuildControl(pageControl.Content, uiFactory));
                 // ScriptablePageModel は PageModel ではないため、null を渡す
                 // または abstract class を使用する必要がある場合は要検討
                 pageControl.Open(this);
