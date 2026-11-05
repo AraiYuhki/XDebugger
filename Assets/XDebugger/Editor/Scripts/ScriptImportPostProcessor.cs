@@ -22,9 +22,8 @@ namespace XDebugger.Editor.Scripts
         /// <param name="movedFromAssetPaths">移動元パス</param>
         public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
-            // 対象となる.csファイルを抽出
-            var targets = importedAssets.Where(path => Path.GetExtension(path) == ".cs")
-                .Concat(movedAssets.Where(path => Path.GetExtension(path) == ".cs"));
+            // 対象となる.csファイルを抽出（Assets配下のプロジェクト所有ファイルのみ）
+            var targets = importedAssets.Concat(movedAssets).Where(IsConvertTarget).Distinct();
             foreach (var path in targets)
             {
                 var encoding = EncodeHelper.GetJpEncoding(path); // 文字コード判定
@@ -37,19 +36,41 @@ namespace XDebugger.Editor.Scripts
                 {
                     continue; // 既にUTF-8なら何もしない
                 }
-                // 元の文字コードでファイル内容を読み込む
-                string data;
-                using (var sr = new StreamReader(path, encoding))
+                try
                 {
-                    data = sr.ReadToEnd();
+                    // 元の文字コードでファイル内容を読み込む
+                    string data;
+                    using (var sr = new StreamReader(path, encoding))
+                    {
+                        data = sr.ReadToEnd();
+                    }
+                    // UTF-8で上書き保存
+                    using (var sw = new StreamWriter(path, false, Encoding.UTF8))
+                    {
+                        sw.Write(data);
+                    }
+                    Debug.Log($"{path} is encoded {encoding.EncodingName} to UTF8");
                 }
-                // UTF-8で上書き保存
-                using (var sw = new StreamWriter(path, false, Encoding.UTF8))
+                catch (System.Exception e)
                 {
-                    sw.Write(data);
+                    // 変換失敗でインポート処理全体を止めない
+                    Debug.LogWarning($"Failed to convert {path} to UTF8: {e.Message}");
                 }
-                Debug.Log($"{path} is encoded {encoding.EncodingName} to UTF8");
             }
+        }
+
+        /// <summary>
+        /// 変換対象の.csファイルかどうか。
+        /// Packages配下（レジストリ/Git/ローカル問わず）やPackageCacheはパッケージ所有のファイルであり、
+        /// 文字コードの誤判定による書き換え（文字化け）を避けるため対象外とする。
+        /// </summary>
+        private static bool IsConvertTarget(string path)
+        {
+            if (Path.GetExtension(path) != ".cs") return false;
+            if (!path.StartsWith("Assets/", System.StringComparison.Ordinal)) return false;
+            // Assets配下でもパッケージ管理下のファイルは対象外
+            if (UnityEditor.PackageManager.PackageInfo.FindForAssetPath(path) != null) return false;
+            return true;
         }
     }
 }
